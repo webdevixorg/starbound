@@ -126,18 +126,11 @@ WSGI_APPLICATION = 'system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'react2',
-        'USER': 'root',
-        'PASSWORD': '',
+        'NAME': 'database_name',
+        'USER': 'your_db_user',
+        'PASSWORD': 'your_db_password',
         'HOST': 'localhost',
         'PORT': '3306',
-        'OPTIONS': {
-            'ssl': {
-                'ca': 'C:/ssl/server.crt',
-                'cert': 'C:/ssl/server.crt',
-                'key': 'C:/ssl/server.key',
-            }
-        },
     }
 }
 
