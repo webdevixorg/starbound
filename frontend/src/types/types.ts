@@ -1,6 +1,5 @@
-import { Dispatch, ReactNode, SetStateAction } from 'react';
-
 export interface User {
+  groups: any;
   id: number;
   username: string;
   first_name: string;
@@ -30,6 +29,7 @@ export interface AuthContextType {
   signin: (tokens: { access: string; refresh: string }) => void;
   signout: () => void;
   user: User | null;
+  role: 'admin' | 'customer' | null;
   profile: Profile | null;
 }
 
@@ -43,6 +43,25 @@ export interface AuthResponse {
   };
 }
 
+// Define the ContentType type
+export interface ContentType {
+  model: any;
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface ContentTypes {
+  [key: string]: ContentType;
+}
+
+// Define the ContentContextType type
+export interface ContentContextTypes {
+  map(arg0: (contentType: any) => boolean): unknown;
+  contentTypes: ContentTypes | null;
+  loading: boolean;
+}
+
 export interface AccountSettings {
   username: string;
   twoFactorSMS: boolean;
@@ -53,16 +72,25 @@ export interface AccountSettings {
   confirm_password: string;
 }
 
-export interface Image {
-  image: string;
-  alt: string;
+export interface ImageFile {
+  file: File;
+  order: number;
 }
 
-export interface Category {
-  href: string;
+export interface Image {
   id: number;
-  name: string;
-  slug: string;
+  alt: string;
+  image_path: string;
+  order: number;
+}
+
+export interface Images {
+  id: number;
+  post: number;
+  image: number;
+  image_path: string;
+  alt: string;
+  order: number;
 }
 
 export interface Author {
@@ -76,22 +104,69 @@ export interface Author {
   last_name: string;
 }
 
-export interface Post {
+export interface Category {
   id: number;
+  name: string;
   slug: string;
-  category: Category;
+  description: string;
+  parent: number;
+  content_type_id: string;
+  children: Category[]; // Ensure this matches the expected type
+}
+
+interface CommonParams {
   title: string;
   description: string;
-  author: Author;
+  slug: string;
   date: string;
-  images: Image[];
+  status: string;
+  user: string;
+}
+
+export interface Post extends CommonParams {
+  id: number;
+  categories: Category[];
+  author: Author;
+  images: Images[];
   featured_image: string;
-  visitor_count: number;
+  aggregated_visitor_counts: number;
+}
+
+export interface PostData extends CommonParams {
+  categories: number[];
+  contentType: string;
+  content_type_id: number; // Add content_type_id here
 }
 
 export interface FetchPostsResponse {
   data: Post[];
   totalPages: number;
+}
+
+interface ProductParams extends CommonParams {
+  price: number;
+  sku: string;
+  children?: Category[];
+  short_description: string;
+  additional_info: string;
+}
+
+export interface ProductData extends ProductParams {
+  categories: number[];
+  contentType: string;
+  content_type_id: number; // Add content_type_id here
+  location: number;
+  sublocation: number;
+}
+
+export interface Product extends ProductParams {
+  id: number;
+  categories: Category[];
+  location_name: string;
+  sublocation_name: string;
+  category_name: string;
+  images: Images[];
+  author: Author;
 }
 
 export interface FAQ {
@@ -148,10 +223,51 @@ export interface Wishlist {
   description: string;
 }
 
-export interface Order {
+export interface Location {
   id: number;
-  destination: string;
-  start_date: string;
-  end_date: string;
-  status: string;
+  name: string;
+  subLocations?: SubLocation[];
+}
+
+export interface SubLocation {
+  id: number;
+  name: string;
+  parent_id: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  subCategories?: SubCategory[];
+}
+
+export interface SubCategory {
+  id: number;
+  name: string;
+  parent_id: number;
+}
+
+export interface SideBarProps {
+  onFilterChange: (Filters: []) => void;
+  selectedLocation: string[];
+  selectedCategory: string[];
+  onClearAllFilters: () => void;
+}
+
+export interface Filter {
+  type: 'locations' | 'sublocations' | 'categories' | 'subcategories';
+  id: number;
+  name: string;
+  parent_id?: number;
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  title?: string;
+  message?: string;
+  onClose: () => void;
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }

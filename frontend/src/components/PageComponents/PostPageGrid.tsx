@@ -1,52 +1,68 @@
-// src/components/PageComponents/PostPageGrid.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useContent } from '../../context/ContentContext'; // useContent hook
 import { fetchPosts } from '../../services/api';
 import { Post } from '../../types/types';
 import { formatDate } from '../../helpers/common';
+import PaginationControls from '../Navigation/Pagination';
 
-interface PostGridProps {
-  filter: string;
-}
-
-const PostPageGrid: React.FC<PostGridProps> = ({ filter }) => {
+const PostPageGrid: React.FC<{ filter: string }> = ({ filter }) => {
+  const { contentTypes, loading: contentLoading } = useContent(); // Get contentTypes from context
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
-  const [pageSize] = useState<number>(4); // Number of posts per page
+  const [pageSize] = useState<number>(10);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [next, setNext] = useState<string | null>(null);
   const [previous, setPrevious] = useState<string | null>(null);
+  const [contentTypeId] = useState<number>(14);
+  const [status] = useState<string>('Published');
+
+  // Memoize matchedContentType to avoid recalculating on each render
+  const matchedContentType = useMemo(() => {
+    if (Array.isArray(contentTypes)) {
+      return contentTypes.find(
+        (contentType: any) => contentType.id === contentTypeId
+      );
+    }
+    return null;
+  }, [contentTypes, contentTypeId]);
 
   useEffect(() => {
+    if (contentLoading || !matchedContentType) return; // Skip if contentTypes or matchedContentType is not ready
+
     const loadPosts = async () => {
+      setLoading(true); // Start loading
+
       try {
         const { results, count, next, previous } = await fetchPosts(
-          filter,
           page,
-          pageSize
+          pageSize,
+          status,
+          filter,
+          matchedContentType.model
         );
+
         setPosts(results);
         setTotalPosts(count);
         setNext(next);
         setPrevious(previous);
-        setLoading(false);
       } catch (error) {
         setError('Error fetching posts');
-        setLoading(false);
+      } finally {
+        setLoading(false); // End loading after API call
       }
     };
 
     loadPosts();
-  }, [filter, page, pageSize]);
+  }, [matchedContentType, filter, page, pageSize, status]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
   if (posts.length === 0) return <div>No posts available</div>;
 
   return (
-    <div className="container mx-auto xs:px-5 max-w-screen-lg py-5 lg:py-8">
+    <div className="container mx-auto xs:px-5 py-5 lg:py-8">
       <div className="w-full my-6">
         <h2 className="text-gray-800 text-2xl font-bold">
           <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
@@ -65,7 +81,11 @@ const PostPageGrid: React.FC<PostGridProps> = ({ filter }) => {
                   alt={post.title}
                   className="object-cover transition-all"
                   sizes="(max-width: 768px) 30vw, 33vw"
-                  src={post.featured_image}
+                  src={
+                    post.images && post.images[0]
+                      ? post.images[0].image_path
+                      : '/assets/image_placeholder.jpg'
+                  }
                   style={{
                     position: 'absolute',
                     height: '100%',
@@ -78,11 +98,17 @@ const PostPageGrid: React.FC<PostGridProps> = ({ filter }) => {
             </div>
             <div>
               <div className="flex gap-3">
-                <a href={`/category/${post.category.slug}`}>
-                  <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600">
-                    {post.category.name}
+                {post.categories && post.categories.length > 0 ? (
+                  <a href={`/category/${post.categories[0].slug}`}>
+                    <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600">
+                      {post.categories[0].name}
+                    </span>
+                  </a>
+                ) : (
+                  <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-gray-600">
+                    No categories available
                   </span>
-                </a>
+                )}
               </div>
               <h2 className="text-lg font-semibold leading-snug tracking-tight mt-2 dark:text-white">
                 <a href={`/posts/${post.slug}`}>
@@ -134,76 +160,14 @@ const PostPageGrid: React.FC<PostGridProps> = ({ filter }) => {
           </div>
         ))}
       </div>
-      {/* Pagination Controls */}
-      <nav className="flex items-center justify-center gap-x-1 mt-8">
-        <button
-          type="button"
-          onClick={() => setPage((prevPage) => Math.max(prevPage - 1, 1))}
-          disabled={!previous}
-          className="min-h-[38px] min-w-[38px] py-2 px-2.5 inline-flex justify-center items-center gap-x-2 text-sm rounded-lg border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:border-transparent dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10"
-        >
-          <svg
-            className="flex-shrink-0 size-3.5"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m15 18-6-6 6-6"></path>
-          </svg>
-          <span aria-hidden="true" className="sr-only">
-            Previous
-          </span>
-        </button>
-        <div className="flex items-center justify-center gap-x-1">
-          {[...Array(Math.ceil(totalPosts / pageSize))].map((_, index) => (
-            <button
-              key={index + 1}
-              type="button"
-              onClick={() => setPage(index + 1)}
-              className={`min-h-[38px] min-w-[38px] flex justify-center items-center border ${
-                page === index + 1 ? 'border-gray-200' : 'border-transparent'
-              } text-gray-800 py-2 px-3 text-sm rounded-lg focus:outline-none ${
-                page === index + 1 ? 'bg-gray-50' : 'hover:bg-gray-100'
-              } disabled:opacity-50 disabled:pointer-events-none dark:border-neutral-700 dark:text-white dark:focus:bg-white/10`}
-              aria-current={page === index + 1 ? 'page' : undefined}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() =>
-            setPage((prevPage) => (next ? prevPage + 1 : prevPage))
-          }
-          disabled={!next}
-          className="min-h-[38px] min-w-[38px] py-2 px-2.5 inline-flex justify-center items-center gap-x-2 text-sm rounded-lg border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:border-transparent dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10"
-        >
-          <span aria-hidden="true" className="sr-only">
-            Next
-          </span>
-          <svg
-            className="flex-shrink-0 size-3.5"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m9 18 6-6-6-6"></path>
-          </svg>
-        </button>
-      </nav>
+      <PaginationControls
+        page={page}
+        totalPosts={totalPosts}
+        pageSize={pageSize}
+        next={next}
+        previous={previous}
+        setPage={setPage}
+      />
     </div>
   );
 };

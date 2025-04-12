@@ -53,7 +53,7 @@ const Dropdown: React.FC<DropdownProps> = ({ label, items }) => {
       >
         <div className="bg-white dark:bg-neutral-900 shadow-lg">
           <div className="container">
-            <ul className="grid space-y-4 mt-4">
+            <ul className="grid mt-4">
               {items.map((item, index) => (
                 <li key={index} className="">
                   <a

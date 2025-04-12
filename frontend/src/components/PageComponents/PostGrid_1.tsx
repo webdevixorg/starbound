@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPosts } from '../../services/api'; // Ensure this path is correct
+import { fetchPostsForSections } from '../../services/api'; // Ensure this path is correct
 import { Post } from '../../types/types';
 import { formatDate } from '../../helpers/common';
+import { CategoryName } from '../../helpers/fetching';
 
-const PostGrid_1: React.FC<{ filter: string }> = ({ filter }) => {
+const PostGrid_1: React.FC<{ filter: string; count: number }> = ({
+  filter,
+  count,
+}) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPosts(filter);
+        const data = await fetchPostsForSections(filter, count);
         setPosts(data.results);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -20,44 +24,52 @@ const PostGrid_1: React.FC<{ filter: string }> = ({ filter }) => {
   }, [filter]);
 
   return (
-    <div className="container mx-auto xs:px-5 max-w-screen-lg py-5 lg:py-8">
-      <div className="w-full py-3">
-        <h2 className="text-gray-800 text-2xl font-bold">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="border-b flex justify-between items-end mb-8 pb-6">
+        <h2 className="text-gray-800 text-4xl">
           <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
-          Trending
+          Entertainment News
         </h2>
       </div>
-      <div className="grid gap-10 md:grid-cols-3 lg:gap-10">
+
+      <div className="grid gap-10 md:grid-cols-2 lg:gap-10">
         {posts.map((post) => (
           <div key={post.id} className="group cursor-pointer">
-            <div className="overflow-hidden rounded-md bg-gray-100 transition-all hover:scale-105 dark:bg-gray-800">
+            <div className="overflow-hidden rounded-md bg-gray-100 transition-all dark:bg-gray-800">
               <a
-                className="relative block aspect-video"
+                className="relative block"
                 href={`/posts/${post.slug}`}
+                style={{ height: '300px' }} // Set a fixed height for the container
               >
-                <img
-                  alt={post.title}
-                  className="object-cover transition-all"
-                  sizes="(max-width: 768px) 30vw, 33vw"
-                  src={post.featured_image}
-                  style={{
-                    position: 'absolute',
-                    height: '100%',
-                    width: '100%',
-                    inset: '0px',
-                    color: 'transparent',
-                  }}
-                />
+                <div className="overflow-hidden h-full w-full">
+                  <img
+                    alt={post.title}
+                    className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110" // Ensure image covers the container and scales on hover
+                    sizes="(max-width: 768px) 30vw, 33vw"
+                    src={
+                      post.images && post.images[0]?.image_path
+                        ? post.images[0].image_path
+                        : '/assets/image_placeholder.jpg'
+                    }
+                  />
+                </div>
               </a>
             </div>
             <div>
               <div className="flex gap-3">
-                <a href={`/category/${post.category.slug}`}>
-                  <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600">
-                    {post.category.name}
+                {post.categories && post.categories.length > 0 ? (
+                  post.categories.map((category) => (
+                    <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600">
+                      <CategoryName categoryId={category} />
+                    </span>
+                  ))
+                ) : (
+                  <span className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-gray-600">
+                    No categories available
                   </span>
-                </a>
+                )}
               </div>
+
               <h2 className="text-lg font-semibold leading-snug tracking-tight mt-2 dark:text-white">
                 <a href={`/posts/${post.slug}`}>
                   <span className="bg-gradient-to-r from-blue-200 to-blue-100 bg-[length:0px_10px] bg-left-bottom bg-no-repeat transition-[background-size] duration-500 hover:bg-[length:100%_3px] group-hover:bg-[length:100%_10px] dark:from-purple-800 dark:to-purple-900">

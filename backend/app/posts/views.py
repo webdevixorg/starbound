@@ -1,102 +1,86 @@
-from rest_framework import viewsets, generics, status
-from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from rest_framework.decorators import action
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Sum, Max, IntegerField
 
-from .models import Post, VisitorCount, AggregatedVisitorCount
-from .serializers import PostSerializer
+from rest_framework import viewsets, generics, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Sum, IntegerField
+from .models import Post
+from .serializers import PostSerializer
 
 class PostPagination(PageNumberPagination):
     page_size_query_param = 'pageSize'
     page_query_param = 'page'
 
-class PostViewSet(viewsets.ModelViewSet):
+class PostView(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = PostPagination
+    lookup_field = 'slug'
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+    def get_queryset(self):
+        queryset = super().get_queryset()
 
+        content_type_id = self.request.GET.get('content_type_id')
+        if content_type_id:
+            queryset = queryset.filter(content_type_id=content_type_id)
+        
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        elif not status:
+            queryset = queryset.exclude(status='Deleted')
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def latest(self, request):
+        count = request.GET.get('count', 10)  # Get the count parameter from the URL, default to 5 if not provided
+        try:
+            count = int(count)
+        except ValueError:
+            count = 5  # Default to 5 if the count parameter is not a valid integer
+
+        queryset = self.get_queryset().order_by('-date')[:count]  # Limit to the latest 'count' items
+        
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context={'request': request, 'truncate': True})
             return self.get_paginated_response(serializer.data)
-
+        
         serializer = self.get_serializer(queryset, many=True, context={'request': request, 'truncate': True})
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def latest(self, request):
-        posts = Post.objects.order_by('-date')
-        page = self.paginate_queryset(posts)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True, context={'request': request, 'truncate': True})
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(posts, many=True, context={'request': request, 'truncate': True})
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def popular(self, request):
-        posts = Post.objects.annotate(
+        queryset = self.get_queryset().annotate(
             visitor_sum=Sum('aggregated_visitor_counts__data__all_time_count', output_field=IntegerField())
         ).order_by('-visitor_sum')
-        page = self.paginate_queryset(posts)
+        
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context={'request': request, 'truncate': True})
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(posts, many=True, context={'request': request, 'truncate': True})
+        serializer = self.get_serializer(queryset, many=True, context={'request': request, 'truncate': True})
         return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def trending(self, request):
-        three_months_ago = timezone.now() - timedelta(days=90)
-        trending_counts = VisitorCount.objects.filter(date__gte=three_months_ago).values('post').annotate(visitor_sum=Sum('count'), latest_date=Max('date')).order_by('-visitor_sum')
-        trending_post_ids = [count['post'] for count in trending_counts]
-        trending_posts = Post.objects.filter(id__in=trending_post_ids).annotate(latest_date=Max('visitor_counts__date')).order_by('-latest_date')
-        page = self.paginate_queryset(trending_posts)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True, context={'request': request, 'truncate': True})
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(trending_posts, many=True, context={'request': request, 'truncate': True})
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def increment_visitor_count(self, request, pk=None):
-        post = self.get_object()
-        count = post.visitor_counts.first()  # Assuming one visitor count entry per post
-        if count:
-            count.count += 1
-            count.save()
-        else:
-            VisitorCount.objects.create(post=post, count=1)
-        return Response({'status': 'visitor count incremented'})
-
-class PostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    
+class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     lookup_field = 'slug'
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
+    @action(detail=True, methods=['patch'])
+    def change_status(self, request, slug=None):
+        try:
+            post = self.get_object()
+            new_status = request.data.get('status')
 
-        filter_kwargs = {self.lookup_field: self.kwargs[self.lookup_field]}
-        obj = generics.get_object_or_404(queryset, **filter_kwargs)
+            if new_status not in ['Deleted', 'Active', 'Published', 'Archived', 'Draft']:
+                return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # May raise a permission denied
-        self.check_object_permissions(self.request, obj)
-        return obj
+            post.status = new_status
+            post.save()
 
-    def handle_exception(self, exc):
-        if isinstance(exc, NotFound):
-            return Response({'detail': 'No Post matches the given query.'}, status=status.HTTP_404_NOT_FOUND)
-        return super().handle_exception(exc)
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
+            return Response({'status': f'post {new_status.lower()}'}, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            return Response({'error': 'post not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': 'internal server error', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

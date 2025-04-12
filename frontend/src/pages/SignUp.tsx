@@ -29,6 +29,7 @@ const SignUp: React.FC = () => {
         first_name: '',
         last_name: '',
         password,
+        groups: [],
       });
       navigate('/signin');
     } catch (error) {
@@ -50,7 +51,7 @@ const SignUp: React.FC = () => {
               your account.
             </p>
             <p className="text-sm mt-12 text-gray-800">
-              Already have an account?{' '}
+              Already have an account?
               <Link
                 to="/signin"
                 className="text-blue-600 font-semibold hover:underline ml-1"
@@ -185,7 +186,7 @@ const SignUp: React.FC = () => {
 
               <div className="flex items-center gap-4">
                 <p className="text-gray-800 text-sm text-center">
-                  Already have an account?{' '}
+                  Already have an account?
                   <Link
                     to="/signin"
                     className="text-blue-600 font-semibold hover:underline ml-1"

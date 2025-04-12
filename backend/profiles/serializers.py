@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Order, Notification, Profile, Update, Trip, Wishlist
@@ -9,10 +9,12 @@ class UserSerializer(serializers.ModelSerializer):
     current_password = serializers.CharField(write_only=True, required=False)
     new_password = serializers.CharField(write_only=True, required=False)
     confirm_password = serializers.CharField(write_only=True, required=False)
+    groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True, required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'current_password', 'new_password', 'confirm_password']
+        fields = ['id', 'email', 'first_name', 'last_name', 'current_password', 'new_password', 'confirm_password', 'groups']
+
 
     def validate(self, data):
         user = self.instance
@@ -62,9 +64,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(settings.MEDIA_URL + 'profiles/profile_images/' + obj.image.name)
-        return None
+        media_url = settings.MEDIA_URL
+        if request:
+            # Build the absolute URI for the media URL
+            absolute_media_url = request.build_absolute_uri(media_url)
+            image_url = f"{absolute_media_url}profiles/profile_images/{obj.image}"
+            return image_url
+        return f"{media_url}profiles/profile_images/{obj.image}"
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})

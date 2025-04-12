@@ -1,15 +1,20 @@
 from rest_framework import serializers
 from django.conf import settings
-from .models import Post, PostImage, Category, AggregatedVisitorCount
 from django.contrib.auth.models import User
 from profiles.models import Profile
+from uploads.serializers import ImageSerializer
+from .models import Post, AggregatedVisitorCount
+from categories.models import Category
+from uploads.models import Image
+import bleach
+from django.utils.safestring import mark_safe
 
 class ProfileSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['image', 'bio']  # Include other fields as necessary
+        fields = ['image', 'bio']
 
     def get_image(self, obj):
         request = self.context.get('request')
@@ -28,67 +33,29 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'profile']
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'slug']
-
-class PostImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PostImage
-        fields = ['image', 'alt']
-
-
-
-
-class PostImageSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = PostImage
-        fields = ['image', 'alt']
-
-    def get_image(self, obj):
-        request = self.context.get('request')
-        image_path = f"profiles/profile_images{obj.image.url}"  # Adding specific URL segments
-        if request:
-            return request.build_absolute_uri(image_path)
-        return image_path
-
 class AggregatedVisitorCountSerializer(serializers.ModelSerializer):
     class Meta:
         model = AggregatedVisitorCount
         fields = ['data']
 
+
 class PostSerializer(serializers.ModelSerializer):
+    aggregated_visitor_counts = AggregatedVisitorCountSerializer(required=False)
     author = UserSerializer(read_only=True, source='user')
-    category = CategorySerializer(read_only=True)
-    images = PostImageSerializer(many=True, read_only=True)
-    featured_image = serializers.SerializerMethodField()
-    aggregated_visitor_counts = AggregatedVisitorCountSerializer()
+    images = serializers.SerializerMethodField()
+    categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)  # Use PrimaryKeyRelatedField here
+    content_type_id = serializers.IntegerField()  # Add content_type_id field
+    description = serializers.CharField(required=False)  # Handle description as raw HTML
 
     class Meta:
         model = Post
-        fields = [
-            'id',
-            'slug',
-            'category',
-            'title',
-            'description',
-            'author',
-            'date',
-            'images',
-            'featured_image',
-            'aggregated_visitor_counts'
-        ]
+        fields = '__all__'
 
-    def get_featured_image(self, obj):
-        request = self.context.get('request', None)
-        first_image = obj.images.first()
-        if first_image and request:
-            return request.build_absolute_uri(first_image.image.url)
-        elif first_image:
-            return first_image.image.url
-        return None
+
+    def get_images(self, obj):
+        images = Image.objects.filter(object_id=obj.id)
+        return ImageSerializer(images, many=True, context=self.context).data
+
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -98,4 +65,35 @@ class PostSerializer(serializers.ModelSerializer):
             if len(representation['description']) > max_description_length:
                 representation['description'] = representation['description'][:max_description_length] + '...'
 
+        # Mark description as safe for HTML rendering
+        if 'description' in representation:
+            representation['description'] = mark_safe(representation['description'])
+
         return representation
+
+    def validate_description(self, value):
+        allowed_tags = ['table', 'tbody', 'tr', 'td', 'th', 'strong', 'b', 'i', 'u', 'p', 'br', 'span']
+        allowed_attributes = {
+            'td': ['style'],
+            'th': ['colspan'],
+            'span': ['style']
+        }
+        return bleach.clean(value, tags=allowed_tags, attributes=allowed_attributes)
+
+    def create(self, validated_data):
+        categories_data = validated_data.pop('categories')
+        images_data = self.context['request'].FILES.getlist('images')
+        aggregated_visitor_counts_data = validated_data.pop('aggregated_visitor_counts', None)
+        post = Post.objects.create(**validated_data)
+        post.categories.set(categories_data)
+
+        if aggregated_visitor_counts_data:
+            aggregated_visitor_counts = AggregatedVisitorCount.objects.create(post=post, **aggregated_visitor_counts_data)
+            post.aggregated_visitor_counts.set([aggregated_visitor_counts])
+
+        for image_data in images_data:
+            Image.objects.create(content_object=post, image_path=image_data)
+
+        return post
+
+

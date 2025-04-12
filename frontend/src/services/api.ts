@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import { Image, Product } from '../types/types'; // Adjust the import path as necessary
 import axiosInstance from './AxiosInstance';
 import axiosInstanceNoAuth from './AxiosInstanceNoAuth';
 import {
@@ -11,7 +12,20 @@ import {
   Message,
   User,
   Post,
+  Category,
+  PostData,
+  ImageFile,
 } from '../types/types'; // Adjust the import path as necessary
+
+export const fetchData = async (url: string) => {
+  try {
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(url);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching data from ${url}:`, error);
+    throw error;
+  }
+};
 
 export const signup = (userData: SignUp): Promise<AxiosResponse<void>> => {
   return axiosInstanceNoAuth.post<void>('/signup/', userData);
@@ -27,7 +41,7 @@ export const signin = (userData: {
 export const fetchUser = async (): Promise<User> => {
   try {
     const response = await axiosInstance.get('/profile');
-    return response.data; // Assuming backend responds with user data
+    return response.data.user; // Assuming backend responds with user data
   } catch (error) {
     throw new Error('Failed to fetch user data'); // Handle specific error cases if needed
   }
@@ -79,20 +93,132 @@ export const updateAccountSettings = async (
   }
 };
 
+export const uploadImage = async (
+  file: ImageFile,
+  title: string,
+  id: number,
+  type: number
+) => {
+  const formData = new FormData();
+  formData.append('image_path', file.file); // Correct field name for the file
+  formData.append('alt', title);
+  formData.append('object_id', id.toString()); // Correct field name for the object ID
+  formData.append('order', file.order.toString()); // Correct field name for the object ID
+  formData.append('content_type', type.toString()); // Correct field name for the content type
+
+  try {
+    const response = await axiosInstance.post('/images/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.status !== 201) {
+      throw new Error('Image upload failed');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+};
+
+export const fetchImagesByObjectId = async (
+  objectId: number
+): Promise<Image> => {
+  try {
+    const response: AxiosResponse = await axiosInstanceNoAuth.get('/images/', {
+      params: {
+        object_id: objectId,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching image by object ID:', error);
+    throw error;
+  }
+};
+
+// Function to update the image order
+export const updateImage = async (imageId: number, data: { order: number }) => {
+  try {
+    const response = await axiosInstance.patch(`/images/${imageId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating order for image ${imageId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteImage = async (imageId: number) => {
+  try {
+    const response = await axiosInstance.delete(`/images/${imageId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status !== 204) {
+      throw new Error('Image deletion failed');
+    }
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(
+        'Error deleting image:',
+        error.response?.data || error.message
+      );
+    } else {
+      console.error('Unexpected error deleting image:', error);
+    }
+    throw error;
+  }
+};
+
+// api.tsx
+
 export const fetchPosts = async (
-  filter: string,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  status: string,
+  filter: string = '',
+  modelName: string
 ): Promise<{
+  page_size: number;
   results: Post[];
   count: number;
   next: string | null;
   previous: string | null;
 }> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/posts/${filter}/`, {
-      params: { page, pageSize },
-    });
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/${modelName}s/${filter}`,
+      {
+        params: { page, pageSize, status: status },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+export const fetchPostsForSections = async (
+  filter: string,
+  count: number
+): Promise<{
+  results: Post[];
+}> => {
+  try {
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/posts/${filter}/`,
+      {
+        params: { count },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -102,10 +228,151 @@ export const fetchPosts = async (
 
 export const fetchPostBySlug = async (slug: string): Promise<Post> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/posts/s/${slug}`);
-    return response.data;
+    const { data: postData }: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/posts/${slug}`
+    );
+
+    // Fetch category details in parallel
+    const categories: Category[] = await Promise.all(
+      postData.categories.map((categoryId: number) =>
+        axiosInstanceNoAuth
+          .get(`/categories/${categoryId}`)
+          .then((res) => res.data)
+      )
+    );
+
+    return { ...postData, categories };
+    alert(categories);
   } catch (error) {
     console.error('Error fetching post:', error);
+    throw error;
+  }
+};
+
+export const createPost = async (data: PostData): Promise<Post> => {
+  try {
+    // Convert PostData to FormData
+    const formData = new FormData();
+    const appendToFormData = (key: string, value: any) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => formData.append(key, item.toString()));
+      } else {
+        formData.append(key, value.toString());
+      }
+    };
+
+    (Object.keys(data) as (keyof PostData)[]).forEach((key) => {
+      appendToFormData(key, data[key]);
+    });
+
+    // Send the formData to the backend
+    const response = await axiosInstance.post(
+      `/${data.contentType}s/`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating post:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      // Handle Axios error
+      throw new Error(error.response.data.message || 'Failed to create post');
+    }
+    throw error;
+  }
+};
+
+export const updatePost = async (
+  slug: string,
+  data: PostData
+): Promise<Post> => {
+  try {
+    // Convert PostData to FormData
+    const formData = new FormData();
+    const appendToFormData = (key: string, value: any) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => formData.append(key, item.toString()));
+      } else {
+        formData.append(key, value.toString());
+      }
+    };
+
+    (Object.keys(data) as (keyof PostData)[]).forEach((key) => {
+      appendToFormData(key, data[key]);
+    });
+
+    // Send the formData to the backend
+    const response = await axiosInstance.put(
+      `/${data.contentType}s/${slug}/`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating post:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.message || 'Failed to update post');
+    }
+    throw new Error('An unexpected error occurred while updating the post');
+  }
+};
+
+const statusErrorMessages: { [key: string]: string } = {
+  Deleted: 'Error deleting post:',
+  Active: 'Error restoring post:',
+  Published: 'Error publishing post:',
+  Archived: 'Error archiving post:',
+  Draft: 'Error drafting post:',
+};
+
+export const changePostStatus = async (
+  slug: string,
+  contentType: string,
+  status: string
+) => {
+  try {
+    const response: AxiosResponse = await axiosInstanceNoAuth.patch(
+      `/${contentType}s/${slug}/change-status/`,
+      {
+        status: status,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      statusErrorMessages[status] || 'Error processing post:';
+    console.error(errorMessage, error);
+    throw error;
+  }
+};
+
+export const deletePost = async (
+  slug: string,
+  contentType: string
+): Promise<void> => {
+  try {
+    const response = await axiosInstance.delete(
+      `/${contentType}s/${slug}/delete/`
+    );
+    if (response.status !== 204) {
+      throw new Error('Failed to delete post');
+    }
+  } catch (error) {
+    console.error('Error deleting post:', error);
     throw error;
   }
 };
@@ -136,16 +403,6 @@ export const fetchWishlist = async (): Promise<any> => {
     return response.data;
   } catch (error) {
     console.error('Error fetching wishlist:', error);
-    throw error;
-  }
-};
-
-export const fetchOrders = async (): Promise<any> => {
-  try {
-    const response = await axiosInstance.get('/orders/');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching Orders:', error);
     throw error;
   }
 };
@@ -182,8 +439,8 @@ export const fetchCurrencyData = async () => {
 
 export const fetchFAQs = async (): Promise<FAQ[]> => {
   try {
-    const response = await axiosInstanceNoAuth.get('/faqs/');
-    return response.data;
+    const response: AxiosResponse = await axiosInstanceNoAuth.get('/faqs/');
+    return response.data.results;
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     throw error;
@@ -192,7 +449,9 @@ export const fetchFAQs = async (): Promise<FAQ[]> => {
 
 export const fetchFAQ = async (id: number): Promise<FAQ> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/faqs/${id}/`);
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/faqs/${id}/`
+    );
     return response.data;
   } catch (error) {
     console.error(`Error fetching FAQ with id ${id}:`, error);
@@ -300,4 +559,159 @@ export const markUpdateAsRead = async (Id: number): Promise<void> => {
   } catch (error) {
     throw new Error('Error marking update as read');
   }
+};
+
+export const fetchProducts = async (
+  orderBy: string,
+  page: number,
+  limit: number,
+  filters: { type: string; id: number }[]
+) => {
+  // Validate parameters
+  if (typeof orderBy !== 'string' || orderBy.trim() === '') {
+    throw new Error('Invalid orderBy parameter');
+  }
+  if (!Number.isInteger(page) || page <= 0) {
+    throw new Error('Invalid page parameter');
+  }
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error('Invalid limit parameter');
+  }
+
+  // Construct URL
+  let url = `/products/?orderBy=${encodeURIComponent(
+    orderBy
+  )}&page=${page}&limit=${limit}`;
+  filters.forEach((filter) => {
+    url += `&${encodeURIComponent(filter.type)}=${encodeURIComponent(
+      filter.id
+    )}`;
+  });
+
+  // Fetch data
+  try {
+    const response = await fetchData(url);
+    return response;
+  } catch (error) {
+    throw new Error('Error fetching products');
+  }
+};
+
+export const fetchProductsForSections = async (
+  filter: string,
+  count: number
+): Promise<{
+  results: Product[];
+}> => {
+  try {
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/products/${filter}/`,
+      {
+        params: { count },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+export const fetchContentTypes = async () => {
+  try {
+    const response = await axiosInstance.get('/content-type');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching content types:', error);
+    throw error;
+  }
+};
+
+export const addCategory = async (category: {
+  name: string;
+  description: string;
+  content_type_id: number; // Add content_type_id to the category type
+}) => {
+  try {
+    const response = await axiosInstance.post('/categories/', category);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding category:', error);
+    throw error;
+  }
+};
+
+export const fetchCategories = async (
+  page: number,
+  pageSize: number,
+  contentTypeId?: number
+) => {
+  try {
+    const params: any = { page, page_size: pageSize }; // Use 'page_size' to match Django's pagination parameter
+    if (contentTypeId) {
+      params.content_type_id = contentTypeId;
+    }
+    const response = await axiosInstance.get('/categories/', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    throw error;
+  }
+};
+
+export const getCategoryDetails = async (categoryId: number) => {
+  try {
+    const response = await axiosInstance.get(`/categories/${categoryId}/`);
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching category details:', error);
+    return null;
+  }
+};
+
+export const getCategoryNameById = async (id: string): Promise<string> => {
+  try {
+    const response = await axiosInstance.get(`/categories/${id}/`);
+    return response.data.name;
+  } catch (error) {
+    console.error(`Error fetching category with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const updateCategory = async (slug: string, category: any) => {
+  try {
+    const response = await axiosInstance.put(`/categories/${slug}/`, category);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating category:', error);
+    throw error;
+  }
+};
+
+// Delete category
+export const deleteCategory = async (slug: string) => {
+  try {
+    const response = await axiosInstance.delete(`/categories/${slug}/`);
+    if (response.status !== 200) {
+      throw new Error('Category deletion failed');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    throw error;
+  }
+};
+
+export const fetchSubCategories = async (categoryId: number) => {
+  const response = await axiosInstance.get(
+    `/categories/${categoryId}/subcategories/`
+  );
+  return response.data;
+};
+
+// Define a function to check if the error is of type FetchError
+export const isFetchError = (error: any): error is RTCError => {
+  return typeof error.status === 'number' && typeof error.message === 'string';
 };

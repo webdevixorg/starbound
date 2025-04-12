@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchPostBySlug } from '../services/api'; // Adjust the path as necessary
-import { Post } from '../types/types'; // Adjust the path as necessary
+import { useAuth } from '../context/AuthContext'; // Import the useAuth hook
+
+import { fetchPostBySlug } from '../services/api';
+import { Post } from '../types/types';
 import { formatDate } from '../helpers/common';
+import HtmlContent from '../helpers/content';
+import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
+import PostListSidebar from '../components/PageComponents/PostListSidebar';
+import ProductListSidebar from '../components/PageComponents/ProductListSidebar';
 
 const SinglePost: React.FC = () => {
+  const { isAuthenticated } = useAuth(); // Use useAuth hook to get the current user
+
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
 
@@ -24,114 +32,108 @@ const SinglePost: React.FC = () => {
   }, [slug]);
 
   if (!post) {
-    return <div>Loading...</div>;
+    return <div className="text-center py-20">Loading...</div>;
   }
 
   return (
-    <div>
-      {/* Main Post */}
-      <div className="relative flex min-h-[calc(100vh-30vh)] items-center mb-10 z-0">
-        <div className="absolute -z-10 h-full w-full before:absolute before:z-10 before:h-full before:w-full before:bg-black/30">
-          <img
-            alt={post.images[0]?.alt}
-            loading="eager"
-            decoding="async"
-            className="object-cover w-full h-full"
-            src={post.featured_image}
-          />
-        </div>
-        <div className="text-center mx-auto max-w-screen-lg px-5 py-20">
-          <h1 className="text-brand-primary mb-3 mt-2 text-3xl font-semibold tracking-tight text-white lg:text-5xl lg:leading-tight">
-            {post.title}
-          </h1>
-          <div className="mt-8 flex justify-center space-x-3 text-gray-500">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex gap-3">
-                <div className="relative h-5 w-5 flex-shrink-0">
-                  <a href="#">
-                    <img
-                      alt={post.author.first_name}
-                      loading="lazy"
-                      decoding="async"
-                      className="rounded-full object-cover"
-                      src={post.author.profile.image}
-                    />
-                  </a>
-                </div>
-                <p className="text-gray-100">
-                  <a href="#">
-                    {post.author.first_name} {post.author.last_name}
-                  </a>
-                  <span className="hidden pl-2 md:inline"> ·</span>
-                </p>
-              </div>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto px-4 mt-6 max-w-full">
+        <BreadcrumbsComponent post={post} />
+      </div>
+      {/* Header Section */}
+
+      <div className="mx-auto max-w-full flex flex-wrap">
+        <div className="w-full sm:w-2/3 md:w-3/4 lg:w-2/3">
+          {/* Title */}
+          <div className="mx-auto px-4 mt-6 max-w-full">
+            <h1 className="font-normal text-gray-900 dark:text-gray-100 mb-6 mt-6 text-left text-4xl leading-tight font-gliko">
+              {post.title}
+            </h1>
+          </div>
+
+          {/* Author and Metadata */}
+          <div className="mx-auto px-4 mb-8 max-w-full">
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 space-x-3">
+              <img
+                alt={post.author.first_name}
+                className="rounded-full h-10 w-10 object-cover"
+                src={post.author.profile.image}
+              />
+              <p className="font-semibold">
+                {post.author.first_name} {post.author.last_name}
+              </p>
+              <time dateTime={post.date}>{formatDate(post.date)}</time>
+              <span> · 6 min read</span>
+              {isAuthenticated && (
+                <a
+                  href={`/posts/${post.slug}/edit`}
+                  className="text-blue-500 hover:underline"
+                >
+                  Edit
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Featured Image */}
+          <div className="mx-auto px-4 max-w-full">
+            <img
+              alt={post.title}
+              className="inline-block mb-2 w-full mx-auto" // Added Tailwind's max-width and center alignment classes
+              src={
+                post.images && post.images[0]
+                  ? post.images[0].image_path
+                  : '/assets/image_placeholder.jpg'
+              }
+              style={{ objectFit: 'cover' }}
+            />
+          </div>
+
+          {/* Article Box */}
+          <div className="mx-auto px-4 mb-10 max-w-full bg-white p-6">
+            <article className="prose prose-lg dark:prose-invert max-w-full">
+              <HtmlContent htmlContent={post.description} />
+            </article>
+          </div>
+
+          {/* About the Author */}
+          <div className="mx-auto px-4 mt-16 max-w-full">
+            <div className="mb-6 flex items-start">
+              <img
+                alt={post.author.first_name}
+                className="rounded-full h-20 w-20 object-cover mb-6 mr-6"
+                src={post.author.profile.image}
+              />
               <div>
-                <div className="flex space-x-2 text-sm md:flex-row md:items-center">
-                  <time className="text-gray-100" dateTime={post.date}>
-                    {formatDate(post.date)}
-                  </time>
-                  <span className="text-gray-100">· 6 min read</span>
-                </div>
+                <h3 className="text-lg font-semibold">
+                  About {post.author.first_name} {post.author.last_name}
+                </h3>
+                <p className="mt-2">{post.author.profile.bio}</p>
+                <Link
+                  to="/profile"
+                  className="text-blue-600 dark:text-blue-400 inline-block"
+                >
+                  View Profile →
+                </Link>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div className="mx-auto mt-14 flex max-w-screen-xl flex-col gap-5 px-5 md:flex-row">
-        {/* Post Content */}
-        <article className="flex-1">
-          <div className="prose prose-lg mx-auto my-3 dark:prose-invert prose-a:text-blue-500">
-            <div
-              className="post-content"
-              dangerouslySetInnerHTML={{ __html: post.description }}
-            />
-          </div>
-          <div className="mb-7 mt-7 flex justify-center">
+
+          {/* Back to Posts */}
+          <div className="mx-auto px-4 mt-10 text-center max-w-full">
             <Link
-              className="bg-brand-secondary/20 rounded-full px-5 py-2 text-sm text-blue-600 dark:text-blue-500 "
               to="/"
+              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-full text-sm hover:bg-blue-500"
             >
               ← View all posts
             </Link>
           </div>
-          <div className="px-8 py-8 mt-3 mb-10 text-gray-500 rounded-2xl bg-gray-50 dark:bg-gray-900 dark:text-gray-400">
-            <div className="flex flex-wrap items-start sm:space-x-6 sm:flex-nowrap">
-              <div className="relative flex-shrink-0 w-24 h-24 mt-1 ">
-                <a href="#">
-                  <img
-                    alt="Author Image"
-                    loading="lazy"
-                    decoding="async"
-                    className="rounded-full object-cover"
-                    src={post.author.profile.image}
-                  />
-                </a>
-              </div>
-              <div>
-                <div className="mb-3">
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-300">
-                    About {post.author.first_name} {post.author.last_name}
-                  </h3>
-                </div>
-                <div>
-                  <p>{post.author.profile.bio}</p>
-                </div>
-                <div className="mt-3">
-                  <a
-                    className="py-2 text-sm text-blue-600 rounded-full dark:text-blue-500 bg-brand-secondary/20 "
-                    href="#"
-                  >
-                    View Profile
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-        <aside className="sticky top-0 w-full self-start md:w-96">
-          {/* Related Posts */}
-          {/* Assuming relatedPosts is fetched separately or passed as a prop */}
-        </aside>
+        </div>
+        {/* Sidebar */}
+        <div className="w-full sm:w-1/3 md:w-1/4 lg:w-1/3 p-4">
+          <ProductListSidebar filter="latest" count={4} />
+          <PostListSidebar filter="latest" count={4} />
+        </div>
       </div>
     </div>
   );

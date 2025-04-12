@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import '../styles/HelpCenter.css';
 import Sidebar from '../components/PageComponents/HelpCenter/Sidebar';
 import Tickets from '../components/PageComponents/HelpCenter/Tickets';
 import Header from '../components/PageComponents/HelpCenter/Header';

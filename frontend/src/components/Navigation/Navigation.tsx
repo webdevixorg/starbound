@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState } from 'react';
 import { Popover, Transition } from '@headlessui/react';
 import ArrowDownIcon from '../UI/Icons/ArrowDown';
 import MegaMenu from './MegaMenu';
@@ -8,18 +8,25 @@ interface SubItem {
   href: string;
 }
 
+interface MenuItem {
+  title: string;
+  items: SubItem[];
+}
+
 interface NavigationItemBase {
   label: string;
   href: string;
+  direct?: boolean;
 }
 
 interface NavigationItemWithSubItems extends NavigationItemBase {
-  subItems: SubItem[];
+  subItems?: SubItem[];
   megaMenu?: undefined;
 }
 
 interface NavigationItemWithMegaMenu extends NavigationItemBase {
   megaMenu: boolean;
+  items: MenuItem[];
   subItems?: undefined;
 }
 
@@ -47,18 +54,28 @@ const Navigation: React.FC<NavigationProps> = ({ item }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {({ open }) => (
+      {() => (
         <>
-          <Popover.Button as="div" className="h-20 min-w-32 flex items-center">
+          {item.direct ? (
             <a
               className="inline-flex items-center text-base text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full 
               hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
               href={item.href}
             >
               {item.label}
-              <ArrowDownIcon />
             </a>
-          </Popover.Button>
+          ) : (
+            <Popover.Button as="div" className="min-w-32 flex items-center">
+              <a
+                className="inline-flex items-center text-base text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full 
+              hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
+                href={item.href}
+              >
+                {item.label}
+                <ArrowDownIcon />
+              </a>
+            </Popover.Button>
+          )}
           {item.subItems && (
             <Transition
               show={isOpen}
@@ -85,7 +102,13 @@ const Navigation: React.FC<NavigationProps> = ({ item }) => {
               </Popover.Panel>
             </Transition>
           )}
-          {item.megaMenu && <MegaMenu isOpen={isOpen} />}
+          {item.megaMenu && (
+            <MegaMenu
+              isOpen={isOpen}
+              menuItems={item.items}
+              label={item.label}
+            />
+          )}
         </>
       )}
     </Popover>

@@ -7,9 +7,9 @@ const Footer: React.FC = () => {
       {/* Footer content */}
       <div
         id="footer-content"
-        className="relative order-last pt-8 xl:pt-16 pb-6 xl:pb-12"
+        className="relative order-last pt-8 pb-6 xl:pt-16 xl:pb-12"
       >
-        <div className="container mx-auto xs:px-5 max-w-screen-lg py-5 lg:py-8">
+        <div className="container mx-auto px-4 sm:px-2 lg:px-6 py-4 sm:py-2 lg:py-6">
           <div className="flex flex-wrap flex-row lg:justify-between -mx-3">
             <div className="flex-shrink max-w-full w-full lg:w-2/5 px-3 lg:pr-16">
               <div className="flex items-center mb-2">
@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
                   <LogoWhiteIcon />
                 </span>
               </div>
-              <div className="p-4">
+              <div>
                 <h2 className="text-4xl font-bold mb-2">StarBound</h2>
                 <p className="text-base">
                   Empowering developers with cutting-edge React, Python, and

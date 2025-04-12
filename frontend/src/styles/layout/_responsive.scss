@@ -1,0 +1,53 @@
+// Responsive design for mobile devices
+@media only screen and (max-width: 768px) {
+  .header {
+    padding: 10px;
+  }
+
+  .header .nav {
+    flex-direction: column;
+  }
+
+  .header .nav .nav-item {
+    margin-bottom: 10px;
+  }
+
+  .footer {
+    padding: 10px;
+  }
+
+  .footer .footer-links {
+    flex-direction: column;
+  }
+
+  .footer .footer-links .footer-link {
+    margin-bottom: 10px;
+  }
+}
+
+// Responsive design for tablet devices
+@media only screen and (max-width: 1024px) {
+  .header {
+    padding: 20px;
+  }
+
+  .header .nav {
+    flex-direction: row;
+  }
+
+  .header .nav .nav-item {
+    margin-right: 20px;
+  }
+
+  .footer {
+    padding: 20px;
+  }
+
+  .footer .footer-links {
+    flex-direction: row;
+  }
+
+  .footer .footer-links .footer-link {
+    margin-right: 20px;
+  }
+}

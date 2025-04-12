@@ -1,0 +1,225 @@
+.chat-container {
+  display: flex;
+  height: calc(
+    100vh - 0px
+  ); // Adjust the height based on the header and input container heights
+
+  .message-list {
+    width: 40%;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+
+    .message-list-header {
+      display: flex;
+      padding: 20px;
+      background-color: #f5f5f5;
+      justify-content: space-between;
+    }
+
+    .message-list-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .message-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+      cursor: pointer;
+
+      &.active {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .message-info {
+        display: flex;
+        align-items: center;
+
+        img {
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          margin-right: 10px;
+        }
+      }
+
+      .message-time {
+        color: #888;
+      }
+    }
+  }
+
+  .chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    border-left: 1px solid #ddd;
+
+    .chat-header {
+      padding: 20px;
+      background-color: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+      z-index: 1;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #fff;
+      height: calc(
+        100vh - 140px
+      ); // Adjust based on header and input container heights
+      scrollbar-width: thin; // For Firefox
+      scrollbar-color: transparent transparent; // For Firefox
+
+      &::-webkit-scrollbar {
+        width: 8px; // Adjust width for vertical scrollbar
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent; // Scrollbar track color
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: transparent; // Scrollbar thumb color
+        border-radius: 10px; // Rounded scrollbar thumb
+        border: 2px solid transparent; // Padding around scrollbar thumb
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background-color: #cccccc; // Thumb color on hover
+      }
+
+      &::-webkit-scrollbar-button {
+        display: none; // Hide scrollbar buttons
+      }
+    }
+
+    .chat-bubble {
+      display: flex;
+
+      &-img {
+        width: fit-content;
+      }
+
+      &.sent {
+        .chat-bubble-img {
+          order: 2;
+        }
+
+        .chat-bubble-content {
+          background-color: #007bff;
+          color: white;
+          align-self: flex-end;
+          margin-left: auto;
+          margin-right: 10px;
+          border-bottom-right-radius: 0;
+        }
+      }
+
+      &.received {
+        .chat-bubble-img {
+          order: 0;
+        }
+
+        .chat-bubble-content {
+          background-color: #f5f5f5;
+          align-self: flex-start;
+          margin-right: auto;
+          border-bottom-left-radius: 0;
+        }
+      }
+
+      .chat-bubble-content {
+        margin-bottom: 25px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        position: relative;
+        max-width: 52%;
+        min-width: 76px;
+        word-wrap: break-word;
+      }
+
+      .chat-time {
+        font-size: 12px;
+        position: absolute;
+        bottom: -18px;
+        right: 10px;
+        color: #888;
+      }
+    }
+  }
+
+  .chat-input-container {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #ddd;
+    background-color: #f5f5f5;
+    position: relative;
+
+    .chat-input {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      position: relative;
+
+      input {
+        flex: 1;
+        padding: 10px 60px;
+        border: none;
+        border-radius: 20px;
+        margin: 0 20px;
+        position: relative;
+      }
+
+      .icon-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        color: #007bff;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+
+        &:hover {
+          color: #0056b3;
+        }
+
+        &.left {
+          left: 50px;
+        }
+
+        &:nth-of-type(2) {
+          right: 80px;
+        }
+
+        &:nth-of-type(3) {
+          right: 50px;
+        }
+      }
+
+      .send-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        color: #007bff;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        &:hover {
+          color: #0056b3;
+        }
+      }
+    }
+  }
+}

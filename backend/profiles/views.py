@@ -10,7 +10,7 @@ from .serializers import NotificationSerializer, ProfileSerializer, UpdateSerial
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return Profile.objects.get(user=self.request.user)
@@ -31,7 +31,7 @@ class AccountSettingsView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-class MyTokenObtainPairView(TokenObtainPairView):
+class StarBoundTokenObtainPairView(TokenObtainPairView):
     permission_classes = (permissions.AllowAny,)
 
 

@@ -1,37 +1,47 @@
 from django.db import models
+from django.utils import timezone
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.auth.models import User
+from categories.models import Category
 
-class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.URLField()
+class PostAbstract(models.Model):
+    class StatusChoices(models.TextChoices):
+        PUBLISHED = 'published', 'Published'
+        DRAFT = 'draft', 'Draft'
+        ARCHIVED = 'archived', 'Archived'
+        DELETED = 'deleted', 'Deleted'
 
-    class Meta:
-        db_table = 'app_post_category'
-
-    def __str__(self):
-        return self.name
-
-class Post(models.Model):
-    slug = models.SlugField(max_length=200, unique=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='posts')
-    title = models.CharField(max_length=200)
-    description = models.TextField()
+    title = models.CharField(max_length=200, default='')
+    slug = models.SlugField(max_length=200, unique=True, blank=True)  # Allow auto-generation
+    description = models.TextField(blank=True)
+    images = GenericRelation('uploads.Image', related_query_name='posts')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateTimeField()
+    date = models.DateTimeField(auto_now_add=True)  # Automatic timestamping
+    content_type_id = models.PositiveSmallIntegerField(default=0)  # Saves space
+
+    status = models.CharField(
+        max_length=10,
+        choices=StatusChoices.choices,
+        default=StatusChoices.DRAFT  # Default to 'Draft'
+    )
 
     def __str__(self):
         return self.title
 
-class PostImage(models.Model):
-    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='posts/')
-    alt = models.CharField(max_length=200)
-
     class Meta:
-        db_table = 'app_post_image'
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.slug:  # Auto-generate slug from title if missing
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+    
+
+class Post(PostAbstract):
+    categories = models.ManyToManyField(Category, related_name='posts')
 
     def __str__(self):
-        return f"Image for {self.post.title}"
+        return self.title
 
 class VisitorCount(models.Model):
     post = models.ForeignKey(Post, related_name='visitor_counts', on_delete=models.CASCADE)

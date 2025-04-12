@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import '../styles/Notifications.css';
 import { fetchNotifications, markNotificationAsRead } from '../services/api'; // Assuming markNotificationAsRead is defined in your API service
 import { Notification } from '../types/types';
 import ProfileImage from '../components/UI/ProfileImage/ProfileImage';

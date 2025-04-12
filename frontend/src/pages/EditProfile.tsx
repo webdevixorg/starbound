@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchProfile, updateProfile } from '../services/api';
-import { Profile as ProfileType } from '../types/types';
 
-import '../styles/EditProfile.css';
 import TextInput from '../components/Forms/Input/TextInput';
 import PhoneInputField from '../components/Forms/Input/PhoneInputField';
 
 const EditProfile: React.FC = () => {
-  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -29,7 +26,6 @@ const EditProfile: React.FC = () => {
     const getProfile = async () => {
       try {
         const data = await fetchProfile();
-        setProfile(data);
         setFormData({
           first_name: data.user.first_name,
           last_name: data.user.last_name,

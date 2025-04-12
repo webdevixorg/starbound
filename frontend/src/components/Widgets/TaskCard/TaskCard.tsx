@@ -109,7 +109,7 @@ const TaskCard: React.FC = () => {
           <a href="#" className="">
             <img
               className="inline-block h-10 w-10 rounded-full object-cover ring-2 ring-white"
-              src="http://localhost:8000/media/profiles/profile_images/2.jpeg"
+              src="http://localhost:8000/media/profiles/profile_images/2.jpg"
               alt="Max"
             />
           </a>

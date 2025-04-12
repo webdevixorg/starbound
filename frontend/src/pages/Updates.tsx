@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import '../styles/Notifications.css';
 import { fetchUpdates, markUpdateAsRead } from '../services/api';
 import { Update } from '../types/types';
 import ProfileImage from '../components/UI/ProfileImage/ProfileImage';

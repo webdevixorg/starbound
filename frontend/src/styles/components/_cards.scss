@@ -1,0 +1,132 @@
+.card {
+  background-color: #fff;
+  padding: 2em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+
+  &.hover {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.product-grid {
+  display: block;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  .product-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 0.25rem;
+    height: 100%;
+  }
+}
+
+.product-card {
+  .product-card-quickview-btn {
+    position: absolute;
+    overflow: hidden;
+    z-index: 1;
+    top: 10px;
+    right: 10px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .product-card-actions-list {
+    position: absolute;
+    overflow: hidden;
+    z-index: 1;
+    top: 40px;
+    right: 0;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+  }
+
+  &:hover .product-card-actions-list {
+    opacity: 1;
+  }
+
+  .add-to-cart-icon {
+    position: relative;
+    border: none;
+    padding: 8px;
+    border-radius: 2px;
+    background: transparent;
+    color: #ccc;
+    z-index: 0;
+    transition: color 0.2s;
+    stroke: #d2d2d2;
+
+    &::before {
+      top: -2px;
+      left: -2px;
+      display: block;
+      content: '';
+      position: absolute;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      background: transparent;
+      z-index: -1;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: background 0.2s, transform 0.2s;
+    }
+  }
+
+  &:active,
+  &:hover {
+    .add-to-cart-icon::before {
+      transform: scale(1);
+      background: #1a79ff;
+    }
+
+    .add-to-cart-icon svg {
+      stroke: #fff;
+    }
+  }
+
+  .product-card-actions-list {
+    transform: translateX(100%) translateX(6px);
+
+    button {
+      color: #000;
+      opacity: 0;
+
+      i {
+        font-size: 1em;
+        color: #a4a4a4;
+        font-weight: 400;
+      }
+
+      &:hover {
+        color: #333;
+        background: #fed700;
+        border-color: #fed700;
+
+        i {
+          color: #000;
+        }
+      }
+    }
+  }
+
+  &:hover .product-card-actions-list {
+    transform: translateX(0%) translateX(-3px);
+
+    button {
+      &:hover {
+        i {
+          color: #fff;
+        }
+      }
+    }
+  }
+
+  &:hover .product-card-actions-list button {
+    opacity: 1;
+  }
+}

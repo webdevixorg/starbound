@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from datetime import timedelta
 from pathlib import Path
+from datetime import timedelta
+
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,15 +52,17 @@ INSTALLED_APPS = [
     'profiles',
     'app', 
     'chat',
-
-
+    'uploads',
+    'categories',
+    'locations',
+    'orders',
+    'reviews',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -117,16 +120,23 @@ WSGI_APPLICATION = 'system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'database_name',
+        'NAME': 'react2',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': 'localhost',   # or '127.0.0.1' for local MySQL server
-        'PORT': '3306',        # MySQL default port
+        'HOST': 'localhost',
+        'PORT': '3306',
         'OPTIONS': {
-            'sql_mode': 'STRICT_TRANS_TABLES',
+            'ssl': {
+                'ca': 'C:/ssl/server.crt',
+                'cert': 'C:/ssl/server.crt',
+                'key': 'C:/ssl/server.key',
+            }
         },
     }
 }
@@ -176,3 +186,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

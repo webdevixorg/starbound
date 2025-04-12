@@ -6,7 +6,8 @@ import React, {
   ReactNode,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchUser, fetchProfile } from '../services/api';
+import { jwtDecode } from 'jwt-decode';
+import { fetchProfile } from '../services/api';
 import { User, AuthContextType, Profile } from '../types/types';
 import SignOutModal from '../components/Modals/SignOutModal';
 
@@ -28,28 +29,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<'admin' | 'customer' | null>(null); // Track role
   const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
-      setIsAuthenticated(true);
-      fetchUserDetails();
+      if (isTokenExpired(token)) {
+        confirmSignOut();
+      } else {
+        setIsAuthenticated(true);
+        fetchUserDetails();
+      }
     } else {
       const timer = setTimeout(() => {
         setLoading(false);
-      }, 1000); // 2 seconds delay
+      }, 1000); // 1 second delay
 
       return () => clearTimeout(timer);
     }
   }, []);
 
+  const isTokenExpired = (token: string) => {
+    try {
+      const decoded: any = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp < currentTime;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return true;
+    }
+  };
+
   const fetchUserDetails = async () => {
     try {
-      const userData = await fetchUser();
-      setUser(userData);
       const profileData = await fetchProfile();
+      const userData = profileData.user;
+      setUser(userData);
       setProfile(profileData);
+
+      if (
+        Array.isArray(userData?.groups) &&
+        userData.groups.every((group) => typeof group === 'number')
+      ) {
+        // Example operation: Check if the user is in group 1
+        if (userData.groups.includes(1)) {
+          setRole('admin');
+        } else {
+          setRole('customer');
+        }
+      } else {
+        console.error('userData.groups is not an array of numbers');
+      }
     } catch (error) {
       console.error('Error fetching user details:', error);
     } finally {
@@ -72,12 +103,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.removeItem('refresh_token');
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/'); // Redirect to home page
+    setRole(null); // Clear the role when logging out
+    navigate('/signin'); // Redirect to sign-in page
   };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, loading, user, profile, signin, signout }}
+      value={{
+        isAuthenticated,
+        loading,
+        user,
+        profile,
+        role,
+        signin,
+        signout,
+      }}
     >
       {children}
       <SignOutModal

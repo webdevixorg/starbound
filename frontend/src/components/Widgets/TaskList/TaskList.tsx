@@ -137,7 +137,7 @@ const TasksWidget: React.FC = () => {
     <div className="mb-4">
       <div className="w-full bg-white shadow-lg rounded-2xl dark:bg-gray-700">
         <p className="p-4 font-bold text-black text-md dark:text-white">
-          My Tasks{' '}
+          My Tasks
           <span className="ml-2 text-sm text-gray-500 dark:text-gray-300 dark:text-white">
             (07)
           </span>

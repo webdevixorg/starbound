@@ -11,6 +11,7 @@ const FAQPage: React.FC = () => {
     const getFAQs = async () => {
       try {
         const data = await fetchFAQs();
+        console.log(data);
         setFAQs(data);
         setError(null);
       } catch (error) {

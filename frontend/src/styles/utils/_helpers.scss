@@ -1,0 +1,18 @@
+// _helpers.scss
+.helper {
+  &.hidden {
+    display: none;
+  }
+
+  &.visible {
+    display: block;
+  }
+
+  &.inline-block {
+    display: inline-block;
+  }
+
+  &.block {
+    display: block;
+  }
+}

@@ -74,7 +74,7 @@ const CustomCalendar: React.FC = () => {
       <div className="p-4 bg-white shadow-lg rounded-2xl dark:bg-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div className="text-xl font-bold text-left text-black dark:text-white">
-            {currentDate.toLocaleString('default', { month: 'long' })}{' '}
+            {currentDate.toLocaleString('default', { month: 'long' })}
             {currentDate.getFullYear()}
           </div>
           <div className="flex space-x-4">

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import '../styles/Messages.css';
 import { Conversation, Message, Participant } from '../types/types'; // Adjust imports as needed
 import {
   fetchConversations,
@@ -234,73 +233,75 @@ const ChatContainer: React.FC = () => {
   }
 
   return (
-    <div className="chat-container">
-      <div className="message-list">
-        <div className="message-list-header" ref={headerRef}>
-          <h2>Conversations</h2>
-        </div>
-        <div className="message-list-content">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.id}
-              className={`message-item ${
-                selectedConversation?.id === conversation.id ? 'active' : ''
-              }`}
-              onClick={() => handleConversationSelect(conversation)}
-            >
-              <div className="message-info">
-                <ProfileImageInList
-                  conversation={conversation}
-                  profile={profile}
-                />
-                <p>{getConversationTitle(conversation)}</p>
+    <div className="chat-container-wrapper">
+      <div className="chat-container">
+        <div className="message-list">
+          <div className="message-list-header" ref={headerRef}>
+            <h2>Conversations</h2>
+          </div>
+          <div className="message-list-content">
+            {conversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                className={`message-item ${
+                  selectedConversation?.id === conversation.id ? 'active' : ''
+                }`}
+                onClick={() => handleConversationSelect(conversation)}
+              >
+                <div className="message-info">
+                  <ProfileImageInList
+                    conversation={conversation}
+                    profile={profile}
+                  />
+                  <p>{getConversationTitle(conversation)}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="chat-window">
-        {selectedConversation ? (
-          <>
-            <div className="chat-header">
-              <h2>{getConversationTitle(selectedConversation)}</h2>
+        <div className="chat-window">
+          {selectedConversation ? (
+            <>
+              <div className="chat-header">
+                <h2>{getConversationTitle(selectedConversation)}</h2>
+              </div>
+              <div className="chat-messages" ref={chatMessagesRef}>
+                {selectedConversation.messages.length ? (
+                  renderMessagesWithDateHeaders(selectedConversation.messages)
+                ) : (
+                  <p>No messages</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <p>Select a conversation to start chatting</p>
+          )}
+          <div className="chat-input-container">
+            <div className="chat-input">
+              <button className="icon-button left">
+                <SmileIcon />
+              </button>
+              <input
+                type="text"
+                placeholder="Type a message"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <button className="icon-button">
+                <PaperClipIcon />
+              </button>
+              <button className="icon-button">
+                <ImageIcon />
+              </button>
+              <button className="send-button" onClick={handleSendMessage}>
+                <PaperPlaneIcon />
+              </button>
             </div>
-            <div className="chat-messages" ref={chatMessagesRef}>
-              {selectedConversation.messages.length ? (
-                renderMessagesWithDateHeaders(selectedConversation.messages)
-              ) : (
-                <p>No messages</p>
-              )}
-            </div>
-          </>
-        ) : (
-          <p>Select a conversation to start chatting</p>
-        )}
-        <div className="chat-input-container">
-          <div className="chat-input">
-            <button className="icon-button left">
-              <SmileIcon />
-            </button>
-            <input
-              type="text"
-              placeholder="Type a message"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSendMessage();
-                }
-              }}
-            />
-            <button className="icon-button">
-              <PaperClipIcon />
-            </button>
-            <button className="icon-button">
-              <ImageIcon />
-            </button>
-            <button className="send-button" onClick={handleSendMessage}>
-              <PaperPlaneIcon />
-            </button>
           </div>
         </div>
       </div>

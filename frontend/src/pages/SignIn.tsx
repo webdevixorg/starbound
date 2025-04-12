@@ -13,6 +13,7 @@ const SignIn: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const navigate = useNavigate();
   const { signin } = useAuth();
 
@@ -34,6 +35,10 @@ const SignIn: React.FC = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
   return (
     <div className="font-[sans-serif]">
       <div className="min-h-screen flex fle-col items-center justify-center py-6 px-4">
@@ -48,7 +53,7 @@ const SignIn: React.FC = () => {
               account with ease.
             </p>
             <p className="text-sm mt-12 text-gray-800">
-              Don't have an account{' '}
+              Don't have an account
               <Link
                 to="/signup"
                 className="text-blue-600 font-semibold hover:underline ml-1"
@@ -94,15 +99,19 @@ const SignIn: React.FC = () => {
                   </label>
                   <div className="relative flex items-center">
                     <input
+                      id="password"
                       name="password"
-                      type="password"
+                      type={passwordVisible ? 'text' : 'password'}
                       className="w-full text-gray-800 text-sm border border-gray-300 px-4 py-2 rounded-md outline-blue-600"
                       placeholder="Enter password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                    <EyeIcon className="w-4 h-4 absolute right-4 cursor-pointer text-gray-400" />
+                    <EyeIcon
+                      className="w-4 h-4 absolute right-4 cursor-pointer text-gray-400"
+                      onClick={togglePasswordVisibility}
+                    />
                   </div>
                 </div>
                 {error && <p className="text-red-500">{error}</p>}
@@ -171,7 +180,7 @@ const SignIn: React.FC = () => {
 
               <div className="flex items-center gap-4">
                 <p className="text-gray-800 text-sm text-center">
-                  Don't have an account?{' '}
+                  Don't have an account?
                   <Link
                     to="/signup"
                     className="text-blue-600 font-semibold hover:underline ml-1"
