@@ -43,15 +43,23 @@ class ProductSerializer(serializers.ModelSerializer):
         validated_data['description'] = self.validate_description(validated_data.get('description', ''))
 
         # Extract categories separately
-        category_ids = validated_data.pop('category_ids', [])
+        category_ids = validated_data.pop('categories', [])
 
         # Create the product instance
         product = Product.objects.create(**validated_data)
-        product.categories.set(category_ids)  # Assign categories
+        product.categories.set(category_ids)  # Assign categories correctly
 
         return product
 
     def update(self, instance, validated_data):
         if 'description' in validated_data:
             validated_data['description'] = self.validate_description(validated_data.get('description', ''))
-        return super().update(instance, validated_data)
+
+        category_ids = validated_data.pop('categories', None)
+        instance = super().update(instance, validated_data)
+
+        if category_ids is not None:
+            instance.categories.set(category_ids)
+
+        return instance
+

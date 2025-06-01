@@ -256,10 +256,11 @@ export interface SideBarProps {
 }
 
 export interface Filter {
-  type: 'locations' | 'sublocations' | 'categories' | 'subcategories';
+  type: 'locations' | 'categories' | 'sublocations' | 'subcategories' | 'price' | 'query';
   id: number;
   name: string;
-  parent_id?: number;
+  min?: number;
+  max?: number;
 }
 
 export interface ModalProps {

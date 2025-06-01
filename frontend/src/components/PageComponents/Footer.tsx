@@ -1,5 +1,5 @@
 import React from 'react';
-import LogoWhiteIcon from '../UI/Icons/LogoWhite';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -14,15 +14,22 @@ const Footer: React.FC = () => {
             <div className="flex-shrink max-w-full w-full lg:w-2/5 px-3 lg:pr-16">
               <div className="flex items-center mb-2">
                 <span className="text-3xl leading-normal mb-2 font-bold text-gray-100 mt-2">
-                  <LogoWhiteIcon />
+                  {/* Logo */}
+                  <Link to="/" className="flex items-center p-2">
+                    <img
+                      src="/logo_white.png"
+                      alt="Logivis Automotive"
+                      className="h-20 sm:h-32 w-auto"
+                    />
+                  </Link>
                 </span>
               </div>
               <div>
-                <h2 className="text-4xl font-bold mb-2">StarBound</h2>
                 <p className="text-base">
-                  Empowering developers with cutting-edge React, Python, and
-                  REST API content to foster innovation, growth, and continuous
-                  learning.
+                  Logivis Automotive stands at the forefront of automotive
+                  excellence, offering a comprehensive range of services
+                  including high-quality spare parts, expert repairs, vehicle
+                  optimization, EV charging, detailing, and tire care.
                 </p>
               </div>
               <ul className="space-x-3 mt-6 mb-6 lg:mb-0">
@@ -128,80 +135,88 @@ const Footer: React.FC = () => {
               <div className="flex flex-wrap flex-row">
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
                   <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Product
+                    Company
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Landing</a>
+                      <a href="/about-us">About Us</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Pages</a>
+                      <a href="/careers">Careers</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Sections</a>
+                      <a href="/posts">News & Blog</a>
+                    </li>
+
+                    <li className="py-1 hover:text-white">
+                      <a href="/privacy-policy">Privacy Policy</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Sign Up</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">SignIn</a>
+                      <a href="/terms-of-use">Terms of Use</a>
                     </li>
                   </ul>
                 </div>
+
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
                   <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
                     Support
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Documentation</a>
+                      <a href="/contact-us">Contact Us</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Changelog</a>
+                      <a href="/helpcenter">Help Center</a>
+                    </li>
+
+                    <li className="py-1 hover:text-white">
+                      <a href="/warranty-and-return">Warranty & Returns</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Tools</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">Icons</a>
-                    </li>
-                  </ul>
-                </div>
-                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Includes
-                  </h4>
-                  <ul>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">Utilities</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">Components</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">Example code</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="#">Updates</a>
+                      <a href="/faq">FAQs</a>
                     </li>
                   </ul>
                 </div>
+
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
                   <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Legal
+                    Services
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Privacy Policy</a>
+                      <a href="#">Vehicle Diagnostics</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Terms of Use</a>
+                      <a href="#">Custom Installation</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">License</a>
+                      <a href="#">Repair & Maintenance</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">GDPR</a>
+                      <a href="#">Software Updates</a>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
+                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
+                    Resources
+                  </h4>
+                  <ul>
+                    <li className="py-1 hover:text-white">
+                      <a href="#">User Manuals</a>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <a href="#">Product Reviews</a>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <a href="#">How-To Videos</a>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <a href="/forum">Community Forum</a>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <a href="#">Feedback</a>
                     </li>
                   </ul>
                 </div>
@@ -217,8 +232,8 @@ const Footer: React.FC = () => {
           <div className="row">
             <div className="col-12 col-md ">
               <p className="d-block my-3 text-center">
-                Copyright &copy; {new Date().getFullYear()} Elegant Inspire. All
-                rights reserved.
+                Copyright &copy; {new Date().getFullYear()} Logivis Automotive.
+                All rights reserved.
               </p>
             </div>
           </div>

@@ -143,9 +143,11 @@ export const fetchProductBySlug = async (slug: string): Promise<Product> => {
   }
 };
 
-export const fetchProduct = async (productId: string) => {
+export const fetchProductById = async (productId: number) => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/products/${productId}/`);
+    const response = await axiosInstanceNoAuth.get(
+      `/products/id/${productId}/`
+    );
     return response.data;
   } catch (error) {
     console.error('Error fetching product:', error);

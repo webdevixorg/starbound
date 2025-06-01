@@ -19,7 +19,7 @@ const TopBar = () => {
           </span>
           <span>
             Mid-Summer Season Sale On Selected Items -{' '}
-            <a href="#" className="underline hover:text-red-600">
+            <a href="/products" className="underline hover:text-red-600">
               Shop Now
             </a>
           </span>
@@ -28,7 +28,7 @@ const TopBar = () => {
         <div className="flex items-center space-x-6">
           {/* Help & Order Tracking */}
           <div className="flex space-x-4">
-            <a href="#" className="hover:underline">
+            <a href="/helpcenter" className="hover:underline">
               Help Center
             </a>
             <a href="#" className="hover:underline">

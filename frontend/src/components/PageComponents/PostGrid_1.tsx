@@ -32,7 +32,7 @@ const PostGrid_1: React.FC<{ filter: string; count: number }> = ({
         </h2>
       </div>
 
-      <div className="grid gap-10 md:grid-cols-2 lg:gap-10">
+      <div className="grid gap-16 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
         {posts.map((post) => (
           <div key={post.id} className="group cursor-pointer">
             <div className="overflow-hidden rounded-md bg-gray-100 transition-all dark:bg-gray-800">

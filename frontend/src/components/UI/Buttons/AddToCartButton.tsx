@@ -1,15 +1,15 @@
-// components/AddToCartIcon.tsx
+// components/AddToCartButton.tsx
 import React from 'react';
 import { useCart } from '../../../context/CartContext';
 import { Product } from '../../../types/types';
 import useToast from '../../../hooks/useToast';
 import CartIcon from '../Icons/Cart';
 
-interface AddToCartIconProps {
+interface AddToCartButtonProps {
   product: Product;
 }
 
-const AddToCartIcon: React.FC<AddToCartIconProps> = ({ product }) => {
+const AddToCartButton: React.FC<AddToCartButtonProps> = ({ product }) => {
   const { dispatch } = useCart();
   const { showToast } = useToast(); // Use the hook
 
@@ -44,4 +44,4 @@ const AddToCartIcon: React.FC<AddToCartIconProps> = ({ product }) => {
   );
 };
 
-export default AddToCartIcon;
+export default AddToCartButton;

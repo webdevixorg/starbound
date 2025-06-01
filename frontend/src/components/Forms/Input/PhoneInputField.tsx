@@ -1,6 +1,6 @@
-import React from "react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import React from 'react';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 interface PhoneInputFieldProps {
   id: string;
@@ -18,7 +18,10 @@ const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
 }) => {
   return (
     <div className="form-group">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+      >
         {label}
       </label>
       <PhoneInput
@@ -31,15 +34,16 @@ const PhoneInputField: React.FC<PhoneInputFieldProps> = ({
           required: true,
         }}
         inputStyle={{
-          width: "100%",
-          borderRadius: "6px",
-          border: "1px solid #d1d5db",
-          padding: "10px 12px 10px 50px",
-          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+          width: '100%',
+          borderRadius: '6px',
+          border: '1px solid #d1d5db',
+          padding: '10px 12px 10px 50px',
+          height: '40px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
         }}
         buttonStyle={{
-          borderRadius: "6px 0 0 6px",
-          border: "1px solid #d1d5db",
+          borderRadius: '6px 0 0 6px',
+          border: '1px solid #d1d5db',
         }}
       />
     </div>

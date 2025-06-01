@@ -18,7 +18,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   return (
     <div className="mb-5">
       <div
-        className="flex items-center justify-between cursor-pointer text-gray-800 font-bold mb-2"
+        className="flex items-center justify-between cursor-pointer text-gray-800 font-bolder text-2xl mb-4" // Updated font size to text-xl
         onClick={() => setOpen(!open)}
       >
         {title} {open ? <ArrowUp isOpen={false} /> : <ArrowDown />}

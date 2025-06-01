@@ -21,6 +21,7 @@ const EditProfile: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null); // New state for date error
 
   useEffect(() => {
     const getProfile = async () => {
@@ -81,6 +82,14 @@ const EditProfile: React.FC = () => {
     }
   };
 
+  const handleImageDelete = () => {
+    setFormData({
+      ...formData,
+      image: '', // Clear the image in formData
+    });
+    setImagePreview(''); // Clear the image preview
+  };
+
   const handlePhoneChange = (value: string) => {
     setFormData({
       ...formData,
@@ -91,17 +100,32 @@ const EditProfile: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate date_of_birth
+    if (!formData.date_of_birth || isNaN(Date.parse(formData.date_of_birth))) {
+      setDateError('Please select a valid date.');
+      return;
+    } else {
+      setDateError(null); // Clear the error if the date is valid
+    }
+
     const updatedData = new FormData();
+
     Object.entries(formData).forEach(([key, value]) => {
       if (key === 'first_name' || key === 'last_name') {
         updatedData.append(`user.${key}`, value as string);
+      } else if (key === 'image') {
+        if (value instanceof File) {
+          updatedData.append('image', (value as File).name); // Send only the file name
+        } else if (value === '') {
+          updatedData.append('image', ''); // Handle image deletion
+        }
       } else {
         updatedData.append(key, value as string);
       }
     });
 
     try {
-      await updateProfile(updatedData);
+      await updateProfile(updatedData); // Send the FormData to the backend
       alert('Profile updated successfully');
     } catch (error) {
       setError('Error updating profile');
@@ -118,10 +142,8 @@ const EditProfile: React.FC = () => {
   }
 
   return (
-    <div className="edit-profile-container bg-white dark:bg-gray-900 max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Your Profile</h2>
-      </div>
+    <div className="edit-profile-container p-6 bg-white dark:bg-gray-900 max-w-4xl">
+      <h2 className="text-2xl font-semibold mb-4 px-4">Your Profile</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <div className="flex items-center">
@@ -141,12 +163,13 @@ const EditProfile: React.FC = () => {
                 type="file"
                 id="image"
                 name="image"
+                accept="image/*" // Ensure only image files can be selected
                 onChange={handleImageChange}
                 className="hidden"
               />
               <button
                 type="button"
-                onClick={() => setImagePreview('')}
+                onClick={handleImageDelete}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
                 <i className="fas fa-trash mr-2"></i> Delete picture
@@ -171,14 +194,19 @@ const EditProfile: React.FC = () => {
             value={formData.last_name}
             onChange={handleChange}
           />
-          <TextInput
-            id="date_of_birth"
-            name="date_of_birth"
-            label="Date of Birth"
-            type="date"
-            value={formData.date_of_birth}
-            onChange={handleChange}
-          />
+          <div className="mb-4">
+            <TextInput
+              id="date_of_birth"
+              name="date_of_birth"
+              label="Date of Birth"
+              type="date"
+              value={formData.date_of_birth}
+              onChange={handleChange}
+            />
+            {dateError && (
+              <p className="text-red-500 text-sm mt-1">{dateError}</p> // Display date error
+            )}
+          </div>
           <PhoneInputField
             id="phone"
             name="phone"

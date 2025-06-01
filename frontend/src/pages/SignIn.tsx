@@ -159,20 +159,22 @@ const SignIn: React.FC = () => {
               <div className="sm:flex sm:items-start space-x-4 max-sm:space-y-4 mb-8">
                 <button
                   type="button"
-                  className="py-2.5 px-4 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex items-center justify-center h-12 px-4 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
                 >
-                  <GoogleIcon />
-                  Sign in with Google
+                  <GoogleIcon className="mr-2" />
+                  <span>Sign in with Google</span>
                 </button>
+
                 <button
                   type="button"
-                  className="py-2.5 px-4 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex items-center justify-center h-12 w-12 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
                 >
                   <FaceBookIcon />
                 </button>
+
                 <button
                   type="button"
-                  className="py-2.5 px-4 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex items-center justify-center h-12 w-12 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
                 >
                   <AppleIcon />
                 </button>

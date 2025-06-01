@@ -11,7 +11,7 @@ import { fetchProfile } from '../services/api';
 import { User, AuthContextType, Profile } from '../types/types';
 import SignOutModal from '../components/Modals/SignOutModal';
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

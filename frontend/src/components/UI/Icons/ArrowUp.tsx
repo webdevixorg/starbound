@@ -11,7 +11,7 @@ const ArrowUpIcon: React.FC<ArrowUpIconProps> = ({ isOpen }) => {
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
-      className={`ml-1 -mr-1 h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out ${
+      className={`ml-1 h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out ${
         isOpen ? 'rotate-180' : ''
       }`}
     >

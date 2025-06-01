@@ -5,7 +5,7 @@ import { Compare } from '@mui/icons-material';
 import { Rating } from '@mui/material';
 import { formatCurrency } from '../../helpers/common';
 import ProductGallery from '../PageComponents/ProductGallery';
-import AddToCartButton from '../UI/Buttons/AddToCart';
+import AddToCartButton from '../UI/Buttons/AddToCartButton';
 import HeartIcon from '../UI/Icons/Heart';
 import PaymentMethods from '../UI/Icons/PaymentMethods';
 import TickSheildIcon from '../UI/Icons/TickSheild';
@@ -167,7 +167,7 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({
         </div>
         <a
           className="quickview__see-details block text-center text-gray-600 text-base h-13 leading-[50px] border-t border-gray-200 rounded-b-md transition duration-150"
-          href="/themes/blue/products/brandix-brake-kit-bdx-750z370-s"
+          href={`/products/${product.slug}`}
         >
           See full details
         </a>

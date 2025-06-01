@@ -30,21 +30,41 @@ const MainContent: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
   const pageSize = 20;
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalPosts);
 
   const [filters, setFilters] = useState<Filter[]>([]);
-
+  const [query, setQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [locations, setLocations] = useState<Location[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subLocations, setSubLocations] = useState<SubLocation[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(100000); // or whatever your max is
 
   const [locationOpen, setLocationOpen] = useState(true);
   const [categoryOpen, setCategoryOpen] = useState(true);
+  const [priceOpen, setPriceOpen] = useState(true); // or false by default
 
   const fetchData = useCallback(
     async (orderBy: string, page: number, filters: Filter[]) => {
       try {
-        const data = await fetchProducts(orderBy, page, pageSize, filters);
+        const queryFilter = query.trim()
+          ? [{ type: 'query', id: 0, name: query }]
+          : [];
+        const categoryFilter =
+          selectedCategory && selectedCategory !== 'All Categories'
+            ? [{ type: 'categories', id: 0, name: selectedCategory }]
+            : [];
+        const combinedFilters = [...filters, ...queryFilter, ...categoryFilter];
+
+        const data = await fetchProducts(
+          orderBy,
+          page,
+          pageSize,
+          combinedFilters
+        );
         if (data && Array.isArray(data.results)) {
           setProducts(data.results);
           setTotalPosts(data.count);
@@ -55,18 +75,47 @@ const MainContent: React.FC = () => {
         console.error('Error fetching products:', error);
       }
     },
-    [pageSize]
+    [pageSize, query, selectedCategory]
   );
 
+  console.log(filters);
+
   const debouncedFetchData = useMemo(
-    () => debounce(fetchData, 300),
-    [fetchData]
+    () =>
+      debounce(
+        (orderBy, page, filters) => fetchData(orderBy, page, filters),
+        300
+      ),
+    []
   );
 
   useEffect(() => {
-    debouncedFetchData(orderBy, page, filters);
-    return () => debouncedFetchData.cancel();
-  }, [orderBy, page, filters, debouncedFetchData]);
+    const params = new URLSearchParams(location.search);
+    const searchQuery = params.get('query')?.trim() || '';
+    const categorySlug = params.get('category')?.trim() || '';
+
+    setQuery(searchQuery);
+    setSelectedCategory(categorySlug);
+
+    if (categorySlug) {
+      const matched = categories.find(
+        (cat) => cat.slug.trim() === categorySlug
+      );
+
+      if (matched) {
+        handleFilterChange('categories', matched.id);
+        return;
+      }
+    }
+
+    // Run fetch only if category not matched or not present
+    const searchFilters: Filter[] = [...filters];
+    if (searchQuery) {
+      searchFilters.push({ type: 'query', id: 0, name: searchQuery });
+    }
+
+    debouncedFetchData(orderBy, page, searchFilters);
+  }, [location.search, orderBy, page, filters, categories]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -278,7 +327,10 @@ const MainContent: React.FC = () => {
     };
 
     return filters.map((filter) => {
-      const dataSet = dataSets[filter.type] || [];
+      const dataSet =
+        filter.type === 'price' || filter.type === 'query'
+          ? []
+          : dataSets[filter.type] || [];
       const name =
         dataSet.find((item) => item.id === filter.id)?.name ||
         String(filter.id);
@@ -287,7 +339,7 @@ const MainContent: React.FC = () => {
         <li
           key={filter.id}
           onClick={() => handleRemoveFilter(filter.id)}
-          className="m-1 bg-blue-100 rounded text-xs p-1.5 cursor-pointer inline-block"
+          className="bg-blue-100 rounded text-xs p-1.5 cursor-pointer inline-block"
         >
           {name}
           <span className="bg-white cursor-pointer w-4 h-4 text-xs rounded-full text-center inline-block ml-1">
@@ -296,20 +348,10 @@ const MainContent: React.FC = () => {
         </li>
       );
     });
-  }, [filters, categories, subCategories, locations, subLocations, setFilters]);
-
-  console.log('filters', filters);
+  });
 
   return (
     <>
-      <div>
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-          <div>{/* existing code to display products */}</div>
-        )}
-      </div>
-
       <div className="shop-section container mx-auto my-5 px-4 sm:px-6 lg:px-8">
         {/* Filters and Sorting */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-5">
@@ -320,18 +362,30 @@ const MainContent: React.FC = () => {
               </header>
             </div>
           </div>
-          <div className="w-3/4 flex flex-col sm:flex-row justify-between items-center gap-4 mb-5">
-            <div className="flex flex-wrap gap-2 items-center">
-              <ul className="flex flex-wrap gap-2">{filterList}</ul>
-              {filters.length > 0 && (
-                <button
-                  onClick={handleClearAllFilters}
-                  className="text-xs text-red-500 ml-2"
-                >
-                  Clear All
-                </button>
+          <div className="w-3/4 flex flex-col sm:flex-row justify-between items-center gap-4 mb-2">
+            <div className="space-y-2">
+              {/* Search Query */}
+              {query && (
+                <div className="text-sm text-gray-600">
+                  {start} to {end} of {totalPosts} results for{' '}
+                  <strong>"{query}"</strong>
+                </div>
               )}
+
+              {/* Filters and Clear Button */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <ul className="flex flex-wrap gap-2">{filterList}</ul>
+                {filters.length > 0 && (
+                  <button
+                    onClick={handleClearAllFilters}
+                    className="text-xs text-red-500 ml-2"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
             </div>
+
             <div className="flex items-center gap-3">
               <label htmlFor="sort-by-select" className="text-sm">
                 Sort By:
@@ -376,9 +430,9 @@ const MainContent: React.FC = () => {
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar */}
           <aside className="col-span-12 sm:col-span-12 md:col-span-12 lg:col-span-3 hidden lg:block px-2">
-            <div className="border border-gray-200 overflow-hidden mb-6 rounded bg-gray-50 p-5">
+            <div className="overflow-hidden mb-6">
               <CollapsibleSection
-                title="Shop By Category"
+                title="Category"
                 open={categoryOpen}
                 setOpen={setCategoryOpen}
               >
@@ -400,7 +454,7 @@ const MainContent: React.FC = () => {
                           .map((filterCategory) => (
                             <li key={filterCategory.id}>
                               <span
-                                className="text-sm font-bold text-gray-800 cursor-pointer"
+                                className="flex text-sm font-bold text-gray-800 cursor-pointer"
                                 onClick={() =>
                                   handleFilterChange(
                                     'categories',
@@ -427,7 +481,7 @@ const MainContent: React.FC = () => {
                               )
                               .map((filterSubCategory) => (
                                 <li key={filterSubCategory.id}>
-                                  <span className="text-sm ml-4 text-gray-800 ">
+                                  <span className="flex text-sm ml-4 text-gray-800 ">
                                     {
                                       subCategories.find(
                                         (subcat) =>
@@ -450,7 +504,7 @@ const MainContent: React.FC = () => {
                                 )
                               }
                             >
-                              <span className="text-sm ml-4 text-gray-800 cursor-pointer">
+                              <span className="flex text-sm ml-4 text-gray-800 cursor-pointer">
                                 {subCategory.name}
                               </span>
                             </li>
@@ -466,7 +520,7 @@ const MainContent: React.FC = () => {
                             handleFilterChange('categories', category.id)
                           }
                         >
-                          <span className="text-sm text-gray-800 cursor-pointer">
+                          <span className="flex text-sm text-gray-800 cursor-pointer">
                             {category.name}
                           </span>
                         </li>
@@ -478,7 +532,7 @@ const MainContent: React.FC = () => {
               <div className="border-t border-gray-300 mb-6" />
 
               <CollapsibleSection
-                title="Shop By Location"
+                title="Location"
                 open={locationOpen}
                 setOpen={setLocationOpen}
               >
@@ -529,7 +583,7 @@ const MainContent: React.FC = () => {
                               )
                               .map((filterSubLocation) => (
                                 <li key={filterSubLocation.id}>
-                                  <span className="text-sm ml-4 text-gray-800">
+                                  <span className="flex text-sm ml-4 text-gray-800">
                                     {
                                       subLocations.find(
                                         (subloc) =>
@@ -552,7 +606,7 @@ const MainContent: React.FC = () => {
                                 )
                               }
                             >
-                              <span className="text-sm ml-4 text-gray-800 cursor-pointer">
+                              <span className="flex text-sm ml-4 text-gray-800 cursor-pointer">
                                 {subLocation.name}
                               </span>
                             </li>
@@ -568,13 +622,61 @@ const MainContent: React.FC = () => {
                             handleFilterChange('locations', location.id)
                           }
                         >
-                          <span className="text-sm text-gray-800 cursor-pointer">
+                          <span className="flex text-sm text-gray-800 cursor-pointer">
                             {location.name}
                           </span>
                         </li>
                       ))
                     )}
                   </ul>
+                </div>
+              </CollapsibleSection>
+              <div className="border-t border-gray-300 mb-6" />
+
+              <CollapsibleSection
+                title="Price"
+                open={priceOpen}
+                setOpen={setPriceOpen}
+              >
+                <div className="p-2">
+                  <div className="flex items-center justify-between mb-2 space-x-4">
+                    <div>
+                      <label className="block text-sm mb-1">From</label>
+                      <input
+                        type="number"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(Number(e.target.value))}
+                        className="border rounded px-2 py-1 w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">To</label>
+                      <input
+                        type="number"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(Number(e.target.value))}
+                        className="border rounded px-2 py-1 w-full"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Update the filters array with the price filter
+                      setFilters((prev) => [
+                        ...prev.filter((f) => f.type !== 'price'), // Remove existing price filter
+                        {
+                          type: 'price',
+                          id: 0, // Price filter doesn't need an ID
+                          name: `${minPrice}-${maxPrice}`,
+                          min: minPrice,
+                          max: maxPrice,
+                        },
+                      ]);
+                    }}
+                    className="bg-blue-500 text-white text-sm mt-3 px-3 py-1 rounded"
+                  >
+                    Apply
+                  </button>
                 </div>
               </CollapsibleSection>
             </div>
@@ -584,7 +686,7 @@ const MainContent: React.FC = () => {
           </aside>
 
           {/* Main Content */}
-          <main className="col-span-12 ms-col-span-12 md:col-span-12 lg:col-span-9 px-2">
+          <main className="col-span-12 ms-col-span-12 md:col-span-12 lg:col-span-9">
             {/* Product Display */}
             <div>
               {viewType === 'list' ? (

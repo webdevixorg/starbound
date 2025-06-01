@@ -1,101 +1,88 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchCategories } from '../../../services/api';
 import MenuIcon2 from '../../UI/Icons/Menu2';
 import ArrowDownIcon from '../../UI/Icons/ArrowDown';
+import ArrowRightIcon from '../../UI/Icons/ArrowRight';
 
-const categories = [
-  {
-    name: 'Autoparts',
-    subcategories: [
-      {
-        name: 'Alternator',
-        items: [
-          'Brakes & Rotors',
-          'Wheel Adapters',
-          'Headlights',
-          'Steering Wheels',
-        ],
-      },
-      {
-        name: 'Custom Grilles',
-        items: ['Speakers', 'Lubricants', 'Coil Spring', 'Service Tools'],
-      },
-      {
-        name: 'Screw Clamps',
-        items: ['Car Jack', 'Engine Fan', 'A/C Compressor', 'Fuel Injector'],
-      },
-    ],
-  },
-  { name: 'Radiator' },
-  { name: 'Suspension' },
-  { name: 'Muffler' },
-  { name: 'Front Axle' },
-  { name: 'Engine' },
-  { name: 'Featured' },
-  { name: 'ABS Brakes' },
-];
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  content_type_id?: number;
+  parent?: number | null;
+  children?: Category[];
+}
 
 export default function CategoryButton() {
-  const [openCategory, setOpenCategory] = useState<number | null>(null);
-  const [openSubcategory, setOpenSubcategory] = useState<number | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const toggleCategory = (index: number) => {
-    setOpenCategory(openCategory === index ? null : index);
-    setOpenSubcategory(null);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchCategories(1, 10); // Provide default page and pageSize
+        const topCategories = Array.isArray(data) ? data : [data];
+        setCategories(topCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
 
-  const toggleSubcategory = (index: number) => {
-    setOpenSubcategory(openSubcategory === index ? null : index);
-  };
+    fetchData();
+  }, []);
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative w-[279px] z-50">
       <button
-        className="w-[279px] text-left font-bold text-lg flex items-center justify-between bg-red-600 hover:bg-red-700 text-white py-4 px-4 rounded-tl rounded-tr"
+        className="w-full text-left font-semibold text-sm flex items-center justify-between bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-t-md"
         onClick={() => setMenuOpen(!menuOpen)}
       >
         <MenuIcon2 />
-        <span className="ml-2 text-sm">Shop By Categories</span>
+        <span className="ml-2">Shop By Categories</span>
         <ArrowDownIcon />
       </button>
+
       {menuOpen && (
-        <ul className="absolute w-[279px] bg-gray-800 text-white p-4 rounded-lg mt-1 shadow-lg">
-          {categories.map((category, index) => (
-            <li key={index} className="mb-2">
-              <button
-                className="w-full text-left py-2 px-3 bg-gray-700 hover:bg-gray-600 rounded"
-                onClick={() => toggleCategory(index)}
-              >
-                {category.name}
+        <ul className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg max-h-[80vh] overflow-visible">
+          {categories.slice(0, 10).map((category) => (
+            <li
+              key={category.id}
+              className="relative group border-b border-gray-100"
+            >
+              <button className="w-full text-left py-2 px-4 hover:bg-gray-100 text-gray-800 font-medium flex justify-between items-center">
+                <span>{category.name}</span>
+                {category.children && category.children.length > 0 && (
+                  <ArrowRightIcon isOpen={false} />
+                )}
               </button>
-              {category.subcategories && openCategory === index && (
-                <ul className="ml-4 mt-2">
-                  {category.subcategories.map((sub, subIndex) => (
-                    <li key={subIndex}>
-                      <button
-                        className="w-full text-left py-2 px-3 bg-gray-600 hover:bg-gray-500 rounded"
-                        onClick={() => toggleSubcategory(subIndex)}
-                      >
-                        {sub.name}
-                      </button>
-                      {sub.items && openSubcategory === subIndex && (
-                        <ul className="ml-4 mt-2 text-sm">
-                          {sub.items.map((item, i) => (
-                            <li
-                              key={i}
-                              className="py-1 px-3 bg-gray-500 hover:bg-gray-400 rounded"
-                            >
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+
+              {category.children && category.children.length > 0 && (
+                <ul className="absolute left-full top-0 min-w-[220px] bg-white border border-gray-200 rounded-md shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible translate-x-2 transition-all duration-300">
+                  {category.children.map((sub) => (
+                    <li
+                      key={sub.id}
+                      className="py-2 px-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      {sub.name}
                     </li>
                   ))}
                 </ul>
               )}
             </li>
           ))}
+
+          {/* More Categories Link */}
+          {categories.length > 10 && (
+            <li className="border-t border-gray-200">
+              <a
+                href="/products"
+                className="block w-full py-2 px-4 text-blue-600 hover:underline text-sm text-center"
+              >
+                More Categories →
+              </a>
+            </li>
+          )}
         </ul>
       )}
     </div>

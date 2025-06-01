@@ -6,6 +6,8 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import Order, Notification, Profile, Update, Trip, Wishlist
+from app.product.models import Product
+
 from .serializers import NotificationSerializer, ProfileSerializer, UpdateSerializer, TripSerializer, UserSerializer, WishlistSerializer, OrderSerializer
 
 class ProfileDetail(generics.RetrieveUpdateAPIView):
@@ -17,11 +19,21 @@ class ProfileDetail(generics.RetrieveUpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        data = request.data
+
+        # Handle image update
+        if 'image' in data:
+            image_name = data.get('image', None)
+            if image_name == '':  # If the image is deleted
+                instance.image = None
+            else:
+                instance.image = image_name  # Update the image field with the file name
+
+        serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response(serializer.data)
-    
+
+        return Response(serializer.data)   
 
 class AccountSettingsView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
@@ -55,11 +67,33 @@ class HistoryView(generics.ListAPIView):
 
 
 class WishlistView(generics.ListCreateAPIView):
-    queryset = Wishlist.objects.all()
     serializer_class = WishlistSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None  # This disables pagination for this view
 
+    def get_queryset(self):
+        # Return only the wishlist items for the authenticated user
+        return Wishlist.objects.filter(user=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user  # Get the authenticated user
+        product_id = request.data.get('product_id')  # Get the product ID from the request data
+
+        if not product_id:
+            return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(id=product_id)  # Fetch the product by ID
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the product is already in the user's wishlist
+        wishlist_item, created = Wishlist.objects.get_or_create(user=user, product=product)
+
+        if created:
+            return Response({'message': 'Product added to wishlist'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message': 'Product is already in the wishlist'}, status=status.HTTP_200_OK)
 
 class WishlistDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Wishlist.objects.all()

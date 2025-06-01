@@ -7,7 +7,7 @@ const ArrowDownIcon: React.FC = () => {
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
-      className="ml-1 -mr-1 h-4 w-4"
+      className="ml-1 h-4 w-4"
     >
       <path
         fillRule="evenodd"

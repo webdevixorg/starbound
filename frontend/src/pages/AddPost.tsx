@@ -45,7 +45,7 @@ const AddPost: React.FC = () => {
   const [date, setDate] = useState('');
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditingSlug, setIsEditingSlug] = useState(false);
-  const [status, setStatus] = useState<string>('Draft');
+  const [status, setStatus] = useState<string>('draft');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<ImageFile[] | []>([]);
@@ -63,7 +63,7 @@ const AddPost: React.FC = () => {
       setDate('');
       setIsEditingDate(false);
       setIsEditingSlug(false);
-      setStatus('Draft');
+      setStatus('draft');
       setCategories([]);
       setSelectedCategories([]);
       setSelectedFiles([]);
@@ -391,8 +391,8 @@ const AddPost: React.FC = () => {
                   onChange={(e) => setStatus(e.target.value)}
                   className="appearance-none border p-1 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
-                  <option value="Draft">Draft</option>
-                  <option value="Published">Published</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
                 </select>
               </div>
             </div>

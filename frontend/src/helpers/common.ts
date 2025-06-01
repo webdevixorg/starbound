@@ -12,6 +12,7 @@ export const formatCurrency = (
   const formattedAmount = new Intl.NumberFormat(locale, {
     style: 'decimal',
   }).format(amount);
+
   return `${currencySymbol} ${formattedAmount}`;
 };
 

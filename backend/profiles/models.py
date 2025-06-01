@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
+from app.product.models import Product 
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -27,13 +28,14 @@ class Trip(models.Model):
     def __str__(self):
         return self.destination
     
+
 class Wishlist(models.Model):
-    destination = models.CharField(max_length=100)
-    description = models.TextField()
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)  # Link the wishlist to a user
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None)  # Link to the Product model
+    timestamp = models.DateTimeField(auto_now_add=True)  # Track when the product was added to the wishlist
 
     def __str__(self):
-        return self.destination
-
+        return f"{self.product.title}"
 
 class Order(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)

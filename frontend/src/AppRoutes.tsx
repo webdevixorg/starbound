@@ -40,6 +40,15 @@ import Cart from './pages/Cart';
 import CheckOut from './pages/CheckOut';
 import OrderReceived from './pages/OderRecieved';
 
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
+import AboutUs from './pages/AboutUs';
+import Career from './pages/Career';
+import ContactUs from './pages/ContactUs';
+import Forum from './pages/Forum';
+import WarrantyAndReturn from './pages/UserProfilePage';
+import HelpCenterFrontEnd from './components/PageComponents/HelpCenter/HelpCenterFrontEnd';
+
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading, role } = useAuth();
 
@@ -109,7 +118,6 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/posts" element={<Posts />} />
         <Route path="/posts/:slug" element={<SinglePost />} />
-        <Route path="/faq/" element={<FAQPage />} />
         <Route path="*" element={<NotFound />} />
 
         <Route path="/products" element={<AdsListingPage />} />
@@ -123,6 +131,16 @@ const AppRoutes: React.FC = () => {
         />
 
         <Route path="/profile" element={<UserProfilePage />} />
+
+        <Route path="/about-us/" element={<AboutUs />} />
+        <Route path="/faq/" element={<FAQPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
+        <Route path="/Careers" element={<Career />} />
+        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/forum" element={<Forum />} />
+        <Route path="/warranty-and-return" element={<WarrantyAndReturn />} />
+        <Route path="/helpcenter" element={<HelpCenterFrontEnd />} />
       </Route>
     </Routes>
   );

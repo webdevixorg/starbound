@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Order, Notification, Profile, Update, Trip, Wishlist
+from app.product.serializers import ProductSerializer
 from django.conf import settings
 
 class UserSerializer(serializers.ModelSerializer):
@@ -101,6 +102,8 @@ class TripSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class WishlistSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)  # Nest the ProductSerializer
+
     class Meta:
         model = Wishlist
         fields = '__all__'

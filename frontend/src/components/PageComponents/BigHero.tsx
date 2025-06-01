@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchPostsForSections } from '../../services/api'; // Ensure this path is correct
 import { Post } from '../../types/types';
 import { CategoryName } from '../../helpers/fetching';
+import LoadingSpinner from '../Common/Loading';
 
 const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -23,7 +24,7 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
   }, [filter, count]); // Include dependencies for filter and count
 
   if (posts.length === 0) {
-    return <div>Loading...</div>; // You can replace this with a proper loading indicator
+    return <LoadingSpinner />;
   }
 
   return (

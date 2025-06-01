@@ -61,8 +61,8 @@ const SliderNews: React.FC<{ filter: string; count: number }> = ({
             >
               {posts.map((post) => (
                 <SplideSlide key={post.id}>
-                  <div className="w-full pb-10">
-                    <div className="hover-img bg-white">
+                  <div className="w-full h-full flex flex-col bg-white">
+                    <div className="hover-img flex flex-col flex-1">
                       <Link to={`/posts/${post.slug}`}>
                         <div className="relative w-full h-64 overflow-hidden">
                           <img
@@ -75,7 +75,7 @@ const SliderNews: React.FC<{ filter: string; count: number }> = ({
                           />
                         </div>
                       </Link>
-                      <div className="py-3 px-6">
+                      <div className="py-3 px-6 flex flex-col justify-between flex-1">
                         <h3 className="text-lg font-semibold leading-snug tracking-tight mt-2 dark:text-white">
                           <Link to={`/posts/${post.slug}`}>
                             <span className="bg-gradient-to-r from-blue-200 to-blue-100 bg-[length:0px_10px] bg-left-bottom bg-no-repeat transition-[background-size] duration-500 hover:bg-[length:100%_10px] dark:from-purple-800 dark:to-purple-900">
@@ -83,7 +83,7 @@ const SliderNews: React.FC<{ filter: string; count: number }> = ({
                             </span>
                           </Link>
                         </h3>
-                        <div className="text-gray-600 dark:text-gray-400 mb-4">
+                        <div className="text-gray-600 dark:text-gray-400 mb-4 mt-auto">
                           <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
                           {post.categories?.length ? (
                             post.categories.map((category) => (

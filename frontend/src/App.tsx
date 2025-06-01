@@ -1,15 +1,18 @@
 import React from 'react';
 import AppRoutes from './AppRoutes';
+import { useAuth } from './context/AuthContext';
 import { ContentProvider } from './context/ContentContext';
 import { ModalProvider } from './context/ModalAlertContext';
 import ScrollToTop from './components/Common/ScrollToTop';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/main.scss';
 
 const App: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="flex flex-col">
       <ScrollToTop>
@@ -17,7 +20,9 @@ const App: React.FC = () => {
           <ContentProvider>
             <ModalProvider>
               <CartProvider>
-                <AppRoutes />
+                <WishlistProvider isAuthenticated={isAuthenticated}>
+                  <AppRoutes />
+                </WishlistProvider>
               </CartProvider>
             </ModalProvider>
           </ContentProvider>

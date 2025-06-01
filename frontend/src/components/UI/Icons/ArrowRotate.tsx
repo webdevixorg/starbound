@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface ArrowUpRightIconProps {
+interface ArrowRotateIconProps {
   rotation?: number; // Add this line
 }
 
-const ArrowUpRightIcon: React.FC<ArrowUpRightIconProps> = ({ rotation }) => {
+const ArrowRotateIcon: React.FC<ArrowRotateIconProps> = ({ rotation }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -22,4 +22,4 @@ const ArrowUpRightIcon: React.FC<ArrowUpRightIconProps> = ({ rotation }) => {
   );
 };
 
-export default ArrowUpRightIcon;
+export default ArrowRotateIcon;

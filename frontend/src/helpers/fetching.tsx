@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useContent } from '../context/ContentContext'; // Import the context hook
 import axiosInstance from '../services/AxiosInstance';
+import { Category } from '../types/types';
 
 interface ContentType {
   id: any;
@@ -41,3 +42,18 @@ export const CategoryName: React.FC<{ categoryId: any }> = ({ categoryId }) => {
 
   return <>{name}</>;
 };
+
+export function findCategoryBySlug(
+  categories: Category[],
+  slug: string
+): Category | null {
+  for (const category of categories) {
+    if (category.slug === slug) return category;
+
+    if (category.children) {
+      const foundChild = category.children.find((child) => child.slug === slug);
+      if (foundChild) return foundChild;
+    }
+  }
+  return null;
+}

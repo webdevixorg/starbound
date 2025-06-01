@@ -397,12 +397,35 @@ export const fetchHistory = async (): Promise<any> => {
   }
 };
 
+export const addToWishlist = async (productId: number): Promise<void> => {
+  try {
+    const response = await axiosInstance.post('/wishlist/', {
+      product_id: productId,
+    });
+
+    if (response.status === 201) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error('Error adding product to wishlist:', error);
+  }
+};
+
 export const fetchWishlist = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get('/wishlist/');
     return response.data;
   } catch (error) {
     console.error('Error fetching wishlist:', error);
+    throw error;
+  }
+};
+
+export const deleteFromWishlist = async (id: string): Promise<void> => {
+  try {
+    await axiosInstance.delete(`/wishlist/${id}/`);
+  } catch (error) {
+    console.error('Error deleting item from wishlist:', error);
     throw error;
   }
 };
@@ -565,7 +588,13 @@ export const fetchProducts = async (
   orderBy: string,
   page: number,
   limit: number,
-  filters: { type: string; id: number }[]
+  filters: {
+    type: string;
+    id?: number;
+    min?: number;
+    max?: number;
+    name?: string;
+  }[]
 ) => {
   // Validate parameters
   if (typeof orderBy !== 'string' || orderBy.trim() === '') {
@@ -582,17 +611,29 @@ export const fetchProducts = async (
   let url = `/products/?orderBy=${encodeURIComponent(
     orderBy
   )}&page=${page}&limit=${limit}`;
+
   filters.forEach((filter) => {
-    url += `&${encodeURIComponent(filter.type)}=${encodeURIComponent(
-      filter.id
-    )}`;
+    if (filter.type === 'price') {
+      if (filter.min !== undefined) {
+        url += `&minPrice=${encodeURIComponent(filter.min)}`;
+      }
+      if (filter.max !== undefined) {
+        url += `&maxPrice=${encodeURIComponent(filter.max)}`;
+      }
+    } else if (filter.type === 'query' && filter.name) {
+      url += `&query=${encodeURIComponent(filter.name)}`;
+    } else {
+      url += `&${encodeURIComponent(filter.type)}=${encodeURIComponent(
+        filter.id || ''
+      )}`;
+    }
   });
 
-  // Fetch data
   try {
     const response = await fetchData(url);
     return response;
   } catch (error) {
+    console.error('Error fetching products:', error);
     throw new Error('Error fetching products');
   }
 };

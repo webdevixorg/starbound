@@ -12,7 +12,7 @@ import TickSheildIcon from '../components/UI/Icons/TickSheild';
 import { Product } from '../types/types';
 import ProductCardGrid from '../components/PageComponents/ProdutctCardGrid';
 import HtmlContent from '../helpers/content';
-import AddToCartButton from '../components/UI/Buttons/AddToCart';
+import AddToCartButton from '../components/UI/Buttons/AddToCartButton';
 import HeartIcon from '../components/UI/Icons/Heart';
 import Compare from '../components/UI/Icons/Compare';
 import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
