@@ -1,0 +1,269 @@
+{
+    "id": 1,
+    "title": "Family Chat",
+    "participants": [
+        1,
+        2,
+        3
+    ],
+    "messages": [
+        {
+            "id": 1,
+            "sender": 1,
+            "content": "Hey, how's everyone doing?",
+            "timestamp": "2024-07-07T12:00:00Z"
+        },
+        {
+            "id": 2,
+            "sender": 2,
+            "content": "All good here, thanks!",
+            "timestamp": "2024-07-07T12:05:00Z"
+        },
+        {
+            "id": "1720749611762",
+            "sender": 2,
+            "content": "sddfg",
+            "timestamp": "2024-07-12T02:00:11.762Z"
+        },
+        {
+            "id": "1720749625364",
+            "sender": 3,
+            "content": "gfh",
+            "timestamp": "2024-07-12T02:00:25.364Z"
+        },
+        {
+            "id": "1720749701291",
+            "sender": 3,
+            "content": "fdghdfgh",
+            "timestamp": "2024-07-12T02:01:41.291Z"
+        },
+        {
+            "id": "1720749713788",
+            "sender": 3,
+            "content": "Neranjan",
+            "timestamp": "2024-07-12T02:01:53.788Z"
+        },
+        {
+            "id": "1720791287648",
+            "sender": 2,
+            "content": "dsgdsgsdg",
+            "timestamp": "2024-07-12T13:34:47.648Z"
+        },
+        {
+            "id": "1720802202861",
+            "sender": 2,
+            "content": "hi",
+            "timestamp": "2024-07-12T16:36:42.861Z"
+        },
+        {
+            "id": "1721844811537",
+            "sender": 1,
+            "content": "Hi",
+            "timestamp": "2024-07-24T18:13:31.537Z"
+        },
+        {
+            "id": "1721845759267",
+            "sender": 1,
+            "content": "edrtret",
+            "timestamp": "2024-07-24T18:29:19.267Z"
+        },
+        {
+            "id": "1721845763085",
+            "sender": 1,
+            "content": "ertertert",
+            "timestamp": "2024-07-24T18:29:23.085Z"
+        },
+        {
+            "id": "1721845813468",
+            "sender": 1,
+            "content": "tyreertertreret",
+            "timestamp": "2024-07-24T18:30:13.468Z"
+        },
+        {
+            "id": "1721845990391",
+            "sender": 1,
+            "content": "ytrtyrety",
+            "timestamp": "2024-07-24T18:33:10.391Z"
+        },
+        {
+            "id": "1721846001460",
+            "sender": 1,
+            "content": "frtyrtyrtytyrtyrtyyyyygjjhfg",
+            "timestamp": "2024-07-24T18:33:21.460Z"
+        },
+        {
+            "id": "1721846137062",
+            "sender": 1,
+            "content": "y54456",
+            "timestamp": "2024-07-24T18:35:37.062Z"
+        },
+        {
+            "id": "1721846148285",
+            "sender": 1,
+            "content": "666",
+            "timestamp": "2024-07-24T18:35:48.285Z"
+        },
+        {
+            "id": "1721846152750",
+            "sender": 1,
+            "content": "666",
+            "timestamp": "2024-07-24T18:35:52.750Z"
+        },
+        {
+            "id": "1721846229831",
+            "sender": 1,
+            "content": "rtyrty",
+            "timestamp": "2024-07-24T18:37:09.831Z"
+        },
+        {
+            "id": "1721846237390",
+            "sender": 1,
+            "content": "rtyrtyrty",
+            "timestamp": "2024-07-24T18:37:17.390Z"
+        },
+        {
+            "id": "1721846239748",
+            "sender": 1,
+            "content": "rtyrtyrty",
+            "timestamp": "2024-07-24T18:37:19.748Z"
+        },
+        {
+            "id": "1721905761269",
+            "sender": 1,
+            "content": "reyresdrfsdfsdfsdfdsffsdfsdfsdfsdfsdfsdfsdfsdfsdf",
+            "timestamp": "2024-07-25T11:09:21.269Z"
+        },
+        {
+            "id": "1721905762381",
+            "sender": 1,
+            "content": "reyresdrfsdfsdfsdfdsffsdfsdfsdfsdfsdfsdfsdfsdfsdf",
+            "timestamp": "2024-07-25T11:09:22.381Z"
+        },
+        {
+            "id": "1721905763045",
+            "sender": 1,
+            "content": "reyresdrfsdfsdfsdfdsffsdfsdfsdfsdfsdfsdfsdfsdfsdf",
+            "timestamp": "2024-07-25T11:09:23.045Z"
+        },
+        {
+            "id": "1721905771005",
+            "sender": 1,
+            "content": "reyresdrfsdfsdfsdfdsffsdfsdfsdfsdfsdfsdfsdfsdfsdf",
+            "timestamp": "2024-07-25T11:09:31.005Z"
+        },
+        {
+            "id": "1721905890101",
+            "sender": 1,
+            "content": "erewersadasdsadad",
+            "timestamp": "2024-07-25T11:11:30.101Z"
+        },
+        {
+            "id": "1721917209175",
+            "sender": 1,
+            "content": "erterdsgdsgsdgsgsg",
+            "timestamp": "2024-07-25T14:20:09.175Z"
+        },
+        {
+            "id": "1721917213621",
+            "sender": 1,
+            "content": "gggggggg",
+            "timestamp": "2024-07-25T14:20:13.621Z"
+        },
+        {
+            "id": "1721917229357",
+            "sender": 1,
+            "content": "erterterttertertert",
+            "timestamp": "2024-07-25T14:20:29.357Z"
+        },
+        {
+            "id": "1721917268840",
+            "sender": 1,
+            "content": "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+            "timestamp": "2024-07-25T14:21:08.840Z"
+        },
+        {
+            "id": "1721917277855",
+            "sender": 1,
+            "content": "ertertet",
+            "timestamp": "2024-07-25T14:21:17.855Z"
+        },
+        {
+            "id": "1721917751693",
+            "sender": 1,
+            "content": "ryreyryeryeeyeryery",
+            "timestamp": "2024-07-25T14:29:11.693Z"
+        },
+        {
+            "id": "1721917989220",
+            "sender": 1,
+            "content": "\\",
+            "timestamp": "2024-07-25T14:33:09.220Z"
+        },
+        {
+            "id": "1721917991949",
+            "sender": 1,
+            "content": "guyguygu",
+            "timestamp": "2024-07-25T14:33:11.949Z"
+        },
+        {
+            "id": "1721918783292",
+            "sender": 1,
+            "content": "GGDFGDFGDFG",
+            "timestamp": "2024-07-25T14:46:23.292Z"
+        },
+        {
+            "id": "1721919210014",
+            "sender": 1,
+            "content": "llljjjjkj",
+            "timestamp": "2024-07-25T14:53:30.014Z"
+        },
+        {
+            "id": "1721922022986",
+            "sender": 1,
+            "content": "tryrtyryrty",
+            "timestamp": "2024-07-25T15:40:22.986Z"
+        },
+        {
+            "id": "1721922475842",
+            "sender": 1,
+            "content": "sdfdsffdsdfsdfsdfsdf",
+            "timestamp": "2024-07-25T15:47:55.842Z"
+        },
+        {
+            "id": "1727889815680",
+            "sender": 3,
+            "content": "dfrtyretet",
+            "timestamp": "2024-10-02T17:23:35.680Z"
+        },
+        {
+            "id": "1727889818681",
+            "sender": 3,
+            "content": "retrtertert",
+            "timestamp": "2024-10-02T17:23:38.681Z"
+        },
+        {
+            "id": "1734245259720",
+            "sender": 3,
+            "content": "reterterertertert",
+            "timestamp": "2024-12-15T06:47:39.720Z"
+        },
+        {
+            "id": "1734245270488",
+            "sender": 3,
+            "content": "ewrterterterterterertertertertertertet",
+            "timestamp": "2024-12-15T06:47:50.488Z"
+        },
+        {
+            "id": "1744550637106",
+            "sender": 3,
+            "content": "hi",
+            "timestamp": "2025-04-13T13:23:57.106Z"
+        },
+        {
+            "id": "1748786955472",
+            "sender": 7,
+            "content": "hi",
+            "timestamp": "2025-06-01T14:09:15.472Z"
+        }
+    ]
+}

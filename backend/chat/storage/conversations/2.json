@@ -1,0 +1,70 @@
+{
+    "id": 2,
+    "title": "Project Team Chat",
+    "participants": [
+        1,
+        3
+    ],
+    "messages": [
+        {
+            "id": 1,
+            "sender": 3,
+            "content": "Hey team, let's discuss the project timeline.",
+            "timestamp": "2024-07-07T12:00:00Z"
+        },
+        {
+            "id": 2,
+            "sender": 3,
+            "content": "Sure, I think we should start with the planning phase.",
+            "timestamp": "2024-07-07T12:00:00Z"
+        },
+        {
+            "id": 3,
+            "sender": 3,
+            "content": "I agree. We'll finalize the details in our next meeting.",
+            "timestamp": "2024-07-07T12:00:00Z"
+        },
+        {
+            "id": "1720749740058",
+            "sender": 1,
+            "content": "Hi",
+            "timestamp": "2024-07-12T02:02:20.058Z"
+        },
+        {
+            "id": "1720790382201",
+            "sender": 3,
+            "content": "rtyrtytry",
+            "timestamp": "2024-07-12T13:19:42.201Z"
+        },
+        {
+            "id": "1720802177581",
+            "sender": 1,
+            "content": "Hi",
+            "timestamp": "2024-07-12T16:36:17.581Z"
+        },
+        {
+            "id": "1720802186212",
+            "sender": 1,
+            "content": "Hi I m neranjan",
+            "timestamp": "2024-07-12T16:36:26.212Z"
+        },
+        {
+            "id": "1721846296420",
+            "sender": 1,
+            "content": "tryrtyrty",
+            "timestamp": "2024-07-24T18:38:16.420Z"
+        },
+        {
+            "id": "1721847372964",
+            "sender": 1,
+            "content": "rerertyrty",
+            "timestamp": "2024-07-24T18:56:12.964Z"
+        },
+        {
+            "id": "1727889826257",
+            "sender": 3,
+            "content": "fyrtytrytry",
+            "timestamp": "2024-10-02T17:23:46.257Z"
+        }
+    ]
+}

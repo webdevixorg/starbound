@@ -1,0 +1,138 @@
+// src/styles/_reset.scss
+
+// Box sizing rule for all elements
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// Set default font size and line height for body
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Remove list styling
+ul,
+ol {
+  list-style: none;
+}
+
+// Remove links underlines and set color
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+// Remove the border on images and prevent unwanted space
+img {
+  max-width: 100%;
+  display: block;
+  border: 0;
+}
+
+// Remove the default styling of form elements
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+// Set the font size for input fields to be consistent across browsers
+input,
+textarea,
+button {
+  font-size: inherit;
+}
+
+// Remove the default margin on headings
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+// Remove the default margin from paragraphs
+p {
+  margin: 0;
+}
+
+// Set the default styles for block elements
+blockquote,
+dl,
+dt,
+dd,
+figure,
+figcaption,
+hr {
+  margin: 0;
+  padding: 0;
+}
+
+// Make sure the default styles for tables are reset
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// Set a base for form controls
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+// Normalize the default display for input types
+input[type='checkbox'],
+input[type='radio'] {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+input[type='checkbox']:checked,
+input[type='radio']:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+// Normalize table display and spacing
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+}
+
+// Ensure that no unwanted spacing is applied on buttons
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+// Remove default block formatting for links inside buttons and anchors
+button,
+a {
+  text-align: left;
+  background: none;
+  color: inherit;
+}

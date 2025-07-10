@@ -1,0 +1,22 @@
+@use '../global/variables' as *;
+@use '../global/mixins' as *;
+
+.notifications {
+  .notification-list {
+    @include flexbox(column, center, center);
+
+    .notification-item {
+      margin-bottom: 20px;
+
+      .notification-link {
+        font-weight: bold;
+        color: $primary-color;
+        text-decoration: none;
+
+        &:hover {
+          color: #0056b3;
+        }
+      }
+    }
+  }
+}

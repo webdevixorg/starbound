@@ -1,0 +1,57 @@
+.starbound-product-table {
+  width: 100%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  text-align: left;
+
+  table {
+    width: 100%;
+    border-collapse: collapse; // Ensures no gaps between cells
+    border: 1px solid #e5e5e5;
+
+    th,
+    td {
+      padding: 10px 15px;
+      border-top: 1px solid #e5e5e5;
+      border-bottom: 1px solid #e5e5e5;
+      border-left: none; // Remove side borders
+      border-right: none; // Remove side borders
+    }
+
+    th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+      color: red; // Makes the text in headers red
+    }
+
+    // Set first column width to 25%
+    th:first-child,
+    td:first-child {
+      width: 25%;
+    }
+
+    tbody {
+      tr {
+        &:nth-child(odd) {
+          background-color: #f9f9f9;
+        }
+        &:nth-child(even) {
+          background-color: #fff;
+        }
+        &:hover {
+          background-color: #f1f1f1;
+        }
+      }
+    }
+  }
+
+  caption {
+    caption-side: top;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+  }
+}

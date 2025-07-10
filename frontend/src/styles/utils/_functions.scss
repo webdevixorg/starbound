@@ -1,0 +1,8 @@
+// _functions.scss
+@function calculate-grid-columns($columns) {
+  @return repeat($columns, 1fr);
+}
+
+@function calculate-grid-gap($gap) {
+  @return $gap;
+}

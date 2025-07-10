@@ -1,0 +1,13 @@
+.menu-dropdown .dropdown-menu {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.menu-dropdown:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+}

@@ -1,0 +1,24 @@
+@use './global/variables' as *;
+@use './global/mixins' as *;
+
+@use './components/buttons' as *;
+@use './components/forms' as *; // Import forms after buttons
+@use './components/cards' as *; // Import forms after buttons
+
+@use './global/base';
+@use './layout';
+@use './components';
+
+// Import page-specific styles
+@use './pages/categories';
+@use './pages/chat';
+@use './pages/page-components';
+@use './pages/contact-us';
+@use './pages/edit-profile';
+@use './pages/feedback';
+@use './pages/modal';
+@use './pages/notifications';
+@use './pages/product';
+@use './pages/search';
+
+@use '@splidejs/react-splide/css';

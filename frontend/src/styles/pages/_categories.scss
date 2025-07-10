@@ -1,0 +1,28 @@
+@use '../global/variables' as *;
+@use '../global/mixins' as *;
+
+.categories {
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: $border-radius-md;
+  box-shadow: $box-shadow;
+
+  .category-list {
+    @include flexbox(column, center, center);
+
+    .category-item {
+      margin-bottom: 20px;
+
+      .category-link {
+        font-weight: bold;
+        color: $primary-color;
+        text-decoration: none;
+
+        &:hover {
+          color: #0056b3;
+        }
+      }
+    }
+  }
+}

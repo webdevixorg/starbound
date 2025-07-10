@@ -1,0 +1,43 @@
+@use '../global/variables' as *;
+@use '../global/mixins' as *;
+
+.feedback {
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: $border-radius-md;
+  box-shadow: $box-shadow;
+
+  .feedback-form {
+    @include flexbox(column, center, center);
+
+    .form-group {
+      margin-bottom: 20px;
+
+      .form-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: $border-radius-md;
+      }
+    }
+
+    .form-button {
+      background-color: $primary-color;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: $border-radius-md;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #0056b3;
+      }
+    }
+  }
+}

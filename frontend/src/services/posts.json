@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "slug": "the-best-javascript-frameworks-to-learn-in-2024",
+    "category": {
+      "id": 1,
+      "name": "Web Development",
+      "slug": "web-development"
+    },
+    "title": "The Best JavaScript Frameworks to Learn in 2024",
+    "description": "Discover the top JavaScript frameworks you should learn in 2024 to stay ahead in web development.",
+    "author": {
+      "profile": {
+        "image": "/images/authors/author1.jpg",
+        "bio": "An experienced web developer"
+      },
+      "id": 1,
+      "email": "author1@example.com",
+      "first_name": "John",
+      "last_name": "Doe"
+    },
+    "date": "2024-01-01T12:34:56",
+    "images": [
+      {
+        "image": "/images/dummy/img15.jpg",
+        "alt": "Image description"
+      }
+    ],
+    "featured_image": "/images/dummy/img15.jpg",
+    "visitor_count": 1500
+  },
+  {
+    "id": 2,
+    "slug": "how-to-optimize-your-website-for-speed-and-performance",
+    "category": {
+      "id": 1,
+      "name": "Web Development",
+      "slug": "web-development"
+    },
+    "title": "How to Optimize Your Website for Speed and Performance",
+    "description": "Follow these tips to ensure your website loads quickly and efficiently, improving user experience and SEO.",
+    "author": {
+      "profile": {
+        "image": "/images/authors/author2.jpg",
+        "bio": "A performance optimization expert"
+      },
+      "id": 2,
+      "email": "author2@example.com",
+      "first_name": "Jane",
+      "last_name": "Smith"
+    },
+    "date": "2024-01-02T13:45:12",
+    "images": [
+      {
+        "image": "/images/dummy/img24.jpg",
+        "alt": "Image description"
+      }
+    ],
+    "featured_image": "/images/dummy/img24.jpg",
+    "visitor_count": 2300
+  }
+]
