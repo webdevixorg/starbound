@@ -5,63 +5,123 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**' # Trigger only when files in backend change
+      - 'backend/**'
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
 
-    steps:
-      # 1. Checkout the latest code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
+    environment: production # Use GitHub environments for better security
 
-      # 2. Setup SSH agent for secure connection to VPS
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Updated to latest version
+
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.0 # Updated to latest version
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
-      # 3. Add VPS host to known_hosts to prevent SSH authenticity prompts
       - name: Add VPS to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # 4. Sync the backend directory to the VPS using rsync
+      - name: Test SSH connection
+        run: |
+          ssh -o ConnectTimeout=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
+
       - name: Sync backend code to VPS
         run: |
-          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
+          rsync -avz --delete \
+            --exclude='.env' \
+            --exclude='venv/' \
+            --exclude='__pycache__/' \
+            --exclude='*.pyc' \
+            backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
 
-      # 5. SSH into the VPS and perform deployment steps
       - name: Deploy backend on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e # Exit on error
-
-            echo "Updating system and installing dependencies..."
-            sudo apt update
-            sudo apt install -y python3 python3-venv python3-pip
-
-            echo "Changing to backend directory..."
+            set -e # Exit on any error
+            
+            echo "🚀 Starting backend deployment..."
             cd /var/www/starbound/backend
 
-            echo "Creating virtual environment if missing..."
+            # Setup environment variables
+            echo "📝 Setting up environment variables..."
+            cat > .env << EOL
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          DEBUG=${{ secrets.DEBUG }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+          EOL
+
+            # Create virtual environment if missing
+            echo "🐍 Setting up Python virtual environment..."
             if [ ! -d "venv" ]; then
               python3 -m venv venv
+              echo "Virtual environment created"
+            else
+              echo "Virtual environment already exists"
             fi
 
-            echo "Activating virtualenv and installing dependencies..."
+            # Activate virtual environment and install dependencies
+            echo "📦 Installing dependencies..."
             source venv/bin/activate
             pip install --upgrade pip setuptools wheel
-            pip install -r requirements.txt
+            pip install -r requirements.txt --no-cache-dir
 
-            echo "Applying migrations and collecting static files..."
-            python manage.py migrate
-            python manage.py collectstatic --noinput
+            # Database operations
+            echo "🗄️ Running database migrations..."
+            python manage.py migrate --noinput
 
-            echo "Restarting Gunicorn..."
-            sudo systemctl restart gunicorn
+            # Collect static files
+            echo "📁 Collecting static files..."
+            python manage.py collectstatic --noinput --clear
 
-            echo "✅ Backend deployment complete!"
+            # Set proper permissions
+            echo "🔒 Setting permissions..."
+            sudo chown -R www-data:www-data /var/www/starbound/backend
+            sudo chmod -R 755 /var/www/starbound/backend
+
+            # Restart services
+            echo "🔄 Restarting services..."
+            if sudo systemctl is-active --quiet gunicorn; then
+              sudo systemctl restart gunicorn
+              echo "Gunicorn restarted"
+            else
+              echo "Gunicorn not running, starting..."
+              sudo systemctl start gunicorn
+            fi
+
+            if sudo systemctl is-active --quiet nginx; then
+              sudo systemctl reload nginx
+              echo "Nginx reloaded"
+            fi
+
+            # Health check
+            echo "🏥 Performing health check..."
+            sleep 5
+            if curl -f http://localhost:8000/health/ > /dev/null 2>&1; then
+              echo "✅ Backend deployment successful!"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
           EOF
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment completed successfully"
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
