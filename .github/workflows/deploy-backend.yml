@@ -20,6 +20,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
       - name: Sync backend code to VPS
         run: |
           rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
@@ -27,11 +32,14 @@ jobs:
       - name: Deploy backend on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e
+            set -e # Exit on error
+
+            echo "Updating system and installing dependencies..."
+            sudo apt update
+            sudo apt install -y python3 python3-venv python3-pip
 
             echo "Changing to backend directory..."
             cd /var/www/starbound/backend
-
 
             echo "Creating virtual environment if missing..."
             if [ ! -d "venv" ]; then
