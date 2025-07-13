@@ -41,36 +41,38 @@ jobs:
             --exclude='*.pyc' \
             backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
 
-      - name: Deploy backend on VPS
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e # Exit on any error
-            
-            echo "🚀 Starting backend deployment..."
-            cd /var/www/starbound/backend
-
-            # Setup environment variables
-            echo "📝 Setting up environment variables..."
-            cat > .env << EOL
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          DEBUG=${{ secrets.DEBUG }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-
-          EOL
-
-            # Create virtual environment if missing
-            echo "🐍 Setting up Python virtual environment..."
-            if [ ! -d "venv" ]; then
-              python3 -m venv venv
-              echo "Virtual environment created"
-            else
-              echo "Virtual environment already exists"
-            fi
+            - name: Deploy backend on VPS
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+                  set -e # Exit on any error
+                  
+                  echo "🚀 Starting backend deployment..."
+                  cd /var/www/starbound/backend
+      
+                  # Setup environment variables
+                  echo "📝 Setting up environment variables..."
+                  cat > .env << EOL
+      SECRET_KEY=${{ secrets.SECRET_KEY }}
+      DEBUG=${{ secrets.DEBUG }}
+      DB_NAME=${{ secrets.DB_NAME }}
+      DB_USER=${{ secrets.DB_USER }}
+      DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      DB_HOST=${{ secrets.DB_HOST }}
+      DB_PORT=${{ secrets.DB_PORT }}
+      ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+      EOL
+      
+                  # Create virtual environment if missing
+                  echo "🐍 Setting up Python virtual environment..."
+                  if [ ! -d "venv" ]; then
+                    python3 -m venv venv
+                    echo "Virtual environment created"
+                  else
+                    echo "Virtual environment already exists"
+                  fi
+      
+                  # ...rest of your deployment steps...
+                EOF
 
             # Activate virtual environment and install dependencies
             echo "📦 Installing dependencies..."
