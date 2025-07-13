@@ -5,114 +5,43 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'
-  workflow_dispatch: # Allow manual trigger
+      - 'backend/**' # Trigger only on backend folder changes
 
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
 
-    environment: production # Use GitHub environments for better security
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Updated to latest version
+        uses: actions/checkout@v3
 
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0 # Updated to latest version
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
-      - name: Add VPS to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Test SSH connection
-        run: |
-          ssh -o ConnectTimeout=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
-
       - name: Sync backend code to VPS
         run: |
-          rsync -avz --delete \
-            --exclude='.env' \
-            --exclude='venv/' \
-            --exclude='__pycache__/' \
-            --exclude='*.pyc' \
-            backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
+          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/starbound-backend/
 
-            - name: Deploy backend on VPS
-              run: |
-                ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-                  set -e # Exit on any error
-                  
-                  echo "🚀 Starting backend deployment..."
-                  cd /var/www/starbound/backend
-
-
-                  # Create virtual environment if missing
-                  echo "🐍 Setting up Python virtual environment..."
-                  if [ ! -d "venv" ]; then
-                    python3 -m venv venv
-                    echo "Virtual environment created"
-                  else
-                    echo "Virtual environment already exists"
-                  fi
-
-                  # ...rest of your deployment steps...
-                EOF
-
-            # Activate virtual environment and install dependencies
-            echo "📦 Installing dependencies..."
-            source venv/bin/activate
-            pip install --upgrade pip setuptools wheel
-            pip install -r requirements.txt --no-cache-dir
-
-            # Database operations
-            echo "🗄️ Running database migrations..."
-            python manage.py migrate --noinput
-
-            # Collect static files
-            echo "📁 Collecting static files..."
-            python manage.py collectstatic --noinput --clear
-
-            # Set proper permissions
-            echo "🔒 Setting permissions..."
-            sudo chown -R www-data:www-data /var/www/starbound/backend
-            sudo chmod -R 755 /var/www/starbound/backend
-
-            # Restart services
-            echo "🔄 Restarting services..."
-            if sudo systemctl is-active --quiet gunicorn; then
-              sudo systemctl restart gunicorn
-              echo "Gunicorn restarted"
-            else
-              echo "Gunicorn not running, starting..."
-              sudo systemctl start gunicorn
-            fi
-
-            if sudo systemctl is-active --quiet nginx; then
-              sudo systemctl reload nginx
-              echo "Nginx reloaded"
-            fi
-
-            # Health check
-            echo "🏥 Performing health check..."
-            sleep 5
-            if curl -f http://localhost:8000/health/ > /dev/null 2>&1; then
-              echo "✅ Backend deployment successful!"
-            else
-              echo "❌ Health check failed"
-              exit 1
-            fi
-          EOF
-
-      - name: Notify deployment status
-        if: always()
+      - name: Deploy backend on VPS
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment completed successfully"
-          else
-            echo "❌ Deployment failed"
-            exit 1
-          fi
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
+            cd /var/www/starbound/starbound-backend
+
+            # Create virtual environment if missing
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+
+            source venv/bin/activate
+
+            pip install --upgrade pip setuptools wheel
+            pip install -r requirements.txt
+
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+
+            sudo systemctl restart gunicorn
+          EOF
