@@ -1,3 +1,12 @@
+name: Deploy Django Backend to VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**' # Trigger only when files in backend change
+
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
@@ -11,11 +20,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
-      - name: Add VPS to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
       - name: Sync backend code to VPS
         run: |
           rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
@@ -24,19 +28,27 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
+
+            echo "Changing to backend directory..."
             cd /var/www/starbound/backend
 
+
+            echo "Creating virtual environment if missing..."
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
 
+            echo "Activating virtualenv and installing dependencies..."
             source venv/bin/activate
-
             pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
 
+            echo "Applying migrations and collecting static files..."
             python manage.py migrate
             python manage.py collectstatic --noinput
 
+            echo "Restarting Gunicorn..."
             sudo systemctl restart gunicorn
+
+            echo "✅ Backend deployment complete!"
           EOF
