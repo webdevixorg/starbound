@@ -34,8 +34,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'www.logivis.com', 'logivis.com']
 
-
-
 # Application definition
 
 INSTALLED_APPS = [
