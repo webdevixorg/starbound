@@ -12,23 +12,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the latest code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Setup SSH agent for secure connection to VPS
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
+      # 3. Add VPS host to known_hosts to prevent SSH authenticity prompts
       - name: Add VPS to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
+      # 4. Sync the backend directory to the VPS using rsync
       - name: Sync backend code to VPS
         run: |
           rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
 
+      # 5. SSH into the VPS and perform deployment steps
       - name: Deploy backend on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
@@ -43,12 +48,12 @@ jobs:
 
             echo "Setting up environment variables..."
             cat > .env <<EOL
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
-            EOL
+DB_NAME=${{ secrets.DB_NAME }}
+DB_USER=${{ secrets.DB_USER }}
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+DB_HOST=${{ secrets.DB_HOST }}
+DB_PORT=${{ secrets.DB_PORT }}
+EOL
 
             echo "Creating virtual environment if missing..."
             if [ ! -d "venv" ]; then
