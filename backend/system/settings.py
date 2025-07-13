@@ -13,16 +13,24 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from datetime import timedelta
 
 import os
-import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
 import dotenv
-dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Try to load local .env first, fallback to production path
+try:
+    local_env_path = os.path.join(BASE_DIR, '.env')
+    if os.path.exists(local_env_path):
+        dotenv.load_dotenv(local_env_path)
+    else:
+        raise FileNotFoundError("Local .env not found")
+except (FileNotFoundError, Exception):
+    dotenv.load_dotenv("/etc/webdevix-env/starbound.env")
+
 
 
 # Quick-start development settings - unsuitable for production
