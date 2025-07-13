@@ -37,6 +37,6 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/starbound-frontend"
 
-      - name: Deploy frontend build to VP
+      - name: Deploy frontend build to VPS
         run: |
           rsync -avz --delete frontend/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/starbound-frontend/
