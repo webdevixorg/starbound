@@ -49,18 +49,6 @@ jobs:
                   echo "🚀 Starting backend deployment..."
                   cd /var/www/starbound/backend
 
-                  # Setup environment variables
-                  echo "📝 Setting up environment variables..."
-                  cat > .env << EOL
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          DEBUG=${{ secrets.DEBUG }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-          EOL
 
                   # Create virtual environment if missing
                   echo "🐍 Setting up Python virtual environment..."
