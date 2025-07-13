@@ -1,0 +1,67 @@
+name: Deploy Django Backend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
+
+      - name: Deploy to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@159.198.66.181 << 'EOF'
+            set -e  # Exit on error
+
+            echo "Updating packages and installing dependencies..."
+            sudo apt update
+            sudo apt install -y python3-venv python3-pip git
+
+            cd /var/www/starbound
+
+            if [ ! -d "starbound-backend" ]; then
+              echo "Cloning repo as it does not exist..."
+              git clone https://github.com/neranjandissanayake/starbound-backend.git
+            fi
+
+            cd starbound-backend
+
+            echo "Resetting and pulling latest changes..."
+            git reset --hard
+            git clean -fd
+            git pull origin main
+
+            # Create virtual environment if missing
+            if [ ! -d "venv" ]; then
+              echo "Creating virtual environment..."
+              python3 -m venv venv
+            fi
+
+            # Debug: list venv directory contents to confirm
+            ls -l venv
+
+            echo "Activating virtual environment and installing dependencies..."
+            source venv/bin/activate
+
+            pip install --upgrade pip setuptools wheel
+            pip install -r requirements.txt
+
+            echo "Running migrations and collecting static files..."
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+
+            echo "Restarting gunicorn service..."
+            sudo systemctl restart gunicorn
+
+            echo "Deployment complete!"
+          EOF

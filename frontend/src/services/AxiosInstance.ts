@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://starbound-backend-rxgm.onrender.com/api'; // Replace with your backend URL
+const API_URL = 'https://logivis.com/api/'; // Replace with your backend URL
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

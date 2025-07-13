@@ -83,6 +83,7 @@ const Contact: React.FC = () => {
             disabled={sending}
           />
         </div>
+
         <div>
           <label className="block font-medium mb-1">Email</label>
           <input
@@ -95,6 +96,7 @@ const Contact: React.FC = () => {
             disabled={sending}
           />
         </div>
+
         <div>
           <label className="block font-medium mb-1">Phone</label>
           <input
@@ -107,6 +109,7 @@ const Contact: React.FC = () => {
             disabled={sending}
           />
         </div>
+
         <div>
           <label className="block font-medium mb-1">Message</label>
           <textarea

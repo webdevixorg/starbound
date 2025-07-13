@@ -10,14 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from pathlib import Path
 from datetime import timedelta
 
 import os
-from dotenv import load_dotenv
-import dj_database_url
+import os
+from pathlib import Path
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+
+import dotenv
+dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +37,7 @@ SECRET_KEY = 'django-insecure-@6(mhc5g=+^f0v&$v@jnkiqc0%v-z73g%6t+&m=&05s&+x=#6m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['http://localhost:3000', 'https://www.logivis.com', 'https://logivis.com', 'starbound-backend-rxgm.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'www.logivis.com', 'logivis.com']
 
 
 
@@ -80,7 +85,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://www.logivis.com",
     "https://logivis.com",
-    "https://starbound-backend-rxgm.onrender.com",
 ]
 
 REST_FRAMEWORK = {
@@ -133,8 +137,16 @@ WSGI_APPLICATION = 'system.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get("DATABASE_URL"))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'starbounddb',
+        'USER': 'neranjan',
+        'PASSWORD': 'Pg@1230588',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
+
 
 
 # Password validation

@@ -1,0 +1,47 @@
+name: Deploy Django Backend to VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'      # Trigger only on backend folder changes
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
+
+      - name: Sync backend code to VPS
+        run: |
+          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/starbound-backend/
+
+      - name: Deploy backend on VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
+            cd /var/www/starbound/starbound-backend
+
+            # Create virtual environment if missing
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+
+            source venv/bin/activate
+
+            pip install --upgrade pip setuptools wheel
+            pip install -r requirements.txt
+
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+
+            sudo systemctl restart gunicorn
+          EOF
