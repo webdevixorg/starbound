@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig({
+  base: '/',
   plugins: [react()],
   server: {
     port: parseInt(process.env.VITE_PORT || '3000'), // Use environment variable for port or default to 3000
