@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'      # Trigger only on backend folder changes
+      - 'backend/**' # Trigger only when files in backend change
 
 jobs:
   deploy-backend:
@@ -28,20 +28,35 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
+
+            echo "Changing to backend directory..."
             cd /var/www/starbound/starbound-backend
 
-            # Create virtual environment if missing
+            echo "Setting up environment variables..."
+            cat > .env <<EOL
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            EOL
+
+            echo "Creating virtual environment if missing..."
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
 
+            echo "Activating virtualenv and installing dependencies..."
             source venv/bin/activate
-
             pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
 
+            echo "Applying migrations and collecting static files..."
             python manage.py migrate
             python manage.py collectstatic --noinput
 
+            echo "Restarting Gunicorn..."
             sudo systemctl restart gunicorn
+
+            echo "✅ Backend deployment complete!"
           EOF
