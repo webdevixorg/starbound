@@ -50,6 +50,7 @@ jobs:
           DB_PORT=${{ secrets.DB_PORT }}
           EOL
 
+
             echo "Creating virtual environment if missing..."
             if [ ! -d "venv" ]; then
               python3 -m venv venv
