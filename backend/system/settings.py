@@ -18,16 +18,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 import dotenv
-# Conditional .env loading
-local_env_path = os.path.join(BASE_DIR, '.env')
-production_env_path = "/etc/webdevix-env/starbound.env"
-
-if os.path.exists(local_env_path):
-    dotenv.load_dotenv(local_env_path)
-    print(f"Loaded local .env from: {local_env_path}")
-else:
-    dotenv.load_dotenv(production_env_path)
-    print(f"Loaded production .env from: {production_env_path}")
+dotenv.load_dotenv("/etc/webdevix-env/starbound.env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
