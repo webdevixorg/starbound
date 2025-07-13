@@ -20,17 +20,22 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
       - name: Sync backend code to VPS
         run: |
-          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/starbound-backend/
+          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
 
       - name: Deploy backend on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            set -e
+            set -e # Exit on error
 
             echo "Changing to backend directory..."
-            cd /var/www/starbound/starbound-backend
+            cd /var/www/starbound/backend
 
             echo "Setting up environment variables..."
             cat > .env <<EOL
