@@ -1,12 +1,3 @@
-name: Deploy Django Backend to VPS
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**' # Trigger only on backend folder changes
-
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
@@ -20,17 +11,21 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_PRIVATE_KEY }}
 
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
       - name: Sync backend code to VPS
         run: |
-          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/starbound-backend/
+          rsync -avz --delete backend/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/backend/
 
       - name: Deploy backend on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
-            cd /var/www/starbound/starbound-backend
+            cd /var/www/starbound/backend
 
-            # Create virtual environment if missing
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
