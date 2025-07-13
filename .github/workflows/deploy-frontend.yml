@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'    # Only trigger when frontend files change
+      - 'frontend/**' # Only trigger when frontend files change
 
 jobs:
   deploy-frontend:
@@ -32,6 +32,10 @@ jobs:
           echo "${{ secrets.VPS_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create parent directory on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/starbound-frontend"
 
       - name: Deploy frontend build to VPS
         run: |
