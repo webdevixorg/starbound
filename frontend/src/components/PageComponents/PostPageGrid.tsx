@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import sanitizeHtml from 'sanitize-html';
 import { useContent } from '../../context/ContentContext';
 import { fetchPosts } from '../../services/api';
 import { Post } from '../../types/types';
@@ -29,21 +30,18 @@ const useForumPosts = (
     error: null,
   });
 
-  const matchedType = useMemo(
-    () => {
-      if (Array.isArray(contentTypes)) {
-        return contentTypes.find((ct: any) => ct.id === contentTypeId);
-      }
-      // If contentTypes is an object, convert to array and find
-      if (contentTypes && typeof contentTypes === 'object') {
-        return Object.values(contentTypes).find(
-          (ct: any) => ct.id === contentTypeId
-        );
-      }
-      return undefined;
-    },
-    [contentTypes, contentTypeId]
-  );
+  const matchedType = useMemo(() => {
+    if (Array.isArray(contentTypes)) {
+      return contentTypes.find((ct: any) => ct.id === contentTypeId);
+    }
+    // If contentTypes is an object, convert to array and find
+    if (contentTypes && typeof contentTypes === 'object') {
+      return Object.values(contentTypes).find(
+        (ct: any) => ct.id === contentTypeId
+      );
+    }
+    return undefined;
+  }, [contentTypes, contentTypeId]);
 
   const load = useCallback(async () => {
     if (contentLoading || !matchedType) return;
@@ -132,7 +130,10 @@ const PostPageGrid: React.FC<{ filter: string }> = ({ filter }) => {
                 </span>
               </header>
               <p className="mt-3 text-gray-700 leading-relaxed line-clamp-3">
-                {post.description.replace(/<[^>]+>/g, '')}
+                {sanitizeHtml(post.description, {
+                  allowedTags: [],
+                  allowedAttributes: {},
+                })}{' '}
               </p>
               <footer className="mt-4 flex items-center space-x-6 text-gray-500">
                 <button className="flex items-center space-x-1 hover:text-blue-600">
