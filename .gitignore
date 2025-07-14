@@ -188,3 +188,7 @@ celerybeat-schedule
 
 # Sphinx documentation
 docs/_build/
+
+# Ignore all files and folders inside backend/media/images and backend/media/posts
+backend/media/images/
+backend/media/posts/
