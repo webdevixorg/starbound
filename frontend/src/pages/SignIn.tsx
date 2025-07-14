@@ -4,6 +4,7 @@ import { signin as signinApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import UserIcon from '../components/UI/Icons/User';
 import EyeIcon from '../components/UI/Icons/Eye';
+import EyeClosedIcon from '../components/UI/Icons/EyeClosed';
 import GoogleIcon from '../components/UI/Icons/Google';
 import FaceBookIcon from '../components/UI/Icons/FaceBook';
 import AppleIcon from '../components/UI/Icons/Apple';
@@ -112,10 +113,19 @@ const SignIn: React.FC = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                    <EyeIcon
-                      className="w-4 h-4 absolute right-4 cursor-pointer text-gray-400"
+
+                    {/* Updated eye icon with proper click handler */}
+                    <button
+                      type="button"
                       onClick={togglePasswordVisibility}
-                    />
+                      className="absolute right-4 focus:outline-none"
+                    >
+                      {passwordVisible ? (
+                        <EyeClosedIcon className="w-4 h-4 cursor-pointer text-gray-400" />
+                      ) : (
+                        <EyeIcon className="w-4 h-4 cursor-pointer text-gray-400" />
+                      )}
+                    </button>
                   </div>
                 </div>
                 {error && <p className="text-red-500">{error}</p>}
