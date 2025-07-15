@@ -9,8 +9,7 @@ const PostGrid_1: React.FC<{
   filter: string;
   count: number;
   title?: string;
-  viewAllLink?: string;
-}> = ({ filter, count, title = 'Post List', viewAllLink = '/posts' }) => {
+}> = ({ filter, count, title = 'Post List' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
