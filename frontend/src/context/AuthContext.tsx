@@ -8,10 +8,9 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { fetchProfile } from '../services/api';
 import { User, AuthContextType, Profile } from '../types/types';
+import { biDirectionalSyncVisits, fetchProfile } from '../services/api';
 import SignOutModal from '../components/Modals/SignOutModal';
-import { biDirectionalSyncVisits } from '../services/api';
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
