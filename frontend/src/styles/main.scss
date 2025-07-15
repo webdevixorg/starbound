@@ -9,6 +9,8 @@
 @use './layout';
 @use './components';
 
+@use './typography';
+
 // Import page-specific styles
 @use './pages/categories';
 @use './pages/chat';
