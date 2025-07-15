@@ -3,11 +3,14 @@ import { fetchPostsForSections } from '../../services/api'; // Ensure this path 
 import { Post } from '../../types/types';
 import { CategoryName } from '../../helpers/fetching';
 import { Link } from 'react-router-dom';
+import HtmlContent from '../../helpers/content';
 
-const LatestNews: React.FC<{ filter: string; count: number }> = ({
-  filter,
-  count,
-}) => {
+const LatestNews: React.FC<{
+  filter: string;
+  count: number;
+  title?: string;
+  viewAllLink?: string;
+}> = ({ filter, count, title = 'Post List', viewAllLink = '/posts' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
@@ -37,12 +40,12 @@ const LatestNews: React.FC<{ filter: string; count: number }> = ({
       <div className="flex flex-row flex-wrap">
         <div className="flex-shrink max-w-full w-full lg:w-2/3 order-first lg:pr-8 lg:pb-8">
           <div className="border-b flex justify-between items-end mb-8 pb-6">
-            <h2 className="text-gray-800 text-3xl">Post List</h2>
+            <h2 className="text-gray-800 text-3xl">{title}</h2>
             <Link
               className="text-blue-500 hover:text-blue-700 font-semibold capitalize"
-              to="/posts"
+              to={viewAllLink}
             >
-              VIEW ALL BLOG
+              View All
             </Link>
           </div>
           <div className="flex flex-row flex-wrap">
@@ -94,12 +97,9 @@ const LatestNews: React.FC<{ filter: string; count: number }> = ({
                         {post.title}
                       </h2>
                     </Link>
-                    <p
-                      className="text-gray-600 dark:text-gray-400 hidden sm:inline-block"
-                      dangerouslySetInnerHTML={{
-                        __html: post.description,
-                      }}
-                    ></p>
+                    <p className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">
+                      <HtmlContent htmlContent={post.description} />
+                    </p>
                   </div>
                 </div>
               </div>

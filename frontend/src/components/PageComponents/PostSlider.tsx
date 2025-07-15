@@ -6,10 +6,11 @@ import { fetchPostsForSections } from '../../services/api';
 import { Post } from '../../types/types';
 import { CategoryName } from '../../helpers/fetching';
 
-const SliderNews: React.FC<{ filter: string; count: number }> = ({
-  filter,
-  count,
-}) => {
+const SliderNews: React.FC<{
+  filter: string;
+  count: number;
+  title: string;
+}> = ({ filter, count, title = 'Post List' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +45,7 @@ const SliderNews: React.FC<{ filter: string; count: number }> = ({
           <div className="w-full py-3">
             <h2 className="text-white text-2xl font-bold text-shadow-black">
               <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
-              Latest News
+              {title}
             </h2>
           </div>
 

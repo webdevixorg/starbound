@@ -3,11 +3,14 @@ import { fetchPostsForSections } from '../../services/api'; // Ensure this path 
 import { Post } from '../../types/types';
 import { formatDate } from '../../helpers/common';
 import { CategoryName } from '../../helpers/fetching';
+import HtmlContent from '../../helpers/content';
 
-const PostGrid_1: React.FC<{ filter: string; count: number }> = ({
-  filter,
-  count,
-}) => {
+const PostGrid_1: React.FC<{
+  filter: string;
+  count: number;
+  title?: string;
+  viewAllLink?: string;
+}> = ({ filter, count, title = 'Post List', viewAllLink = '/posts' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
@@ -28,7 +31,7 @@ const PostGrid_1: React.FC<{ filter: string; count: number }> = ({
       <div className="border-b flex justify-between items-end mb-8 pb-6">
         <h2 className="text-gray-800 text-4xl">
           <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
-          Entertainment News
+          {title}
         </h2>
       </div>
 
@@ -80,9 +83,7 @@ const PostGrid_1: React.FC<{ filter: string; count: number }> = ({
               <div className="flex">
                 <a href={`/posts/${post.slug}`}>
                   <p className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">
-                    <span
-                      dangerouslySetInnerHTML={{ __html: post.description }}
-                    />
+                    <HtmlContent htmlContent={post.description} />
                   </p>
                 </a>
               </div>
