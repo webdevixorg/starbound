@@ -2,14 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { fetchUpdates, markUpdateAsRead } from '../services/api';
 import { Update } from '../types/types';
 import ProfileImage from '../components/UI/ProfileImage/ProfileImage';
+import LoadingSpinner from '../components/Common/Loading';
 
 const Updates: React.FC = () => {
   const [Updates, setUpdates] = useState<Update[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null); // State to handle errors
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null); // State to handle errors
 
   const UpdatesEndRef = useRef<HTMLDivElement>(null);
 
@@ -17,8 +18,8 @@ const Updates: React.FC = () => {
     const loadUpdates = async () => {
       setIsFetchingMore(true);
       try {
+        setLoading(true);
         const response = await fetchUpdates(pageNumber, 8);
-        console.log('Response from fetchUpdates:', response);
 
         const { count, results } = response;
         const totalUpdates = count;
@@ -38,7 +39,7 @@ const Updates: React.FC = () => {
         console.error('Error fetching travel updates:', error);
         setError('Failed to load updates. Please try again.'); // Update error state
       } finally {
-        setIsLoading(false);
+        setLoading(false);
         setIsFetchingMore(false);
       }
     };
@@ -101,14 +102,18 @@ const Updates: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div className="container p-6 bg-white text-red-600">{error}</div>;
+  }
+
   return (
     <div className="p-6 bg-white">
       <h3 className="text-2xl font-bold mb-6 text-gray-900">Updates</h3>
-      {error ? (
-        <p>{error}</p> // Display error message if there's an error fetching travel updates
-      ) : isLoading ? (
-        <p>Loading travel updates...</p>
-      ) : Updates.length > 0 ? (
+      {Updates.length > 0 ? (
         <>
           {Updates.map((Update) => (
             <div

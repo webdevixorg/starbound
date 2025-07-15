@@ -29,6 +29,8 @@ import {
   toggleCategorySelection,
   useEventListener,
 } from '../helpers/fromSubmission';
+import LoadingSpinner from '../components/Common/Loading';
+
 import StarBoundTextEditor from '../modules/StarboundEditor/src/App';
 
 const AddProduct: React.FC = () => {
@@ -55,6 +57,8 @@ const AddProduct: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<ImageFile[]>([]);
   const [galleryImages, setGalleryImages] = useState<Image[]>([]);
   const [deletedImages, setDeletedImages] = useState<Image[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const baseURL = `${window.location.origin}/${contentType}s/`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,6 +117,8 @@ const AddProduct: React.FC = () => {
 
     const loadCategories = async () => {
       try {
+        setLoading(true);
+
         // Fetch categories
         const fetchedCategories = await fetchCategories(
           currentPage,
@@ -146,7 +152,10 @@ const AddProduct: React.FC = () => {
           setSku(fetchedPost.sku); // Set SKU if available
         }
       } catch (error) {
+        setError('Error fetching data');
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -274,6 +283,14 @@ const AddProduct: React.FC = () => {
   };
 
   useEventListener('mousedown', handleClickOutside, isEditingDate);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <div className="p-4 flex">

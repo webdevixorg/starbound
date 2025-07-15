@@ -26,6 +26,7 @@ import {
   useEventListener,
 } from '../helpers/fromSubmission';
 import StarBoundTextEditor from '../modules/StarboundEditor/src/App';
+import LoadingSpinner from '../components/Common/Loading';
 
 const AddPost: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +52,8 @@ const AddPost: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<ImageFile[] | []>([]);
   const [galleryImages, setGalleryImages] = useState<Image[]>([]);
   const [deletedImages, setDeletedImages] = useState<Image[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const baseURL = `${window.location.origin}/${contentType}s/`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +104,8 @@ const AddPost: React.FC = () => {
 
     const loadCategories = async () => {
       try {
+        setLoading(true);
+
         // Fetch categories
         const fetchedCategories = await fetchCategories(
           currentPage,
@@ -130,7 +135,10 @@ const AddPost: React.FC = () => {
           );
         }
       } catch (error) {
+        setError('Error fetching data');
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -256,6 +264,14 @@ const AddPost: React.FC = () => {
   };
 
   useEventListener('mousedown', handleClickOutside, isEditingDate);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <div className="p-4 flex">

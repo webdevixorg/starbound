@@ -9,6 +9,7 @@ import {
 import { useContent } from '../context/ContentContext'; // Import the context hook
 import { Category } from '../types/types';
 import { slugify } from '../helpers/common';
+import LoadingSpinner from '../components/Common/Loading';
 
 const PostCategory: React.FC = () => {
   const location = useLocation();
@@ -228,7 +229,7 @@ const PostCategory: React.FC = () => {
     [categories, handleDelete, handleEdit]
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingSpinner />;
   if (error) return <div>{error}</div>;
 
   return (

@@ -9,6 +9,7 @@ import HtmlContent from '../helpers/content';
 import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
 import PostListSidebar from '../components/PageComponents/PostListSidebar';
 import ProductListSidebar from '../components/PageComponents/ProductListSidebar';
+import LoadingSpinner from '../components/Common/Loading';
 
 const SinglePost: React.FC = () => {
   const { isAuthenticated } = useAuth(); // Use useAuth hook to get the current user
@@ -32,7 +33,7 @@ const SinglePost: React.FC = () => {
   }, [slug]);
 
   if (!post) {
-    return <div className="text-center py-20">Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

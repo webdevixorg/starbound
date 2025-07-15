@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
 import { fetchOrder } from '../services/apiProducts'; // Ensure the module exists at this path or adjust the path accordingly
 import { formatCurrency } from '../helpers/common';
+import LoadingSpinner from '../components/Common/Loading';
+import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
 
 interface Order {
   id: number;
@@ -68,7 +69,7 @@ const OrderReceived: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!order) {

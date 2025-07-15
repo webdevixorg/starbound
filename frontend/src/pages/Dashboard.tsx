@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { fetchOrders, fetchAllReviews } from '../services/apiProducts';
 import { fetchVisitHistory } from '../services/api';
+import LoadingSpinner from '../components/Common/Loading';
 import SummaryCard from '../components/PageComponents/Dashboard/SummeryCard';
-
 
 export default function AutomotiveDashboard() {
   const { user } = useAuth();
@@ -38,12 +38,19 @@ export default function AutomotiveDashboard() {
     (async () => {
       try {
         const history = await fetchVisitHistory();
-        const recent = history.slice(0, 5).map((v: { item_id: any; product: { title: any; slug: any; image: any; }; }) => ({
-          id: v.item_id,
-          title: v.product?.title || `Product #${v.item_id}`,
-          slug: v.product?.slug || String(v.item_id),
-          image: v.product?.image,
-        }));
+        const recent = history
+          .slice(0, 5)
+          .map(
+            (v: {
+              item_id: any;
+              product: { title: any; slug: any; image: any };
+            }) => ({
+              id: v.item_id,
+              title: v.product?.title || `Product #${v.item_id}`,
+              slug: v.product?.slug || String(v.item_id),
+              image: v.product?.image,
+            })
+          );
         setVisited(recent);
       } catch (err) {
         console.error('Failed to fetch visit history:', err);
@@ -54,11 +61,7 @@ export default function AutomotiveDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="p-10 text-lg text-gray-500">
-        Loading your dashboard...
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

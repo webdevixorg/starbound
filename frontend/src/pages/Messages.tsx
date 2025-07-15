@@ -6,6 +6,7 @@ import {
   sendMessage,
 } from '../services/api'; // Adjust imports as needed
 import { useAuth } from '../context/AuthContext'; // Import useAuth hook from AuthContext
+import LoadingSpinner from '../components/Common/Loading';
 import ProfileImage from '../components/UI/ProfileImage/ProfileImage';
 import ImageIcon from '../components/UI/Icons/Image';
 import PaperPlaneIcon from '../components/UI/Icons/PaperPlane';
@@ -229,7 +230,7 @@ const ChatContainer: React.FC = () => {
   }
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <LoadingSpinner />;
   }
 
   return (

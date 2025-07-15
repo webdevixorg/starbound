@@ -10,7 +10,7 @@ const Home: React.FC = () => {
     <div>
       <BigHero filter="latest" count={5} />
       <ProductGridSection filter="latest" count={4} />
-      <PostGrid_1 filter="latest" count={4} />
+      <PostGrid_1 filter="latest" count={4} title={'Automotive Tech'} />
       <div className="post-add mt-30">
         <div className="bg-white-50 py-6">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -22,8 +22,9 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      <PostGrid_2 filter="latest" count={4} />
-      <PostSlider filter="latest" count={4} />
+      <PostGrid_2 filter="latest" count={4} title="How-To Guides" />
+      <PostGrid_1 filter="latest" count={4} title={'Product Reviews'} />
+      <PostSlider filter="latest" count={4} title={'News & Updates'} />
     </div>
   );
 };

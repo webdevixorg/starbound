@@ -7,6 +7,7 @@ import PreferencesTab from '../components/PageComponents/AccountTabs/Preferences
 import PaymentMethodsTab from '../components/PageComponents/AccountTabs/PaymentMethodsTab';
 import NotificationsTab from '../components/PageComponents/AccountTabs/NotificationsTab';
 import TabsNavigation from '../components/PageComponents/AccountTabs/TabsNavigation';
+import LoadingSpinner from '../components/Common/Loading';
 
 const Settings: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const getAccountSettings = async () => {
       try {
+        setLoading(true);
         const data = await fetchAccountSettings();
         setFormData({
           email: data.email,
@@ -74,7 +76,7 @@ const Settings: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (error) {

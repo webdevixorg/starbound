@@ -10,7 +10,7 @@ const Posts: React.FC = () => {
       <div className="mx-auto px-4 mt-6">
         <BreadcrumbsComponent />
       </div>
-      <PostPageGrid filter="latest" />
+      <PostPageGrid filter="latest" count={0} />
     </div>
   );
 };

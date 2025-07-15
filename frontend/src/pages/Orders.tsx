@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fetchOrders } from '../services/apiProducts';
 import { formatCurrency } from '../helpers/common';
+import LoadingSpinner from '../components/Common/Loading'; // Make sure this path is correct
 
 interface Order {
-  ship_to_different_address: any;
+  ship_to_different_address: boolean;
   selected_payment_method: string;
-  order_data: any;
+  order_data: any[];
   billing_data: any;
   shipping_data: any;
   created_at: string | number | Date;
@@ -21,16 +22,22 @@ interface Order {
 const OrderList: React.FC = () => {
   const contentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [orders, setOrders] = useState<Order[]>([]);
-  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null); // State to track expanded orders
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getOrders = async () => {
       try {
-        // Replace with real API call
+        setLoading(true);
         const data = await fetchOrders();
         setOrders(data.results);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
+      } catch (err: any) {
+        setError('Failed to load orders. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -53,13 +60,23 @@ const OrderList: React.FC = () => {
   };
 
   const toggleExpanded = (orderId: number) => {
-    setExpandedOrderId((prev) => (prev === orderId ? null : orderId)); // Toggle the expanded state
+    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
 
   const calculateHeight = (id: string) => {
     const element = contentRefs.current[id];
     return element ? `${element.scrollHeight}px` : '0px';
   };
+
+  // 🌟 Render loading state
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // ❗ Render error state
+  if (error) {
+    return <div className="container p-6 bg-white text-red-600">{error}</div>;
+  }
 
   return (
     <div className="p-6 bg-white">

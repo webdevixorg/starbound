@@ -2,14 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { fetchNotifications, markNotificationAsRead } from '../services/api'; // Assuming markNotificationAsRead is defined in your API service
 import { Notification } from '../types/types';
 import ProfileImage from '../components/UI/ProfileImage/ProfileImage';
+import LoadingSpinner from '../components/Common/Loading';
 
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null); // State to handle errors
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null); // State to handle errors
 
   const notificationsEndRef = useRef<HTMLDivElement>(null);
 
@@ -17,6 +18,7 @@ const Notifications: React.FC = () => {
     const loadNotifications = async () => {
       setIsFetchingMore(true);
       try {
+        setLoading(true);
         const response = await fetchNotifications(pageNumber, 8); // Fetch 8 notifications per page
         console.log('Response from fetchNotifications:', response); // Log response to inspect in console
 
@@ -38,10 +40,10 @@ const Notifications: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching notifications:', error);
         setError('Failed to load notifications. Please try again.'); // Update error state
+        console.error('Error fetching notifications:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
         setIsFetchingMore(false);
       }
     };
@@ -104,12 +106,20 @@ const Notifications: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div className="container p-6 bg-white text-red-600">{error}</div>;
+  }
+
   return (
     <div className="p-6 bg-white">
       <h3 className="text-2xl font-bold mb-6 text-gray-900">Notifications</h3>
       {error ? (
         <p>{error}</p> // Display error message if there's an error fetching notifications
-      ) : isLoading ? (
+      ) : loading ? (
         <p>Loading notifications...</p>
       ) : notifications.length > 0 ? (
         <>

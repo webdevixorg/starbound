@@ -1,6 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import LoadingSpinner from '../components/Common/Loading';
 
 const Feedback: React.FC = () => {
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Simulate loading delay or wrap in async fetch logic
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500); // e.g., simulate a 500ms load time
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,6 +35,10 @@ const Feedback: React.FC = () => {
     console.log(formData); // For demonstration, log the form data
     alert('Feedback submitted!'); // Example alert for demonstration
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="max-w-2xl p-6 bg-white">

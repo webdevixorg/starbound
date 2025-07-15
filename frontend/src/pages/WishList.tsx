@@ -1,24 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWishlist } from '../context/WishlistContext';
+import LoadingSpinner from '../components/Common/Loading';
 
-// Define the WishlistItem type to match the actual wishlist data structure
 type WishlistItem = {
   id: string | number;
   product: {
     images?: { image_path: string; alt?: string }[];
     title: string;
     description?: string;
-    location_name?: string; // Make location_name optional to match possible missing property
+    location_name?: string;
     price: number | string;
   };
 };
 
 const Wishlist: React.FC = () => {
   const { wishlist, removeFromWishlist } = useWishlist();
+  const [loading, setLoading] = useState<boolean>(true);
 
-  if (!wishlist) {
-    return <div className="container p-6 bg-white">Loading...</div>;
-  }
+  useEffect(() => {
+    // Simulate loading delay or wrap in async fetch logic
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500); // e.g., simulate a 500ms load time
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRemove = (id: string | number) => {
     if (
@@ -29,6 +35,10 @@ const Wishlist: React.FC = () => {
       removeFromWishlist(String(id));
     }
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="p-6 bg-white">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signin as signinApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,50 +10,87 @@ import FaceBookIcon from '../components/UI/Icons/FaceBook';
 import AppleIcon from '../components/UI/Icons/Apple';
 
 const SignIn: React.FC = () => {
-  const [username, setUsername] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
-  const navigate = useNavigate();
-  const { signin } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const navigate = useNavigate();
+  const { signin, isAuthenticated } = useAuth();
+
+  // Redirect to dashboard if already signed in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Load saved credentials
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
+    if (savedUsername && savedRememberMe) {
+      setUsername(savedUsername);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
     try {
       const response = await signinApi({ username, password });
-      if (response.data.access && response.data.refresh) {
+
+      if (response.data?.access && response.data?.refresh) {
+        if (rememberMe) {
+          localStorage.setItem('rememberedUsername', username);
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberMe');
+        }
+
         signin({
           access: response.data.access,
           refresh: response.data.refresh,
         });
-        navigate('/profile'); // Redirect to the profile page after successful signin
-      } else {
-        setError('Sign In failed: No tokens received');
-      }
-    } catch (error) {
-      setError('Sign In failed');
-    }
-  };
 
-  const togglePasswordVisibility = () => {
-    setPasswordVisible(!passwordVisible);
+        navigate('/dashboard');
+      } else {
+        setError('Login failed: Missing token.');
+      }
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setError('Invalid username or password.');
+      } else if (error.response?.status >= 500) {
+        setError('Server error. Try again later.');
+      } else {
+        setError('Unexpected error occurred.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="font-[sans-serif]">
       <div className="min-h-screen flex fle-col items-center justify-center py-6 px-4">
         <div className="grid md:grid-cols-2 items-center gap-10 max-w-6xl w-full">
+          {/* Left content */}
           <div>
             <h2 className="lg:text-5xl text-4xl font-extrabold lg:leading-[55px] text-gray-800">
               Effortless Sign In for Exclusive Access
             </h2>
             <p className="text-sm mt-6 text-gray-800">
               Access your Logivis dashboard instantly and manage your smart
-              automotive solutions with ease. From diagnostics to digital
-              services, everything is just one sign-in away.
+              automotive solutions with ease.
             </p>
             <p className="text-sm mt-12 text-gray-800">
-              Don't have an account
+              Don’t have an account?
               <Link
                 to="/signup"
                 className="text-blue-600 font-semibold hover:underline ml-1"
@@ -62,8 +99,9 @@ const SignIn: React.FC = () => {
               </Link>
             </p>
           </div>
+
+          {/* Form */}
           <div className="max-w-md w-full">
-            {/* Logo */}
             <Link to="/" className="flex items-center justify-center mb-6">
               <img
                 src="/logo.png"
@@ -73,137 +111,172 @@ const SignIn: React.FC = () => {
             </Link>
 
             <div className="p-8 rounded-2xl bg-white shadow">
-              <div className="mb-8">
-                <h3 className="text-3xl font-extrabold text-gray-800">
-                  Sign in
-                </h3>
-              </div>
+              <h3 className="text-3xl font-extrabold text-gray-800 mb-8">
+                Sign in
+              </h3>
 
-              <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+              {error && (
+                <div className="mb-4 p-4 rounded-md bg-red-50 border border-red-200 text-sm text-red-800">
+                  {error}
+                </div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Username */}
                 <div>
                   <label className="text-gray-800 text-sm mb-2 block">
                     User name
                   </label>
                   <div className="relative flex items-center">
                     <input
-                      name="username"
                       type="text"
-                      className="w-full text-gray-800 text-sm border border-gray-300 px-4 py-2 rounded-md outline-blue-600"
-                      placeholder="Enter user name"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
+                      disabled={isLoading}
+                      className="w-full text-sm text-gray-800 border border-gray-300 px-4 py-2 rounded-md outline-blue-600"
+                      placeholder="Enter user name"
                     />
                     <UserIcon className="w-4 h-4 absolute right-4 text-gray-400" />
                   </div>
                 </div>
 
+                {/* Password */}
                 <div>
                   <label className="text-gray-800 text-sm mb-2 block">
-                    Password
+                    Password{' '}
+                    {rememberMe && (
+                      <span className="text-xs text-blue-600 ml-2">
+                        (remembered for 30 days)
+                      </span>
+                    )}
                   </label>
                   <div className="relative flex items-center">
                     <input
-                      id="password"
-                      name="password"
                       type={passwordVisible ? 'text' : 'password'}
-                      className="w-full text-gray-800 text-sm border border-gray-300 px-4 py-2 rounded-md outline-blue-600"
-                      placeholder="Enter password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={isLoading}
+                      className="w-full text-sm text-gray-800 border border-gray-300 px-4 py-2 rounded-md outline-blue-600"
+                      placeholder="Enter password"
                     />
-
-                    {/* Updated eye icon with proper click handler */}
                     <button
                       type="button"
-                      onClick={togglePasswordVisibility}
+                      onClick={() => setPasswordVisible((prev) => !prev)}
                       className="absolute right-4 focus:outline-none"
+                      disabled={isLoading}
                     >
                       {passwordVisible ? (
-                        <EyeClosedIcon className="w-4 h-4 cursor-pointer text-gray-400" />
+                        <EyeClosedIcon className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                       ) : (
-                        <EyeIcon className="w-4 h-4 cursor-pointer text-gray-400" />
+                        <EyeIcon className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                       )}
                     </button>
                   </div>
                 </div>
-                {error && <p className="text-red-500">{error}</p>}
 
+                {/* Remember me + Forgot password */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center">
+                  <label className="flex items-center text-sm text-gray-800">
                     <input
-                      id="remember-me"
-                      name="remember-me"
                       type="checkbox"
-                      className="h-4 w-4 shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      disabled={isLoading}
                     />
-                    <label
-                      htmlFor="remember-me"
-                      className="ml-3 block text-sm text-gray-800"
-                    >
-                      Remember me
-                    </label>
-                  </div>
-                  <div className="text-sm">
-                    <a
-                      href="jajvascript:void(0);"
-                      className="text-blue-600 hover:underline font-semibold"
-                    >
-                      Forgot your password?
-                    </a>
-                  </div>
+                    <span className="ml-2">Remember me for 30 days</span>
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-blue-600 font-semibold hover:underline text-sm"
+                  >
+                    Forgot your password?
+                  </Link>
                 </div>
 
+                {/* Submit */}
                 <div className="!mt-8">
                   <button
                     type="submit"
-                    className="w-full py-2 px-4 text-sm tracking-wide rounded-lg text-white text-center bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                    disabled={isLoading}
+                    className="w-full py-2 px-4 text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition duration-200 disabled:opacity-50"
                   >
-                    Sign in
+                    {isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin h-5 w-5 mr-3"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          />
+                        </svg>
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign in'
+                    )}
                   </button>
                 </div>
               </form>
-              <div className="my-3 flex items-center gap-4">
+
+              {/* Divider */}
+              <div className="my-4 flex items-center gap-4">
                 <hr className="w-full border-gray-300" />
-                <p className="text-sm text-gray-800 text-center">or</p>
+                <span className="text-sm text-gray-800">or</span>
                 <hr className="w-full border-gray-300" />
               </div>
 
-              <div className="sm:flex sm:items-start space-x-4 max-sm:space-y-4 mb-8">
+              {/* Social login buttons */}
+              <div className="flex gap-4 flex-wrap">
                 <button
                   type="button"
-                  className="flex items-center justify-center h-12 px-4 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex-1 flex items-center justify-center px-4 h-12 bg-blue-100 hover:bg-blue-200 text-blue-500 rounded-md"
+                  disabled={isLoading}
                 >
                   <GoogleIcon className="mr-2" />
-                  <span>Sign in with Google</span>
+                  Sign in with Google
                 </button>
 
                 <button
                   type="button"
-                  className="flex items-center justify-center h-12 w-12 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex items-center justify-center h-12 w-12 bg-blue-100 hover:bg-blue-200 text-blue-500 rounded-md"
+                  disabled={isLoading}
                 >
                   <FaceBookIcon />
                 </button>
 
                 <button
                   type="button"
-                  className="flex items-center justify-center h-12 w-12 text-sm font-semibold rounded-md text-blue-500 bg-blue-100 hover:bg-blue-200 focus:outline-none"
+                  className="flex items-center justify-center h-12 w-12 bg-blue-100 hover:bg-blue-200 text-blue-500 rounded-md"
+                  disabled={isLoading}
                 >
                   <AppleIcon />
                 </button>
               </div>
 
-              <div className="flex items-center gap-4">
-                <p className="text-gray-800 text-sm text-center">
-                  Don't have an account?
-                  <Link
-                    to="/signup"
-                    className="text-blue-600 font-semibold hover:underline ml-1"
-                  >
-                    Sign Up here
-                  </Link>
-                </p>
+              {/* Sign up CTA */}
+              <div className="mt-6 text-sm text-center text-gray-800">
+                Don’t have an account?
+                <Link
+                  to="/signup"
+                  className="text-blue-600 font-semibold hover:underline ml-1"
+                >
+                  Sign Up here
+                </Link>
               </div>
             </div>
           </div>

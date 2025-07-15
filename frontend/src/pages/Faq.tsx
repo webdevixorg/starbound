@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchFAQs } from '../services/api';
 import { FAQ } from '../types/types'; // Adjust the import path as necessary
+import LoadingSpinner from '../components/Common/Loading';
 import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
 
 const FAQPage: React.FC = () => {
@@ -27,7 +28,7 @@ const FAQPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="container p-6 bg-white">Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (error) {

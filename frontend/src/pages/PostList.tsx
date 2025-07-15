@@ -5,6 +5,7 @@ import { changePostStatus, deletePost, fetchPosts } from '../services/api'; // E
 import { Post } from '../types/types'; // Adjust the path as necessary
 import { Link, useLocation } from 'react-router-dom';
 import { CategoryName } from '../helpers/fetching';
+import LoadingSpinner from '../components/Common/Loading';
 
 const PostList: React.FC = () => {
   const location = useLocation();
@@ -14,7 +15,7 @@ const PostList: React.FC = () => {
   const [contentType, setContentType] = useState<string>('');
   const [nonTrashedPosts, setNonTrashedPosts] = useState<Post[]>([]);
   const [trashedPosts, setTrashedPosts] = useState<Post[]>([]);
-  const [, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [nonDeletedCurrentPage, setNonDeletedCurrentPage] = useState<number>(1);
   const [deletedCurrentPage, setDeletedCurrentPage] = useState<number>(1);
@@ -62,6 +63,8 @@ const PostList: React.FC = () => {
 
     const loadPosts = async (page: number, isDeleted: boolean) => {
       try {
+        setLoading(true);
+
         if (isDeleted) {
           const status = 'Deleted';
           const deletedResponse = await fetchPosts(
@@ -86,11 +89,10 @@ const PostList: React.FC = () => {
             Math.ceil(nonDeletedResponse.count / pageSize)
           ); // Calculate total pages
         }
-
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching posts:', error); // Debugging: Log the error
         setError('Error fetching posts');
+      } finally {
         setLoading(false);
       }
     };
@@ -172,6 +174,10 @@ const PostList: React.FC = () => {
     activeTab === 'active' ? nonDeletedCurrentPage : deletedCurrentPage;
   const totalPages =
     activeTab === 'active' ? nontrashedTotalPages : trashedTotalPages;
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   if (error) {
     return <div>{error}</div>;

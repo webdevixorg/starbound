@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchReviewsByUserId } from '../services/apiProducts';
 import { useAuth } from '../context/AuthContext'; // to get logged-in user
+import LoadingSpinner from '../components/Common/Loading';
 
 type Review = {
   id: number;
@@ -41,7 +42,7 @@ const ReviewDashboard: React.FC = () => {
   }, [user]);
 
   if (loading) {
-    return <div className="p-6 text-gray-500">Loading reviews...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

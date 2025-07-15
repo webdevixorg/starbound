@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchProfile, updateProfile } from '../services/api';
-
+import LoadingSpinner from '../components/Common/Loading';
 import TextInput from '../components/Forms/Input/TextInput';
 import PhoneInputField from '../components/Forms/Input/PhoneInputField';
 
@@ -134,7 +134,7 @@ const EditProfile: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (error) {

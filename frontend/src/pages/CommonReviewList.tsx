@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAllReviews, updateReviewApproval } from '../services/apiProducts';
+import LoadingSpinner from '../components/Common/Loading';
 
 interface Review {
   id: number;
@@ -19,6 +20,7 @@ interface Review {
 const CommonReviewDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const loadReviews = async () => {
@@ -27,6 +29,7 @@ const CommonReviewDashboard: React.FC = () => {
       const response = await fetchAllReviews(); // Must return paginated { count, next, previous, results }
       setReviews(Array.isArray(response.results) ? response.results : []);
     } catch (error) {
+      setError('Failed to load reviews. Please try again later.');
       console.error('Error fetching reviews:', error);
     } finally {
       setLoading(false);
@@ -53,7 +56,11 @@ const CommonReviewDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-gray-500">Loading reviews...</div>;
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div className="container p-6 bg-white text-red-600">{error}</div>;
   }
 
   return (
@@ -62,12 +69,6 @@ const CommonReviewDashboard: React.FC = () => {
         <h2 className="text-2xl font-semibold text-gray-800">
           Customer Reviews
         </h2>
-        <button
-          onClick={loadReviews}
-          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Refresh
-        </button>
       </div>
 
       {reviews.length === 0 ? (
