@@ -10,9 +10,18 @@ import { VisitProvider } from './context/VisitContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/main.scss';
+import LoadingSpinner from './components/Common/Loading';
+
+// Loading component
 
 const App: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="flex flex-col">
       <ScrollToTop>
