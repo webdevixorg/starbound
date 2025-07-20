@@ -8,23 +8,23 @@ class ContentTypeSerializer(serializers.ModelSerializer):
         model = ContentType
         fields = '__all__'  # Include all fields in the serialized output
 
-
-# Serializer for the Category model
 class CategorySerializer(serializers.ModelSerializer):
-    # This will add a custom field 'children' to include nested subcategories
-    children = serializers.SerializerMethodField()
+    children = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Category
-        fields = '__all__'  # You could specify fields explicitly for better control
+        fields = '__all__'
 
-    # This method fetches and serializes all direct children of the current category
     def get_children(self, obj):
-        children = obj.children.all()  # Retrieve all child categories
-        return CategorySerializer(children, many=True).data  # Recursively serialize them
+        children = obj.children.all()
+        return CategorySerializer(children, many=True).data
 
-    # Custom create method (not strictly needed if no extra processing is required)
     def create(self, validated_data):
-        # Create a new Category instance using validated input data
-        category = Category.objects.create(**validated_data)
-        return category
+        # Remove content_type if it's accidentally passed
+        validated_data.pop('content_type', None)
+        return Category.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        # Remove content_type if it's accidentally passed
+        validated_data.pop('content_type', None)
+        return super().update(instance, validated_data)
