@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://logivis.com/api/'; // Replace with your backend URL
+const API_URL = 'http://127.0.0.1:8000/api'; // Replace with your backend URL
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
