@@ -38,6 +38,72 @@ export const signin = (userData: {
   return axiosInstanceNoAuth.post<AuthResponse>('/signin/', userData);
 };
 
+// Add these functions to your existing api.ts file
+
+export const requestPasswordReset = async (email: string): Promise<any> => {
+  try {
+    const response = await axiosInstanceNoAuth.post(
+      '/auth/password/reset/request/',
+      {
+        email: email,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      // Re-throw the actual error so the component can handle it properly
+      throw error;
+    }
+    throw new Error('Failed to send reset email');
+  }
+};
+
+export const resetPassword = async (data: {
+  token: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}): Promise<any> => {
+  try {
+    const response = await axiosInstanceNoAuth.post(
+      '/auth/password/reset/confirm/',
+      {
+        token: data.token,
+        email: data.email,
+        password: data.password,
+        confirm_password: data.confirmPassword, // Backend might expect confirm_password
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(
+        error.response.data.message || 'Failed to reset password'
+      );
+    }
+    throw new Error('Failed to reset password');
+  }
+};
+
+export const validatePasswordResetToken = async (
+  token: string,
+  email: string
+): Promise<boolean> => {
+  try {
+    const response = await axiosInstanceNoAuth.post(
+      '/auth/password/reset/validate/',
+      {
+        token: token,
+        email: email,
+      }
+    );
+    return response.status === 200;
+  } catch (error) {
+    console.error('Error validating password reset token:', error);
+    return false;
+  }
+};
+
 export const fetchUser = async (): Promise<User> => {
   try {
     const response = await axiosInstance.get('/profile');
