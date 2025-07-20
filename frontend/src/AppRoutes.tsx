@@ -15,7 +15,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
 // Home and content pages
-import Home from './pages/home/Home';
+import Home from './pages/Home/Home';
 import Posts from './pages/Posts';
 import SinglePost from './pages/SinglePost';
 
@@ -36,7 +36,7 @@ import Orders from './pages/Orders';
 import LoadingSpinner from './components/Common/Loading';
 
 // Product/Ads related pages
-import AdsListingPage from './pages/products/Products';
+import AdsListingPage from './pages/Products/Products';
 import AdDetailPage from './pages/ProductsSingle';
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
