@@ -12,7 +12,7 @@ import NotFound from './pages/NotFound';
 import SignUp from './pages/auth/SignUp';
 import SignIn from './pages/auth/SignIn';
 import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/RestPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 // Home and content pages
 import Home from './pages/home/Home';
@@ -25,7 +25,7 @@ import FAQPage from './pages/Faq';
 import EditProfile from './pages/EditProfile';
 import HelpCenter from './pages/HelpCenter';
 import Feedback from './pages/Feedback';
-import ContactSupport from './pages/ContacSupport';
+import ContactSupport from './pages/ContactSupport';
 import Updates from './pages/Updates';
 import Notifications from './pages/Notifications';
 import Messages from './pages/Messages';
@@ -50,7 +50,7 @@ import Category from './pages/Category';
 import AddProduct from './pages/AddProduct';
 import Cart from './pages/Cart';
 import CheckOut from './pages/CheckOut';
-import OrderReceived from './pages/OderRecieved';
+import OrderReceived from './pages/OrderReceived';
 
 // Static/informational pages
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -59,7 +59,7 @@ import AboutUs from './pages/AboutUs';
 import Career from './pages/Career';
 import ContactUs from './pages/ContactUs';
 import Forum from './pages/Forum';
-import WarrantyAndReturn from './pages/UserProfilePage';
+import WarrantyAndReturn from './pages/WarrantyAndReturn'; // Fixed: was pointing to UserProfilePage
 import HelpCenterFrontEnd from './components/PageComponents/HelpCenter/HelpCenterFrontEnd';
 import CommonReviewList from './pages/CommonReviewList';
 import ReviewList from './pages/ReviewList';
