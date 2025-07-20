@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signup } from '../services/api';
-import UserIcon from '../components/UI/Icons/User';
-import EyeIcon from '../components/UI/Icons/Eye';
-import EyeClosedIcon from '../components/UI/Icons/EyeClosed';
-import GoogleIcon from '../components/UI/Icons/Google';
-import FaceBookIcon from '../components/UI/Icons/FaceBook';
-import AppleIcon from '../components/UI/Icons/Apple';
+import { signup } from '../../services/api';
+import UserIcon from '../../components/UI/Icons/User';
+import EyeIcon from '../../components/UI/Icons/Eye';
+import EyeClosedIcon from '../../components/UI/Icons/EyeClosed';
+import GoogleIcon from '../../components/UI/Icons/Google';
+import FaceBookIcon from '../../components/UI/Icons/FaceBook';
+import AppleIcon from '../../components/UI/Icons/Apple';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState<string>('');

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signin as signinApi } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import UserIcon from '../components/UI/Icons/User';
-import EyeIcon from '../components/UI/Icons/Eye';
-import EyeClosedIcon from '../components/UI/Icons/EyeClosed';
-import GoogleIcon from '../components/UI/Icons/Google';
-import FaceBookIcon from '../components/UI/Icons/FaceBook';
-import AppleIcon from '../components/UI/Icons/Apple';
+import { signin as signinApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import UserIcon from '../../components/UI/Icons/User';
+import EyeIcon from '../../components/UI/Icons/Eye';
+import EyeClosedIcon from '../../components/UI/Icons/EyeClosed';
+import GoogleIcon from '../../components/UI/Icons/Google';
+import FaceBookIcon from '../../components/UI/Icons/FaceBook';
+import AppleIcon from '../../components/UI/Icons/Apple';
+import InlineLoaderIcon from '../../components/UI/Icons/InlineLoader';
 
 const SignIn: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -205,25 +206,7 @@ const SignIn: React.FC = () => {
                   >
                     {isLoading ? (
                       <>
-                        <svg
-                          className="animate-spin h-5 w-5 mr-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v8z"
-                          />
-                        </svg>
+                        <InlineLoaderIcon className="mr-2" />
                         Signing in...
                       </>
                     ) : (
