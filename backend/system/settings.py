@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'corsheaders',
 
     # Project apps
@@ -137,12 +138,15 @@ WSGI_APPLICATION = 'system.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'react2',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',   # or '127.0.0.1' for local MySQL server
+        'PORT': '3306',        # MySQL default port
+        'OPTIONS': {
+            'sql_mode': 'STRICT_TRANS_TABLES',
+        },
     }
 }
 
@@ -191,3 +195,44 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# Email Configuration
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))  # Keep default for PORT to avoid errors
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+# Frontend URL for reset links
+FRONTEND_URL = os.getenv('FRONTEND_URL')
+
+# Email configuration validation
+if not all([EMAIL_BACKEND, EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL]):
+    import warnings
+    warnings.warn("Email configuration incomplete. Some environment variables are missing.")
+    
+    # For development, fallback to console backend
+    if DEBUG:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        DEFAULT_FROM_EMAIL = 'Starbound <noreply@localhost>'
+
+
+# Template directory
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # Add this line
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
