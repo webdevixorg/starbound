@@ -5,12 +5,17 @@ import { useAuth } from './context/AuthContext';
 import ProfileLayout from './layouts/ProfileLayout';
 import MainLayout from './layouts/MainLayout';
 
-import Home from './pages/Home/Home';
+import NotFound from './pages/NotFound';
+
+import SignUp from './pages/auth/SignUp';
+import SignIn from './pages/auth/SignIn';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/RestPassword';
+
+import Home from './pages/home/Home';
 import Posts from './pages/Posts';
 import SinglePost from './pages/SinglePost';
-import NotFound from './pages/NotFound';
-import SignUp from './pages/SignUp';
-import SignIn from './pages/SignIn';
+
 import Dashboard from './pages/Dashboard';
 import FAQPage from './pages/Faq';
 import EditProfile from './pages/EditProfile';
@@ -26,7 +31,7 @@ import Settings from './pages/Settings';
 import Orders from './pages/Orders';
 import LoadingSpinner from './components/Common/Loading';
 
-import AdsListingPage from './pages/Products/Products';
+import AdsListingPage from './pages/products/Products';
 import AdDetailPage from './pages/ProductsSingle';
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
@@ -81,6 +86,9 @@ const AppRoutes: React.FC = () => {
           )
         }
       />
+
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected Routes */}
       <Route
