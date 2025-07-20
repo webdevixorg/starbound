@@ -14,8 +14,6 @@ const ForgotPassword: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setMessage('');
-
     setMessage('If this email is registered, you will receive a reset link.');
 
     try {
@@ -73,9 +71,7 @@ const ForgotPassword: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Reset link sent!
                 </h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  If this email is registered, you will receive a reset link.
-                </p>
+                <p className="text-sm text-gray-600 mb-6">{message}</p>
                 <div className="space-y-3">
                   <Link
                     to="/signin"
