@@ -6,19 +6,22 @@ import {
   addCategory,
   updateCategory,
 } from '../services/api';
-import { useContent } from '../context/ContentContext'; // Import the context hook
+import { useContent } from '../context/ContentContext';
 import { Category } from '../types/types';
 import { slugify } from '../helpers/common';
 import LoadingSpinner from '../components/Common/Loading';
+import ModalAlert from '../components/Modals/ModalAlert';
 
 const PostCategory: React.FC = () => {
   const location = useLocation();
-  const { contentTypes, loading: contentLoading } = useContent(); // Get contentTypes from context
+  const { contentTypes, loading: contentLoading } = useContent();
 
   const [contentTypeId, setContentTypeId] = useState<number>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [pageSize] = useState<number>(10);
@@ -39,34 +42,22 @@ const PostCategory: React.FC = () => {
     parent: null,
   });
 
-  // Fetch content type on pathname change
   useEffect(() => {
-    if (contentLoading || !contentTypes) return; // Ensure contentTypes is loaded before processing
-
-    // Extract the base path (e.g., "/products" or "/posts") from the pathname
-    const basePath = location.pathname.split('/')[1]; // Use 'let' to allow reassignment
-
-    // Remove trailing "s" if it exists
-    let contentTypeName = basePath;
+    if (contentLoading || !contentTypes) return;
+    let basePath = location.pathname.split('/')[1];
     if (basePath.endsWith('s')) {
-      contentTypeName = basePath.slice(0, -1); // Remove last character 's'
+      basePath = basePath.slice(0, -1);
     }
-
-    const matchedContentType = Array.isArray(contentTypes)
-      ? contentTypes.find(
-          (contentType: { model: string }) =>
-            contentType.model === contentTypeName
-        )
-      : undefined;
-
-    setContentTypeId(matchedContentType.id);
+    const matched = Object.values(contentTypes).find(
+      (ct) => ct.model === basePath
+    );
+    setContentTypeId(matched?.id);
   }, [contentTypes, contentLoading, location.pathname]);
 
   useEffect(() => {
-    // Only run the effect if contentTypeId has a valid value
     if (!contentTypeId) return;
 
-    const loadCategories = async () => {
+    const load = async () => {
       setLoading(true);
       try {
         const response = await fetchCategories(
@@ -76,84 +67,71 @@ const PostCategory: React.FC = () => {
         );
         setCategories(response || []);
         setTotalPages(Math.ceil(response.count / pageSize));
-      } catch (error) {
-        setError('Error fetching categories');
+      } catch {
+        setError('Failed to fetch categories.');
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
     };
 
-    loadCategories();
-  }, [currentPage, contentTypeId]); // Dependency on currentPage and contentTypeId
+    load();
+  }, [currentPage, contentTypeId]);
 
-  // Memoize the function to prevent unnecessary re-renders
   const handleDelete = useCallback(async (slug: string) => {
     try {
       const response = await deleteCategory(slug);
       if (response.ok) {
-        setCategories((prevCategories) =>
-          prevCategories.filter((category) => category.slug !== slug)
-        );
+        setCategories((prev) => prev.filter((cat) => cat.slug !== slug));
       } else {
-        setError('Failed to delete category');
+        setError('Delete failed.');
+        setShowErrorModal(true);
       }
-    } catch (error) {
-      setError('Error deleting category');
+    } catch {
+      setError('Error deleting category.');
+      setShowErrorModal(true);
     }
   }, []);
 
-  // Add or update category
   const handleAddCategory = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+      setSubmitting(true);
       try {
-        const addedCategory = editMode
+        const added = editMode
           ? await updateCategory(newCategory.oldSlug!, newCategory)
           : await addCategory({
               ...newCategory,
               content_type_id: contentTypeId ?? 0,
             });
 
-        setCategories((prevCategories) => {
-          const updatedCategories = editMode
-            ? prevCategories.map((category) =>
-                category.id === addedCategory.id ? addedCategory : category
-              )
-            : [...prevCategories, addedCategory];
+        const updated = editMode
+          ? categories.map((cat) => (cat.id === added.id ? added : cat))
+          : [...categories, added];
 
-          if (newCategory.parent) {
-            return updatedCategories.map((category) =>
-              category.id === newCategory.parent
-                ? {
-                    ...category,
-                    children: [...(category.children || []), addedCategory],
-                  }
-                : category
-            );
-          }
-          return updatedCategories;
-        });
-
+        setCategories(updated);
         setShowAddForm(false);
         setEditMode(false);
         setNewCategory({ name: '', slug: '', description: '', parent: null });
-      } catch (error) {
-        setError('Error adding/updating category');
+      } catch {
+        setError('Error saving category.');
+        setShowErrorModal(true);
+      } finally {
+        setSubmitting(false);
       }
     },
-    [editMode, newCategory, contentTypeId]
+    [editMode, newCategory, contentTypeId, categories]
   );
 
-  // Edit category
   const handleEdit = useCallback(
-    (category: Category) => {
+    (cat: Category) => {
       setNewCategory({
-        id: category.id,
-        name: category.name,
-        oldSlug: category.slug,
-        slug: category.slug,
-        description: category.description ?? '',
-        parent: category.parent ?? null,
+        id: cat.id,
+        oldSlug: cat.slug,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description ?? '',
+        parent: cat.parent ?? null,
         content_type_id: contentTypeId,
       });
       setShowAddForm(true);
@@ -162,190 +140,216 @@ const PostCategory: React.FC = () => {
     [contentTypeId]
   );
 
-  // Pagination controls
-  const handlePreviousPage = useCallback(() => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  }, [currentPage]);
+  const handlePreviousPage = () =>
+    currentPage > 1 && setCurrentPage(currentPage - 1);
+  const handleNextPage = () =>
+    currentPage < totalPages && setCurrentPage(currentPage + 1);
 
-  const handleNextPage = useCallback(() => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  }, [currentPage, totalPages]);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setNewCategory({ ...newCategory, name, slug: slugify(name) });
+  };
 
-  // Handle category name change
-  const handleNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const name = e.target.value;
-      setNewCategory({ ...newCategory, name, slug: slugify(name) });
-    },
-    [newCategory]
-  );
-
-  // Render category tree recursively
-  const renderCategories = useMemo(
-    () =>
-      (categories: Category[], level: number = 0) => {
-        return categories.map((category) => (
-          <React.Fragment key={category.id}>
-            <tr
-              className={`hover:bg-gray-100 ${
-                level > 0 ? 'pl-' + level * 4 : ''
-              }`}
-            >
-              <td className="py-2 px-4 border-b border-gray-200">
-                {category.parent ? '-' : ''} {category.name}
-              </td>
-              <td className="py-2 px-4 border-b border-gray-200">
-                {category.slug}
-              </td>
-              <td className="py-2 px-4 border-b border-gray-200">
-                {category.description ?? ''}
-              </td>
-              <td className="py-2 px-4 border-b border-gray-200">
-                <a
-                  href={`/categories/${category.slug}`}
-                  className="text-blue-500 hover:underline mr-2"
-                >
-                  View
-                </a>
-                <button
-                  onClick={() => handleEdit(category)}
-                  className="text-yellow-500 hover:underline mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(category.slug)}
-                  className="text-red-500 hover:underline"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-            {category.children &&
-              renderCategories(category.children, level + 1)}
-          </React.Fragment>
-        ));
-      },
-    [categories, handleDelete, handleEdit]
-  );
+  const renderCategories = useMemo(() => {
+    const recursive = (cats: Category[], level: number = 0): React.ReactNode =>
+      cats.map((cat) => (
+        <React.Fragment key={cat.id}>
+          <tr className="hover:bg-gray-50">
+            <td className="py-2 px-4 border-b">
+              {'— '.repeat(level) + cat.name}
+            </td>
+            <td className="py-2 px-4 border-b">{cat.slug}</td>
+            <td className="py-2 px-4 border-b">{cat.description}</td>
+            <td className="py-2 px-4 border-b space-x-2">
+              <button
+                onClick={() => handleEdit(cat)}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(cat.slug)}
+                className="text-red-500 hover:underline text-sm"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {cat.children && recursive(cat.children, level + 1)}
+        </React.Fragment>
+      ));
+    return recursive(categories);
+  }, [categories, handleDelete, handleEdit]);
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div>{error}</div>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Categories</h2>
-      <button
-        onClick={() => {
-          setShowAddForm(!showAddForm);
-          setEditMode(false);
-          setNewCategory({ name: '', slug: '', description: '', parent: null });
-        }}
-        className="mb-4 bg-blue-500 text-white py-2 px-4 rounded"
+    <div className="relative">
+      {submitting && (
+        <div className="absolute inset-0 bg-white bg-opacity-60 flex items-center justify-center z-50">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      <div
+        className={`p-6 bg-white rounded transition-opacity ${submitting ? 'opacity-50' : 'opacity-100'}`}
       >
-        {showAddForm ? 'Cancel' : 'Add Category'}
-      </button>
-      {showAddForm && (
-        <form onSubmit={handleAddCategory} className="mb-4">
-          <div>
-            <label className="block mb-2">Name</label>
-            <input
-              type="text"
-              value={newCategory.name}
-              onChange={handleNameChange}
-              className="border py-2 px-4 mb-4 w-full"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">Slug</label>
-            <input
-              type="text"
-              value={newCategory.slug}
-              onChange={(e) =>
-                setNewCategory({ ...newCategory, slug: e.target.value })
-              }
-              className="border py-2 px-4 mb-4 w-full"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">Description</label>
-            <input
-              type="text"
-              value={newCategory.description}
-              onChange={(e) =>
-                setNewCategory({ ...newCategory, description: e.target.value })
-              }
-              className="border py-2 px-4 mb-4 w-full"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">Parent Category</label>
-            <select
-              value={newCategory.parent ? newCategory.parent.toString() : ''}
-              onChange={(e) =>
-                setNewCategory({
-                  ...newCategory,
-                  parent: e.target.value ? parseInt(e.target.value) : null,
-                })
-              }
-              className="border py-2 px-4 mb-4 w-full"
-            >
-              <option value="">None</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Manage Categories
+          </h2>
           <button
-            type="submit"
-            className="bg-green-500 text-white py-2 px-4 rounded"
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setEditMode(false);
+              setNewCategory({
+                name: '',
+                slug: '',
+                description: '',
+                parent: null,
+              });
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            {editMode ? 'Update Category' : 'Add Category'}
+            {showAddForm ? 'Cancel' : 'Add New'}
           </button>
-        </form>
-      )}
-      {categories.length === 0 ? (
-        <p>No categories found.</p>
-      ) : (
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b border-gray-200">Name</th>
-              <th className="py-2 px-4 border-b border-gray-200">Slug</th>
-              <th className="py-2 px-4 border-b border-gray-200">
+        </div>
+
+        {showAddForm && (
+          <form
+            onSubmit={handleAddCategory}
+            className="mb-6 space-y-4 border rounded p-4 bg-gray-50"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Name
+              </label>
+              <input
+                type="text"
+                value={newCategory.name}
+                onChange={handleNameChange}
+                className="mt-1 block w-full border border-gray-300 p-2 rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Slug
+              </label>
+              <input
+                type="text"
+                value={newCategory.slug}
+                onChange={(e) =>
+                  setNewCategory({ ...newCategory, slug: e.target.value })
+                }
+                className="mt-1 block w-full border border-gray-300 p-2 rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Description
-              </th>
-              <th className="py-2 px-4 border-b border-gray-200">Actions</th>
-            </tr>
-          </thead>
-          <tbody>{renderCategories(categories)}</tbody>
-        </table>
-      )}
-      <div className="flex justify-between mt-4">
-        <button
-          onClick={handlePreviousPage}
-          disabled={currentPage === 1}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded disabled:opacity-50"
-        >
-          Next
-        </button>
+              </label>
+              <input
+                type="text"
+                value={newCategory.description}
+                onChange={(e) =>
+                  setNewCategory({
+                    ...newCategory,
+                    description: e.target.value,
+                  })
+                }
+                className="mt-1 block w-full border border-gray-300 p-2 rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Parent
+              </label>
+              <select
+                value={newCategory.parent ? String(newCategory.parent) : ''}
+                onChange={(e) =>
+                  setNewCategory({
+                    ...newCategory,
+                    parent: e.target.value ? parseInt(e.target.value) : null,
+                  })
+                }
+                className="mt-1 block w-full border border-gray-300 p-2 rounded"
+              >
+                <option value="">None</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+              {editMode ? 'Update' : 'Create'}
+            </button>
+          </form>
+        )}
+
+        {categories.length === 0 ? (
+          <p className="text-gray-500">No categories found.</p>
+        ) : (
+          <table className="w-full table-auto border border-gray-200 bg-white shadow-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="py-2 px-4 border-b text-left text-sm font-medium">
+                  Name
+                </th>
+                <th className="py-2 px-4 border-b text-left text-sm font-medium">
+                  Slug
+                </th>
+                <th className="py-2 px-4 border-b text-left text-sm font-medium">
+                  Description
+                </th>
+                <th className="py-2 px-4 border-b text-left text-sm font-medium">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>{renderCategories}</tbody>
+          </table>
+        )}
+
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
+
+      <ModalAlert
+        isOpen={showErrorModal}
+        title="Error"
+        message={error || 'An unexpected error occurred.'}
+        onClose={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        onConfirm={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        confirmText="OK"
+        cancelText=""
+      />
     </div>
   );
 };
