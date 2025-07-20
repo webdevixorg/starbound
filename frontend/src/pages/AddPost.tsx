@@ -14,6 +14,7 @@ import {
 } from '../services/api'; // Adjust the path as necessary
 
 import { Category, Image, ImageFile, PostData } from '../types/types';
+
 import GalleryImageUpload from '../components/Forms/Input/GalleryImageUpload';
 import {
   capitalizeFirstLetter,
@@ -27,6 +28,8 @@ import {
 } from '../helpers/fromSubmission';
 import StarBoundTextEditor from '../modules/StarboundEditor/src/App';
 import LoadingSpinner from '../components/Common/Loading';
+import InlineLoaderIcon from '../components/UI/Icons/InlineLoader';
+import ModalAlert from '../components/Modals/ModalAlert';
 
 const AddPost: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +57,8 @@ const AddPost: React.FC = () => {
   const [deletedImages, setDeletedImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
 
   const baseURL = `${window.location.origin}/${contentType}s/`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -136,6 +141,8 @@ const AddPost: React.FC = () => {
         }
       } catch (error) {
         setError('Error fetching data');
+        setShowErrorModal(true);
+
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -221,6 +228,8 @@ const AddPost: React.FC = () => {
               return { ...file, uploadedImageData };
             } catch (error) {
               console.error('Error uploading image:', error);
+              setError('Error uploading image');
+              setShowErrorModal(true);
               return null;
             }
           })
@@ -242,11 +251,13 @@ const AddPost: React.FC = () => {
           setGalleryImages([]);
         } catch (error) {
           console.error('Error updating image orders:', error);
+          setError('Error updating image orders');
+          setShowErrorModal(true);
         }
       }
 
       if (newPostId) {
-        alert(`${capitalizeFirstLetter(contentType)} saved successfully`);
+        setShowSuccessModal(true);
         // Fetch the updated post data to ensure the state is updated
         const updatedPost = await fetchPostBySlug(response.slug);
         setGalleryImages(updatedPost.images);
@@ -259,7 +270,8 @@ const AddPost: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error(`Error creating ${contentType}:`, error);
+      setError(`Error creating ${contentType}`);
+      setShowErrorModal(true);
     }
   };
 
@@ -414,24 +426,70 @@ const AddPost: React.FC = () => {
             </div>
           </div>
 
-          <div className="widget-footer bg-gray-200">
-            <div className="text-lg font-semibold bg-gray-200 p-2 flex justify-between">
+          <div className="widget-footer bg-gray-50 border-t border-gray-200">
+            <div className=" flex p-4 space-y-3">
+              {/* Save Button */}
               <button
                 type="submit"
                 onClick={handleSubmit}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 focus:outline-none focus:shadow-outline"
+                disabled={loading}
+                className="w-full py-3 px-4 text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
               >
-                Save
+                {loading ? (
+                  <>
+                    <InlineLoaderIcon className="mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Save {capitalizeFirstLetter(contentType)}
+                  </>
+                )}
               </button>
+              {/* Preview Button - Only show for existing posts */}
               {slug && (
-                <a
-                  href={`/posts/${slug}`}
-                  target="_blank" // Open in a new page
-                  rel="noopener noreferrer" // Security best practice
-                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-4 focus:outline-none focus:shadow-outline inline-block text-center"
-                >
-                  Preview
-                </a>
+                <div className="flex gap-2">
+                  <a
+                    href={`/${contentType}s/${slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2 px-4 text-sm font-medium rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    Preview
+                  </a>
+                </div>
               )}
             </div>
           </div>
@@ -493,6 +551,35 @@ const AddPost: React.FC = () => {
           </div>
         </div>
       </div>
+      <ModalAlert
+        isOpen={showErrorModal}
+        title="Error"
+        message={error || 'An unexpected error occurred.'}
+        onClose={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        onConfirm={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        confirmText="OK"
+        cancelText=""
+      />
+
+      <ModalAlert
+        isOpen={showSuccessModal}
+        title="Success"
+        message={`${capitalizeFirstLetter(contentType)} saved successfully`}
+        onClose={() => {
+          setShowSuccessModal(false);
+        }}
+        onConfirm={() => {
+          setShowSuccessModal(false);
+        }}
+        confirmText="OK"
+        cancelText=""
+      />
     </div>
   );
 };
