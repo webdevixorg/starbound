@@ -36,7 +36,7 @@ import Orders from './pages/Orders';
 import LoadingSpinner from './components/Common/Loading';
 
 // Product/Ads related pages
-import AdsListingPage from './pages/products/Products';
+import AdsListingPage from './pages/Products/Products';
 import AdDetailPage from './pages/ProductsSingle';
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
