@@ -2,8 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthenticatedRoutes from './context/AuthenticatedRoutes';
 import { useAuth } from './context/AuthContext';
-import ProfileLayout from './layouts/ProfileLayout';
 import MainLayout from './layouts/MainLayout';
+import ProfileLayout from './layouts/ProfileLayout';
 
 // Common components
 import NotFound from './pages/NotFound';
