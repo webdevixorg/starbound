@@ -36,7 +36,7 @@ import Orders from './pages/Orders';
 import LoadingSpinner from './components/Common/Loading';
 
 // Product/Ads related pages
-import AdsListingPage from './pages/products/Products';
+import Products from './pages/products/Products';
 import AdDetailPage from './pages/ProductsSingle';
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
@@ -164,9 +164,9 @@ const AppRoutes: React.FC = () => {
         <Route path="*" element={<NotFound />} />
 
         {/* Product/Marketplace Pages */}
-        <Route path="/products" element={<AdsListingPage />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/products/:slug" element={<AdDetailPage />} />
-        <Route path="/products/categories/:slug" element={<AdsListingPage />} />
+        <Route path="/products/categories/:slug" element={<Products />} />
 
         {/* E-commerce Flow */}
         <Route path="/cart" element={<Cart />} />
