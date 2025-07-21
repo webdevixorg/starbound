@@ -36,13 +36,8 @@ import Orders from './pages/Orders';
 import LoadingSpinner from './components/Common/Loading';
 
 // Product/Ads related pages
-<<<<<<< HEAD
 import Products from './pages/products/Products';
 import AdDetailPage from './pages/ProductsSingle';
-=======
-import AdsListingPage from './pages/products/Products';
-import AdDetailPage from './pages/products/ProductsSingle';
->>>>>>> 1c3ec9dea37b7ea6291fbbe49e25750ba1f59275
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
 import AddPost from './pages/AddPost';
@@ -52,10 +47,10 @@ import ProductList from './pages/PostList';
 import Category from './pages/Category';
 
 // E-commerce pages
-import AddProduct from './pages/products/AddProduct';
-import Cart from './pages/products/Cart';
-import CheckOut from './pages/products/CheckOut';
-import OrderReceived from './pages/products/OrderReceived';
+import AddProduct from './pages/AddProduct';
+import Cart from './pages/Cart';
+import CheckOut from './pages/CheckOut';
+import OrderReceived from './pages/OrderReceived';
 
 // Static/informational pages
 import PrivacyPolicy from './pages/PrivacyPolicy';
