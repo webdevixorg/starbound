@@ -9,7 +9,7 @@ import HtmlContent from '../helpers/content';
 import BreadcrumbsComponent from '../components/Common/Breadcrumbs';
 import PostListSidebar from '../components/PageComponents/PostListSidebar';
 import ProductListSidebar from '../components/PageComponents/ProductListSidebar';
-import LoadingSpinner from '../components/Common/Loading';
+import LoadingSpinner from '../components/Common/Loading'; // Spinner shown during loading
 
 const SinglePost: React.FC = () => {
   const { isAuthenticated } = useAuth(); // Use useAuth hook to get the current user
