@@ -37,7 +37,7 @@ import LoadingSpinner from './components/Common/Loading';
 
 // Product/Ads related pages
 import AdsListingPage from './pages/products/Products';
-import AdDetailPage from './pages/ProductsSingle';
+import AdDetailPage from './pages/products/ProductsSingle';
 import UserProfilePage from './pages/UserProfilePage';
 import PostList from './pages/PostList';
 import AddPost from './pages/AddPost';
@@ -47,10 +47,10 @@ import ProductList from './pages/PostList';
 import Category from './pages/Category';
 
 // E-commerce pages
-import AddProduct from './pages/AddProduct';
-import Cart from './pages/Cart';
-import CheckOut from './pages/CheckOut';
-import OrderReceived from './pages/OrderReceived';
+import AddProduct from './pages/products/AddProduct';
+import Cart from './pages/products/Cart';
+import CheckOut from './pages/products/CheckOut';
+import OrderReceived from './pages/products/OrderReceived';
 
 // Static/informational pages
 import PrivacyPolicy from './pages/PrivacyPolicy';

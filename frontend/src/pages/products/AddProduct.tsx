@@ -1,37 +1,37 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
-import { useContent } from '../context/ContentContext'; // Import the context hook
+import { useAuth } from '../../context/AuthContext'; // Import useAuth hook
+import { useContent } from '../../context/ContentContext'; // Import the context hook
 
 import {
   fetchCategories,
   uploadImage,
   updateImage,
   deleteImage,
-} from '../services/api';
+} from '../../services/api';
 import {
   createProduct,
   fetchProductBySlug,
   updateProduct,
-} from '../services/apiProducts';
+} from '../../services/apiProducts';
 
 import DOMPurify from 'dompurify';
 
-import { Category, Image, ImageFile, ProductData } from '../types/types';
-import GalleryImageUpload from '../components/Forms/Input/GalleryImageUpload';
+import { Category, Image, ImageFile, ProductData } from '../../types/types';
+import GalleryImageUpload from '../../components/Forms/Input/GalleryImageUpload';
 import {
   capitalizeFirstLetter,
   formatDateToISOString,
   slugify,
-} from '../helpers/common';
+} from '../../helpers/common';
 import {
   createHandleDateChange,
   toggleCategorySelection,
   useEventListener,
-} from '../helpers/fromSubmission';
-import LoadingSpinner from '../components/Common/Loading';
+} from '../../helpers/fromSubmission';
+import LoadingSpinner from '../../components/Common/Loading';
 
-import StarBoundTextEditor from '../modules/StarboundEditor/src/App';
+import StarBoundTextEditor from '../../modules/StarboundEditor/src/App';
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate();
