@@ -68,12 +68,10 @@ const OrderList: React.FC = () => {
     return element ? `${element.scrollHeight}px` : '0px';
   };
 
-  // 🌟 Render loading state
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  // ❗ Render error state
   if (error) {
     return <div className="container p-6 bg-white text-red-600">{error}</div>;
   }
