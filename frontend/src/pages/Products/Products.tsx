@@ -22,7 +22,7 @@ import PaginationControls from '../../components/Navigation/Pagination';
 import CollapsibleSection from '../../components/PageComponents/Sidebar/ProfileSidebar/CollapsibleSection';
 import ProductListSidebar from '../../components/PageComponents/ProductListSidebar';
 
-const MainContent: React.FC = () => {
+const Products: React.FC = () => {
   const [, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [viewType, setViewType] = useState<'list' | 'grid'>('list');
@@ -735,4 +735,4 @@ const MainContent: React.FC = () => {
   );
 };
 
-export default MainContent;
+export default Products;
