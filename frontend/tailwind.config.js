@@ -1,32 +1,18 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  purge: {
-    enabled: true,
-    content: [
-      './src/**/*.{js,jsx,ts,tsx}',
-      './public/index.html',
-    ],
-    options: {
-      safelist: [],
-    },
-  },
-  darkMode: `media`, // or 'media' or 'class'
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './layouts/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     extend: {
-      fontFamily: {
-        gliko: [
-          'Gliko',
-          'Gliko-fallback',
-          'Gliko-roboto',
-          'Gliko-local',
-          'Georgia',
-          'Times',
-          'Serif',
-        ],
+      borderWidth: {
+        '3': '3px',
       },
     },
   },
-  variants: {
-    extend: {},
-  },
-  plugins: [require('@tailwindcss/typography')],
-}
+  plugins: [],
+};

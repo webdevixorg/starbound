@@ -1,0 +1,208 @@
+.product-card {
+  position: relative;
+  background-color: #fff;
+  border-radius: 0.25rem;
+  height: 100%;
+  transition: box-shadow 0.3s ease;
+  overflow: hidden;
+
+  &:hover {
+    .product-card-actions-list {
+      transform: translateX(0) translateX(-3px);
+      opacity: 1;
+
+      button {
+        opacity: 1;
+      }
+    }
+  }
+
+  .product-card-quickview-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .product-card-actions-list {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    z-index: 10;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    transform: translateX(100%) translateX(6px);
+
+    button {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+
+      &:hover i {
+        color: #fff;
+      }
+    }
+  }
+
+  .add-to-cart-icon,
+  .add-to-wishlist-icon {
+    position: relative;
+    border: none;
+    padding: 8px;
+    border-radius: 2px;
+    background: transparent;
+    color: #ccc;
+    z-index: 0;
+    transition: color 0.2s;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      background: transparent;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: background 0.2s, transform 0.2s;
+      z-index: -1;
+    }
+  }
+
+  &:hover {
+    .add-to-cart-icon::before {
+      transform: scale(1);
+      background: #1a79ff; // Blue for add-to-cart
+    }
+
+    .add-to-cart-icon svg {
+      stroke: #fff;
+    }
+
+    .add-to-wishlist-icon {
+      &.default::before {
+        background: #fff;
+      }
+
+      &.inwishlist {
+        svg {
+          stroke: #fff;
+        }
+
+        &::before {
+          background: #ef4444; // Red for in wishlist
+        }
+      }
+
+      &::before {
+        transform: scale(1);
+        background: #fff;
+        box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+      }
+
+      svg {
+        fill: none;
+        stroke: #000;
+        strokewidth: 16px;
+      }
+
+      &:hover::before {
+        background: #ef4444;
+        box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+      }
+
+      &:hover svg {
+        stroke: #fff;
+      }
+    }
+  }
+
+  /* GRID VIEW */
+  &.product-card-grid {
+    display: flex;
+    flex-direction: column;
+
+    img {
+      width: 100%;
+      object-fit: cover;
+      border-radius: 0.25rem 0.25rem 0 0;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+
+    .product-info {
+      padding: 1rem;
+      flex-grow: 1;
+
+      h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #222;
+      }
+
+      p {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .price {
+        font-weight: 700;
+        color: #1a79ff;
+        margin-top: 0.5rem;
+      }
+    }
+  }
+
+  /* LIST VIEW */
+  &.product-card-list {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    border: 1px solid #e5e7eb; /* Tailwind's gray-200 */
+    margin-bottom: 1.5rem; /* mb-6 */
+    background-color: #fff;
+
+    img {
+      object-fit: cover;
+      border-top-left-radius: 0.25rem;
+      border-bottom-left-radius: 0.25rem;
+      flex-shrink: 0;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+
+    .product-info {
+      flex: 1;
+      padding: 0.75rem 0;
+
+      h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #111;
+      }
+
+      p {
+        color: #555;
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .price {
+        font-weight: 700;
+        color: #1a79ff;
+        margin-top: 0.25rem;
+      }
+    }
+  }
+}

@@ -19,20 +19,9 @@ class ProfileDetail(generics.RetrieveUpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
-        data = request.data
-
-        # Handle image update
-        if 'image' in data:
-            image_name = data.get('image', None)
-            if image_name == '':  # If the image is deleted
-                instance.image = None
-            else:
-                instance.image = image_name  # Update the image field with the file name
-
-        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
         return Response(serializer.data)   
 
 class AccountSettingsView(generics.RetrieveUpdateAPIView):

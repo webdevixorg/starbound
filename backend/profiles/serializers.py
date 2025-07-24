@@ -57,21 +57,21 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    image = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['user', 'image', 'bio', 'phone', 'address', 'city', 'region', 'postal_code', 'country', 'date_of_birth']
+        fields = ['user', 'image', 'image_url', 'bio', 'phone', 'address', 'city', 'region', 'postal_code', 'country', 'date_of_birth']
 
-    def get_image(self, obj):
+    def get_image_url(self, obj):
         request = self.context.get('request')
         media_url = settings.MEDIA_URL
-        if request:
-            # Build the absolute URI for the media URL
-            absolute_media_url = request.build_absolute_uri(media_url)
-            image_url = f"{absolute_media_url}profiles/profile_images/{obj.image}"
-            return image_url
-        return f"{media_url}profiles/profile_images/{obj.image}"
+        if obj.image:
+            if request:
+                # Build the absolute URI for the media URL
+                return request.build_absolute_uri(obj.image.url)
+            return f"{media_url}{obj.image}"
+        return None
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
@@ -90,9 +90,16 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.postal_code = validated_data.get('postal_code', instance.postal_code)
         instance.country = validated_data.get('country', instance.country)
         instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
-        instance.image = validated_data.get('image', instance.image)
+        
+        # Handle image field properly
+        if 'image' in validated_data:
+            image_data = validated_data.get('image')
+            if image_data is None or image_data == '':
+                instance.image = None
+            else:
+                instance.image = image_data
+        
         instance.save()
-
         return instance
 
 

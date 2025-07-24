@@ -1,0 +1,668 @@
+'use client';
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useContent } from '@/context/ContentContext';
+import {
+  fetchCategories,
+  uploadImage,
+  updateImage,
+  deleteImage,
+  createPost,
+  fetchPostBySlug,
+  updatePost,
+} from '@/services/api';
+import { Category, Image, ImageFile, PostData } from '@/types/types';
+import GalleryImageUpload from '@/components/Forms/Input/GalleryImageUpload';
+import {
+  capitalizeFirstLetter,
+  formatDateToISOString,
+  slugify,
+} from '@/helpers/common';
+import {
+  createHandleDateChange,
+  toggleCategorySelection,
+  useEventListener,
+} from '@/helpers/fromSubmission';
+import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
+import LoadingSpinner from '@/components/Common/Loading';
+import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
+import ModalAlert from '@/components/Modals/ModalAlert';
+
+const AddPostPage: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const slug = searchParams.get('slug') || undefined;
+
+  const { user } = useAuth();
+  const { contentTypes, loading: contentLoading } = useContent();
+
+  // State declarations
+  const [currentPage] = useState<number>(1);
+  const [pageSize] = useState<number>(10);
+  const [contentTypeId, setContentTypeId] = useState<number>();
+  const [contentType, setContentType] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [postSlug, setPostSlug] = useState('');
+  const [date, setDate] = useState('');
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [status, setStatus] = useState<string>('draft');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<ImageFile[] | []>([]);
+  const [galleryImages, setGalleryImages] = useState<Image[]>([]);
+  const [deletedImages, setDeletedImages] = useState<Image[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
+  const [isClient, setIsClient] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Ensure client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Base URL for preview
+  const baseURL = `${
+    typeof window !== 'undefined' ? window.location.origin : ''
+  }/${contentType}s/`;
+
+  // Reset form when creating new post
+  useEffect(() => {
+    if (!isClient) return;
+
+    if (!slug) {
+      setTitle('');
+      setDescription('');
+      setPostSlug('');
+      setDate('');
+      setIsEditingDate(false);
+      setIsEditingSlug(false);
+      setStatus('draft');
+      setCategories([]);
+      setSelectedCategories([]);
+      setSelectedFiles([]);
+      setGalleryImages([]);
+    }
+  }, [slug, isClient]);
+
+  // Determine content type from URL
+  useEffect(() => {
+    if (!isClient || contentLoading || !contentTypes) return;
+
+    // For Next.js App Router, we're at /profile/posts/add-post
+    // So we know this is for 'post' content type
+    const contentTypeName = 'post';
+
+    const matchedContentType = Array.isArray(contentTypes)
+      ? contentTypes.find(
+          (contentType: { model: string }) =>
+            contentType.model === contentTypeName
+        )
+      : undefined;
+
+    if (matchedContentType) {
+      setContentTypeId(matchedContentType.id);
+      setContentType(matchedContentType.model);
+    } else {
+      console.error('No matching content type found for:', contentTypeName);
+      setError('Content type not found');
+      setShowErrorModal(true);
+    }
+  }, [contentTypes, contentLoading, isClient]);
+
+  // Load categories when content type is set
+  useEffect(() => {
+    if (!isClient || !contentTypeId) return;
+
+    const loadCategories = async () => {
+      try {
+        setLoading(true);
+
+        const fetchedCategories = await fetchCategories(
+          currentPage,
+          pageSize,
+          contentTypeId
+        );
+        setCategories(fetchedCategories);
+      } catch (error) {
+        setError('Error fetching categories');
+        setShowErrorModal(true);
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, [currentPage, contentTypeId, isClient]);
+
+  // Load post data when editing
+  useEffect(() => {
+    if (!isClient || !slug) return;
+
+    const loadPostData = async () => {
+      try {
+        setLoading(true);
+        const fetchedPost = await fetchPostBySlug(slug);
+        setTitle(fetchedPost.title);
+        setDescription(fetchedPost.description);
+        setPostSlug(fetchedPost.slug);
+        setDate(new Date(fetchedPost.date).toISOString().slice(0, 16));
+        setStatus(fetchedPost.status);
+        setSelectedCategories(fetchedPost.categories);
+        setGalleryImages(
+          fetchedPost.images
+            .map((image) => ({
+              id: image.id,
+              alt: image.alt,
+              image_path: image.image_path,
+              order: image.order,
+            }))
+            .filter((image): image is Image => image.image_path !== undefined)
+        );
+      } catch (error) {
+        setError('Error fetching post data');
+        setShowErrorModal(true);
+        console.error('Error fetching post data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPostData();
+  }, [slug, isClient]);
+
+  // Event handlers
+  const handleCategoryChange = useCallback((category: Category) => {
+    setSelectedCategories((prevSelected) =>
+      toggleCategorySelection(prevSelected, category)
+    );
+  }, []);
+
+  const handleDescriptionChange = useCallback((value: string) => {
+    setDescription(value);
+  }, []);
+
+  const handleDateChange = createHandleDateChange(setDate);
+
+  const handleClickOutside = useCallback((event: Event) => {
+    const mouseEvent = event as MouseEvent;
+    if (
+      inputRef.current &&
+      !inputRef.current.contains(mouseEvent.target as Node)
+    ) {
+      setIsEditingDate(false);
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const slugToSave = postSlug || slugify(title);
+
+    if (selectedCategories.length === 0) {
+      setError('At least one category is required');
+      setShowErrorModal(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const postData: PostData = {
+        title,
+        description,
+        slug: slugToSave,
+        date: formatDateToISOString(date),
+        status,
+        categories: selectedCategories.map((category) => category.id),
+        user: user ? user.id.toString() : '',
+        contentType: contentType,
+        content_type_id: contentTypeId ?? 0,
+      };
+
+      // Delete images
+      for (const image of deletedImages) {
+        if (image.id) {
+          await deleteImage(image.id);
+        } else {
+          console.error('Image ID is undefined:', image);
+        }
+      }
+
+      setDeletedImages([]);
+
+      let response;
+
+      if (slug) {
+        response = await updatePost(slug, postData);
+      } else {
+        response = await createPost(postData);
+      }
+
+      const newPostId = response.id;
+
+      if (selectedFiles.length > 0 && newPostId) {
+        await Promise.all(
+          selectedFiles.map(async (file) => {
+            try {
+              const uploadedImageData = await uploadImage(
+                file,
+                title,
+                newPostId,
+                contentTypeId ?? 0
+              );
+              return { ...file, uploadedImageData };
+            } catch (error) {
+              console.error('Error uploading image:', error);
+              setError('Error uploading image');
+              setShowErrorModal(true);
+              return null;
+            }
+          })
+        );
+        setSelectedFiles([]);
+      }
+
+      if (galleryImages.length > 0) {
+        try {
+          for (const image of galleryImages) {
+            if (image.id && image.id !== 0) {
+              await updateImage(image.id, { order: image.order });
+            }
+          }
+          console.log('All images updated successfully');
+          setGalleryImages([]);
+        } catch (error) {
+          console.error('Error updating image orders:', error);
+          setError('Error updating image orders');
+          setShowErrorModal(true);
+        }
+      }
+
+      if (newPostId) {
+        setShowSuccessModal(true);
+        if (!slug) {
+          // If creating new, navigate to edit page
+          router.push(`/profile/posts/add-post?slug=${response.slug}`);
+        }
+      } else {
+        console.error(
+          `${capitalizeFirstLetter(
+            contentType
+          )} ID is not set. Navigation will not occur.`
+        );
+      }
+    } catch (error) {
+      setError(`Error ${slug ? 'updating' : 'creating'} ${contentType}`);
+      setShowErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEventListener('mousedown', handleClickOutside, isEditingDate);
+
+  // Loading skeleton for SSR compatibility
+  if (!isClient) {
+    return (
+      <div className="p-6 bg-white">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="flex space-x-6">
+            <div className="w-3/4 space-y-4">
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+            <div className="w-1/4 space-y-4">
+              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && contentLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 bg-white min-h-screen">
+      <div className="container mx-auto">
+        <div className="flex gap-6">
+          {/* Main Content */}
+          <div className="w-3/4">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {slug ? 'Edit' : 'Add New'} {capitalizeFirstLetter(contentType)}
+              </h1>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <button
+                  onClick={() => router.back()}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  ← Back to Posts
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Title */}
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="title"
+                >
+                  Title *
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="Enter post title..."
+                />
+              </div>
+
+              {/* Slug */}
+              <div>
+                <div className="flex items-center text-sm text-gray-700 mb-2">
+                  <label className="font-medium mr-2" htmlFor="slug">
+                    Slug:
+                  </label>
+                  <div className="flex items-center flex-1">
+                    <span className="text-gray-500">{baseURL}</span>
+                    {isEditingSlug ? (
+                      <div className="flex items-center ml-1">
+                        <input
+                          id="slug"
+                          type="text"
+                          value={postSlug}
+                          onChange={(e) => setPostSlug(e.target.value)}
+                          className="px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="post-slug"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!postSlug) {
+                              setPostSlug(slugify(title));
+                            }
+                            setIsEditingSlug(false);
+                          }}
+                          className="ml-2 px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                        >
+                          OK
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center ml-1">
+                        <span className="text-gray-900 font-medium">
+                          {postSlug || 'auto-generated-from-title'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingSlug(true)}
+                          className="ml-2 text-blue-600 hover:text-blue-800 text-xs underline"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="description"
+                >
+                  Content *
+                </label>
+                <div className="overflow-hidden">
+                  <StarBoundTextEditor
+                    value={description}
+                    onChange={handleDescriptionChange}
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-1/4 space-y-6">
+            {/* Publish Widget */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Publish</h3>
+              </div>
+              <div className="p-4 space-y-4">
+                {/* Date */}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Posted On:
+                  </label>
+                  {isEditingDate ? (
+                    <input
+                      id="date"
+                      type="datetime-local"
+                      value={date}
+                      ref={inputRef}
+                      onChange={handleDateChange}
+                      onBlur={() => setIsEditingDate(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setIsEditingDate(false);
+                        }
+                      }}
+                      className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  ) : (
+                    <span
+                      onClick={() => setIsEditingDate(true)}
+                      className="text-sm text-gray-600 cursor-pointer hover:text-blue-600"
+                    >
+                      {date
+                        ? new Date(date).toLocaleString()
+                        : new Date().toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">
+                    Status:
+                  </label>
+                  <select
+                    id="status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="p-4 bg-gray-50 border-t border-gray-200 space-y-3">
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="w-full py-3 px-4 text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                >
+                  {loading ? (
+                    <>
+                      <InlineLoaderIcon className="mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      {slug ? 'Update' : 'Publish'}{' '}
+                      {capitalizeFirstLetter(contentType)}
+                    </>
+                  )}
+                </button>
+
+                {/* Preview Button */}
+                {slug && (
+                  <a
+                    href={`/${contentType}s/${slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2 px-4 text-sm font-medium rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    Preview
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Categories Widget */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Categories
+                </h3>
+              </div>
+              <div className="p-4">
+                {categories.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {categories.map((category: Category) => {
+                      const isChecked = selectedCategories.some(
+                        (selectedCategory) =>
+                          selectedCategory.id === category.id
+                      );
+
+                      return (
+                        <label
+                          key={category.id}
+                          className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleCategoryChange(category)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {category.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No categories available
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Images Widget */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Images</h3>
+              </div>
+              <div className="p-4">
+                <GalleryImageUpload
+                  setSelectedFiles={setSelectedFiles}
+                  galleryImages={galleryImages}
+                  setGalleryImages={setGalleryImages}
+                  setDeletedImages={setDeletedImages}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <ModalAlert
+        isOpen={showErrorModal}
+        title="Error"
+        message={error || 'An unexpected error occurred.'}
+        onClose={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        onConfirm={() => {
+          setShowErrorModal(false);
+          setError(null);
+        }}
+        confirmText="OK"
+        cancelText=""
+      />
+
+      <ModalAlert
+        isOpen={showSuccessModal}
+        title="Success"
+        message={`${capitalizeFirstLetter(contentType)} saved successfully`}
+        onClose={() => {
+          setShowSuccessModal(false);
+        }}
+        onConfirm={() => {
+          setShowSuccessModal(false);
+        }}
+        confirmText="OK"
+        cancelText=""
+      />
+    </div>
+  );
+};
+
+export default AddPostPage;
