@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { fetchProductsForSections } from '@/services/api'; // Ensure this path is correct
+import { fetchProductsForSections } from '@/services/apiProducts'; // Ensure this path is correct
 import { Product } from '@/types/types';
 import ProductCardGrid from './ProdutctCardGrid';
 

@@ -1,6 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Prevent CSS caching issues
+  experimental: {
+    optimizeCss: true,
+  },
+  // Force CSS reloads in development
+  webpack: (config: any, { dev }: { dev: boolean }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
+  },
   images: {
+    domains: [
+      'logivis.com',
+      '127.0.0.1',
+      'localhost',
+      'pxrnjcxsxlridkkqehyo.supabase.co',
+    ],
     remotePatterns: [
       {
         protocol: 'http',
@@ -21,8 +41,8 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'your-production-domain.com', // Replace with your actual domain
-        pathname: '/media/**',
+        hostname: 'pxrnjcxsxlridkkqehyo.supabase.co',
+        pathname: '/storage/v1/object/**', // Supabase storage path
       },
     ],
     // Alternative: Use domains (deprecated but still works)
@@ -33,6 +53,13 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+
+    // Handle image loading errors gracefully
+    unoptimized: false,
+
+    // Improve image loading
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   // Other config options...
 };

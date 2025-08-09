@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 import Image from 'next/image';
 
 interface OrderItem {

@@ -1,18 +1,22 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
-import { Post } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 import Link from 'next/link';
+
+import SafeImage from '../UI/SafeImage';
 import HtmlContent from '@/helpers/content';
+import { CategoryName } from '@/helpers/fetching';
+import { getPublicImageUrl } from '@/helpers/media';
+
+import { Post } from '@/types/types';
+import { fetchPostsByCategory } from '@/services/api';
 
 const LatestNews: React.FC<{
-  filter: string;
+  categoryId: number;
   count: number;
   title?: string;
   viewAllLink?: string;
-}> = ({ filter, count, title = 'Post List', viewAllLink = '/posts' }) => {
+}> = ({ categoryId, count, title = 'Post List', viewAllLink = '/posts' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   // Ensure viewAllLink is never undefined
@@ -21,15 +25,15 @@ const LatestNews: React.FC<{
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPostsForSections(filter, count);
+        const data = await fetchPostsByCategory(categoryId, count);
         setPosts(data.results);
       } catch (error) {
-        console.error(`Error fetching ${filter} news:`, error);
+        console.error('Error fetching posts:', error);
       }
     };
 
     loadPosts();
-  }, [filter]);
+  }, [categoryId]);
 
   const popularPosts = posts
     .filter(
@@ -71,15 +75,22 @@ const LatestNews: React.FC<{
                       href={`posts/${post.slug}`}
                       className="h-full w-full block"
                     >
-                      <img
+                      <SafeImage
                         alt={post.title}
                         className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
                         sizes="(max-width: 768px) 30vw, 33vw"
-                        src={
-                          post.images && post.images[0]?.image_path
-                            ? post.images[0].image_path
-                            : '/assets/image_placeholder.jpg'
-                        }
+                        images={[
+                          {
+                            image_path: getPublicImageUrl(
+                              'posts',
+                              post.id,
+                              post.images?.[0]?.image_path
+                            ),
+                          },
+                        ]}
+                        fill
+                        width={400} // or your preferred width
+                        height={300} // or your preferred height
                       />
                     </a>
                   </div>
@@ -87,7 +98,10 @@ const LatestNews: React.FC<{
                     <div className="text-gray-600 dark:text-gray-400 mb-4">
                       {post.categories && post.categories.length > 0 ? (
                         post.categories.map((category, index) => (
-                          <span key={`${post.id}-category-${category}-${index}`} className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600">
+                          <span
+                            key={`${post.id}-category-${category}-${index}`}
+                            className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
+                          >
                             <CategoryName categoryId={category} />
                           </span>
                         ))

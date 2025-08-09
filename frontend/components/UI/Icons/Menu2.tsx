@@ -9,7 +9,7 @@ const MenuIcon2 = () => {
     >
       <path
         d="M3 12H15M3 6H21M3 18H21"
-        stroke="#fff"
+        stroke="#000"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -26,7 +26,7 @@ interface MenuItem {
   icon: ReactNode;
   text: string;
   subLinks?: SubLink[];
-  type: 'admin' | 'customer' | 'all'; // Added type property
+  type: ('admin' | 'staff' | 'client' | 'all')[];
 }
 
 const menuItems: MenuItem[] = [
@@ -35,49 +35,49 @@ const menuItems: MenuItem[] = [
     icon: <DashBoardIcon size={20} />,
     text: 'Dashboard',
     alert: true,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/wishlist',
     icon: <Heart size={20} />,
     text: 'Wishlist',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/orders',
     icon: <Cart size={20} />,
     text: 'Orders',
     alert: true,
-    type: 'admin', // Added type
+    type: ['admin', 'staff'],
   },
   {
     href: '/profile/orders',
     icon: <Cart size={20} />,
     text: 'My Orders',
     alert: true,
-    type: 'customer', // Added type
+    type: ['client'],
   },
   {
     href: '/profile/history',
     icon: <HistoryIcon size={20} />,
     text: 'History',
     alert: false,
-    type: 'customer', // Added type
+    type: ['client'],
   },
   {
     href: '/profile/reviews',
     icon: <HistoryIcon size={20} />,
-    text: 'All Reviews',
+    text: 'Reviews',
     alert: false,
-    type: 'admin', // Added type
+    type: ['admin', 'staff'],
   },
   {
     href: '/profile/my-reviews',
     icon: <HistoryIcon size={20} />,
-    text: 'Reviews',
+    text: 'My Reviews',
     alert: false,
-    type: 'customer', // Added type
+    type: ['client'],
   },
   {
     href: '#',
@@ -93,7 +93,7 @@ const menuItems: MenuItem[] = [
       },
     ],
     alert: false,
-    type: 'admin', // Added type
+    type: ['admin', 'staff'],
   },
   {
     href: '#',
@@ -117,7 +117,7 @@ const menuItems: MenuItem[] = [
       },
     ],
     alert: false,
-    type: 'admin', // Added type
+    type: ['admin', 'staff'],
   },
 ];
 
@@ -127,14 +127,14 @@ const personalInfoItems: MenuItem[] = [
     icon: <User />,
     text: 'Edit Profile',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/settings',
     icon: <CogWheelIcon size={20} />,
     text: 'Settings',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
 ];
 
@@ -144,21 +144,21 @@ const notificationsItems: MenuItem[] = [
     icon: <SMSIcon size={20} />,
     text: 'Messages',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/notifications',
     icon: <BellIcon size={20} />,
     text: 'Notifications',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/updates',
     icon: <UpdateIcon size={20} />,
     text: 'Updates',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
 ];
 
@@ -168,21 +168,21 @@ const supportItems: MenuItem[] = [
     icon: <SupportIcon size={20} />,
     text: 'Contact Support',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/help-center',
     icon: <HelpIcon size={20} />,
     text: 'Help Center',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
   {
     href: '/profile/feedback',
     icon: <FeedBackIcon size={20} />,
     text: 'Feedback',
     alert: false,
-    type: 'all', // Added type
+    type: ['all'],
   },
 ];
 

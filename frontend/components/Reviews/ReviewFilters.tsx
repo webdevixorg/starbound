@@ -1,9 +1,9 @@
 import React from 'react';
 import {
-  SORT_OPTIONS,
   FILTER_OPTIONS,
   RATING_FILTER_OPTIONS,
-} from '@/types/review';
+  SORT_OPTIONS,
+} from '@/lists/filterItems';
 
 interface ReviewFiltersProps {
   searchQuery: string;

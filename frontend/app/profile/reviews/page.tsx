@@ -277,17 +277,6 @@ export default function ReviewDashboardPage() {
           <BreadcrumbsComponent />
         </div>
 
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Review Management
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Manage customer reviews, approve or disapprove content, and respond
-            to feedback. Maintain quality standards for your travel platform.
-          </p>
-        </div>
-
         {/* ✅ Statistics Cards */}
         <ReviewStats reviews={state.reviews} />
 

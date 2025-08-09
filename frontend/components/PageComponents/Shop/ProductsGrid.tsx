@@ -4,9 +4,10 @@ import React from 'react';
 import ProductCardGrid from '@/components/PageComponents/ProdutctCardGrid';
 import ProductCardList from '@/components/PageComponents/ProdutctCardList';
 import PaginationControls from '@/components/Navigation/Pagination';
+import { Product } from '@/types/types';
 
 interface ProductsGridProps {
-  products: any[];
+  products: Product[];
   viewType: 'list' | 'grid';
   page: number;
   totalPosts: number;
@@ -22,7 +23,6 @@ const ProductsGrid: React.FC<ProductsGridProps> = ({
   page,
   totalPosts,
   pageSize,
-  loading,
   onPageChange,
 }) => {
   return (
@@ -31,7 +31,7 @@ const ProductsGrid: React.FC<ProductsGridProps> = ({
       <div>
         {viewType === 'list' ? (
           <ul className="space-y-4">
-            {products.map((product: any) => (
+            {products.map((product: Product) => (
               <ProductCardList key={product.id} product={product} />
             ))}
           </ul>

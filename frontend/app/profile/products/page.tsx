@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
 import { changePostStatus, deletePost, fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
+import SafeImage from '@/components/UI/SafeImage';
+import { getPublicImageUrl } from '@/helpers/media';
 
 const ProductsListPage: React.FC = () => {
-  const router = useRouter();
   const pathname = usePathname();
   const { contentTypes, loading: contentLoading } = useContent();
 
@@ -42,7 +43,7 @@ const ProductsListPage: React.FC = () => {
     if (contentLoading || !contentTypes) return;
 
     // Extract the base path from pathname
-    const pathSegments = pathname.split('/').filter(Boolean);
+    const pathSegments = (pathname ?? '').split('/').filter(Boolean);
     const basePath = pathSegments[pathSegments.length - 1]; // Get last segment (products)
 
     // Remove trailing "s" if it exists
@@ -348,13 +349,21 @@ const ProductsListPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
-                                <img
-                                  className="h-10 w-10 rounded-lg object-cover"
-                                  src={
-                                    post.featured_image ||
-                                    '/images/placeholder-product.png'
-                                  }
+                                <SafeImage
                                   alt={post.title}
+                                  className="inline-block mb-2 w-full mx-auto" // Added Tailwind's max-width and center alignment classes
+                                  images={[
+                                    {
+                                      image_path: getPublicImageUrl(
+                                        'products',
+                                        post.id,
+                                        post.images[0]?.image_path
+                                      ),
+                                    },
+                                  ]}
+                                  fallback="/images/placeholders/612x612.png"
+                                  width={100}
+                                  height={100}
                                 />
                               </div>
                               <div className="ml-4">
@@ -406,15 +415,15 @@ const ProductsListPage: React.FC = () => {
                                 post.status === 'Published'
                                   ? 'bg-green-100 text-green-800'
                                   : post.status === 'Draft'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
                               }`}
                             >
                               {post.status}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(post.date).toLocaleDateString()}
+                            {new Date(post.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                             <Link
@@ -503,8 +512,8 @@ const ProductsListPage: React.FC = () => {
                                 post.status === 'Published'
                                   ? 'bg-green-100 text-green-800'
                                   : post.status === 'Draft'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
                               }`}
                             >
                               {post.status}
@@ -512,7 +521,7 @@ const ProductsListPage: React.FC = () => {
                           </div>
                           <div className="flex items-center justify-between mt-3">
                             <span className="text-xs text-gray-500">
-                              {new Date(post.date).toLocaleDateString()}
+                              {new Date(post.created_at).toLocaleDateString()}
                             </span>
                             <div className="flex space-x-2">
                               <Link

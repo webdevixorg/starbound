@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils import timezone
+from django.utils.text import slugify
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.auth.models import User
 from categories.models import Category
@@ -16,7 +16,7 @@ class PostAbstract(models.Model):
     description = models.TextField(blank=True)
     images = GenericRelation('uploads.Image', related_query_name='posts')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)  # Automatic timestamping
+    created_at = models.DateTimeField(auto_now_add=True)  # Automatic timestamping
     content_type_id = models.PositiveSmallIntegerField(default=0)  # Saves space
 
     status = models.CharField(

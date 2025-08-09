@@ -214,7 +214,7 @@ export async function headerMenuItems() {
         { label: 'Sales', href: '/contact/sales' },
         { label: 'Partnerships', href: '/contact/partnerships' },
         { label: 'Feedback', href: '/feedback' },
-        { label: 'FAQ', href: '/faq' },
+        { label: 'Help Center', href: '/help-center' },
       ],
     },
   ];

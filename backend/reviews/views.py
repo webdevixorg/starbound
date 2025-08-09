@@ -17,8 +17,8 @@ class ReviewByProduct(APIView):
         if not product_id:
             return Response({'detail': 'product_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Only fetch approved reviews for the given product
-        reviews = Review.objects.filter(product_id=product_id, approved=True).order_by('-created_at')
+        # Only fetch approved reviews for the given product (status=1)
+        reviews = Review.objects.filter(product_id=product_id, status=1).order_by('-created_at')
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
 
@@ -43,8 +43,8 @@ class ReviewList(ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Review.objects.all().order_by('-created_at')
-        return Review.objects.filter(user=user).order_by('-created_at')
+            return Review.objects.exclude(status=0).order_by('-created_at')
+        return Review.objects.filter(user=user).exclude(status=0).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

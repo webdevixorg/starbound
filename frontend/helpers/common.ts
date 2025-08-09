@@ -25,6 +25,8 @@ export const formatDate = (dateStr: string) => {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   };
   return new Date(dateStr).toLocaleDateString(undefined, options);
 };
@@ -39,31 +41,24 @@ export const formatDateToISOString = (date?: string | Date): string => {
   return date ? new Date(date).toISOString() : new Date().toISOString();
 };
 
-// helpers/dateUtils.ts
-export const timeSince = (date: Date) => {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  let interval = Math.floor(seconds / 31536000);
+/**
+ * Get the time difference in a human-readable format.
+ * @param timestamp - The timestamp to compare against the current time.
+ * @returns A string representing the time difference (e.g., "2h ago", "3d ago").
+ */
+export const getTimeAgo = (timestamp: string) => {
+  const now = new Date();
+  const visitTime = new Date(timestamp);
+  const diffInHours = Math.floor(
+    (now.getTime() - visitTime.getTime()) / (1000 * 60 * 60)
+  );
 
-  if (interval > 1) {
-    return interval + ' years ago';
-  }
-  interval = Math.floor(seconds / 2592000);
-  if (interval > 1) {
-    return interval + ' months ago';
-  }
-  interval = Math.floor(seconds / 86400);
-  if (interval > 1) {
-    return interval + ' days ago';
-  }
-  interval = Math.floor(seconds / 3600);
-  if (interval > 1) {
-    return interval + ' hours ago';
-  }
-  interval = Math.floor(seconds / 60);
-  if (interval > 1) {
-    return interval + ' minutes ago';
-  }
-  return Math.floor(seconds) + ' seconds ago';
+  if (diffInHours < 1) return 'Just now';
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  return `${diffInWeeks}w ago`;
 };
 
 /**

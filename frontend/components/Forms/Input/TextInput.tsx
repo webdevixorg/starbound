@@ -7,6 +7,7 @@ interface TextInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
+  disabled?: boolean;
 }
 
 const TextInput: React.FC<TextInputProps> = ({

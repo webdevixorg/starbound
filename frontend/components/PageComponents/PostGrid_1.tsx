@@ -1,23 +1,27 @@
 'use client';
-
 import React, { useEffect, useState } from 'react';
-import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
-import { Post } from '@/types/types';
-import { formatDate } from '@/helpers/common';
-import { CategoryName } from '@/helpers/fetching';
+
+import SafeImage from '../UI/SafeImage';
 import HtmlContent from '@/helpers/content';
 
+import { formatDate } from '@/helpers/common';
+import { CategoryName } from '@/helpers/fetching';
+import { getPublicImageUrl } from '@/helpers/media';
+
+import { fetchPostsByCategory } from '@/services/api';
+import { Post } from '@/types/types';
+
 const PostGrid_1: React.FC<{
-  filter: string;
+  categoryId: number;
   count: number;
   title?: string;
-}> = ({ filter, count, title = 'Post List' }) => {
+}> = ({ categoryId, count, title = 'Post List' }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPostsForSections(filter, count);
+        const data = await fetchPostsByCategory(categoryId, count);
         setPosts(data.results);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -25,7 +29,7 @@ const PostGrid_1: React.FC<{
     };
 
     loadPosts();
-  }, [filter]);
+  }, [categoryId]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -46,15 +50,23 @@ const PostGrid_1: React.FC<{
                 style={{ height: '300px' }} // Set a fixed height for the container
               >
                 <div className="overflow-hidden h-full w-full">
-                  <img
+                  <SafeImage
                     alt={post.title}
-                    className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110" // Ensure image covers the container and scales on hover
+                    className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
                     sizes="(max-width: 768px) 30vw, 33vw"
-                    src={
-                      post.images && post.images[0]?.image_path
-                        ? post.images[0].image_path
-                        : '/assets/image_placeholder.jpg'
-                    }
+                    images={[
+                      {
+                        image_path: getPublicImageUrl(
+                          'posts',
+                          post.id,
+                          post.images?.[0]?.image_path
+                        ),
+                      },
+                    ]}
+                    fill
+                    width={400} // or your preferred width
+                    height={300} // or your preferred height
+                    priority
                   />
                 </div>
               </a>
@@ -63,7 +75,10 @@ const PostGrid_1: React.FC<{
               <div className="flex gap-3">
                 {post.categories && post.categories.length > 0 ? (
                   post.categories.map((category, index) => (
-                    <span key={`${post.id}-category-${category}-${index}`} className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600">
+                    <span
+                      key={`${post.id}-category-${category}-${index}`}
+                      className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600"
+                    >
                       <CategoryName categoryId={category} />
                     </span>
                   ))
@@ -92,18 +107,22 @@ const PostGrid_1: React.FC<{
                 <a href={`/authors/${post.author.id}`}>
                   <div className="flex items-center gap-3">
                     <div className="relative h-5 w-5 flex-shrink-0">
-                      <img
-                        alt={post.author.first_name}
-                        className="rounded-full object-cover"
-                        sizes="20px"
-                        src={post.author.profile.image}
-                        style={{
-                          position: 'absolute',
-                          height: '100%',
-                          width: '100%',
-                          inset: '0px',
-                          color: 'transparent',
-                        }}
+                      <SafeImage
+                        alt={
+                          post.author.first_name + ' ' + post.author.last_name
+                        }
+                        className="rounded-full h-5 w-5 object-cover mb-6 mr-6"
+                        images={[
+                          {
+                            image_path: getPublicImageUrl(
+                              'profiles',
+                              post.author.id,
+                              post.author.profile.image_path
+                            ),
+                          },
+                        ]}
+                        width={400}
+                        height={200}
                       />
                     </div>
                     <span className="truncate text-sm">
@@ -114,8 +133,8 @@ const PostGrid_1: React.FC<{
                 <span className="text-xs text-gray-300 dark:text-gray-600">
                   •
                 </span>
-                <time className="truncate text-sm" dateTime={post.date}>
-                  {formatDate(post.date)}
+                <time className="truncate text-sm" dateTime={post.created_at}>
+                  {formatDate(post.created_at)}
                 </time>
               </div>
             </div>

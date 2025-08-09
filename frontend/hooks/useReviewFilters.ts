@@ -30,10 +30,10 @@ export const useReviewFilters = (
     if (filterBy !== 'all') {
       switch (filterBy) {
         case 'approved':
-          filtered = filtered.filter((review) => review.approved);
+          filtered = filtered.filter((review) => review.status === 1);
           break;
         case 'pending':
-          filtered = filtered.filter((review) => !review.approved);
+          filtered = filtered.filter((review) => review.status === 0);
           break;
         case 'flagged':
           filtered = filtered.filter((review) => review.flagged);

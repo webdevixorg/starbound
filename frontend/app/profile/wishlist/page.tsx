@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/Common/Loading';
+import SafeImage from '@/components/UI/SafeImage';
+import HtmlContent from '@/helpers/content';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 import ModalAlert from '@/components/Modals/ModalAlert';
+import { getPublicImageUrl } from '@/helpers/media';
 
 // Types
 interface WishlistProduct {
@@ -115,9 +117,9 @@ export default function WishlistPage() {
   // Get product URL
   const getProductUrl = useCallback((product: WishlistProduct): string => {
     if (product.slug) {
-      return `/products/${product.slug}`;
+      return `/shop/${product.slug}`;
     }
-    return `/products/${product.id}`;
+    return `/shop/${product.id}`;
   }, []);
 
   // Loading states
@@ -267,16 +269,25 @@ export default function WishlistPage() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-20 w-20">
                               {item.product.images?.[0]?.image_path ? (
-                                <Image
-                                  src={item.product.images[0].image_path}
+                                <SafeImage
                                   alt={
                                     item.product.images[0].alt ||
                                     item.product.title
                                   }
+                                  className="h-20 w-20 object-cover rounded-lg"
+                                  images={[
+                                    {
+                                      image_path: getPublicImageUrl(
+                                        'products',
+                                        typeof item.product.id === 'string'
+                                          ? parseInt(item.product.id, 10)
+                                          : item.product.id,
+                                        item.product.images[0].image_path
+                                      ),
+                                    },
+                                  ]}
                                   width={80}
                                   height={80}
-                                  className="h-20 w-20 object-cover rounded-lg"
-                                  loading="lazy"
                                 />
                               ) : (
                                 <div className="h-20 w-20 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -384,15 +395,24 @@ export default function WishlistPage() {
                       <div className="flex space-x-4">
                         <div className="flex-shrink-0">
                           {item.product.images?.[0]?.image_path ? (
-                            <Image
-                              src={item.product.images[0].image_path}
+                            <SafeImage
                               alt={
                                 item.product.images[0].alt || item.product.title
                               }
+                              className="h-20 w-20 object-cover rounded-lg"
+                              images={[
+                                {
+                                  image_path: getPublicImageUrl(
+                                    'products',
+                                    typeof item.product.id === 'string'
+                                      ? parseInt(item.product.id, 10)
+                                      : item.product.id,
+                                    item.product.images[0].image_path
+                                  ),
+                                },
+                              ]}
                               width={80}
                               height={80}
-                              className="h-20 w-20 object-cover rounded-lg"
-                              loading="lazy"
                             />
                           ) : (
                             <div className="h-20 w-20 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -421,7 +441,9 @@ export default function WishlistPage() {
                           </Link>
                           {item.product.description && (
                             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                              {item.product.description}
+                              <HtmlContent
+                                htmlContent={item.product.description}
+                              />
                             </p>
                           )}
                           {item.product.location_name && (

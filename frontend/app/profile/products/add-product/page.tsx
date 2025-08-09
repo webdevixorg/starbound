@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useContent } from '@/context/ContentContext';
+import { fetchCategories } from '@/services/api';
 import {
-  fetchCategories,
   uploadImage,
   updateImage,
   deleteImage,
-} from '@/services/api';
+  saveImageUrlToDB,
+} from '@/services/images';
+
 import {
   createProduct,
   fetchProductBySlug,
@@ -43,7 +45,7 @@ interface Product extends ProductData {
 export default function AddProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const slug = searchParams.get('slug') || undefined;
+  const slug = searchParams ? searchParams.get('slug') || undefined : undefined;
 
   const { user } = useAuth();
   const { contentTypes, loading: contentLoading } = useContent();
@@ -79,7 +81,9 @@ export default function AddProductPage() {
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
   const [isClient, setIsClient] = useState(false);
-
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
+    new Set()
+  );
   // Product-specific states
   const [additionalInfo, setAdditionalInfo] = useState<string>('');
   const [shortDescription, setShortDescription] = useState<string>('');
@@ -104,6 +108,19 @@ export default function AddProductPage() {
   const baseURL = `${
     typeof window !== 'undefined' ? window.location.origin : ''
   }/${contentType}s/`;
+
+  // Toggle Category Expansion
+  const toggleCategoryExpansion = (categoryId: number) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
 
   // Validation function
   const validateForm = useCallback(() => {
@@ -218,7 +235,9 @@ export default function AddProductPage() {
           setTitle(fetchedProduct.title);
           setDescription(fetchedProduct.description);
           setPostSlug(fetchedProduct.slug);
-          setDate(new Date(fetchedProduct.date).toISOString().slice(0, 16));
+          setDate(
+            new Date(fetchedProduct.created_at).toISOString().slice(0, 16)
+          );
           setStatus(fetchedProduct.status);
           setSelectedCategories(fetchedProduct.categories);
           setGalleryImages(
@@ -227,6 +246,7 @@ export default function AddProductPage() {
                 id: image.id,
                 alt: image.alt,
                 image_path: image.image_path,
+                object_id: image.object_id,
                 order: image.order,
               }))
               .filter((image): image is Image => image.image_path !== undefined)
@@ -254,12 +274,61 @@ export default function AddProductPage() {
     loadData();
   }, [currentPage, contentTypeId, isEditing, slug, isClient]);
 
-  // Event handlers
+  // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(
     (category: Category) => {
-      setSelectedCategories((prevSelected) =>
-        toggleCategorySelection(prevSelected, category)
-      );
+      setSelectedCategories((prevSelected) => {
+        const isCurrentlySelected = prevSelected.some(
+          (selected) => selected.id === category.id
+        );
+
+        let newSelected = [...prevSelected];
+
+        if (isCurrentlySelected) {
+          // Remove the category
+          newSelected = newSelected.filter(
+            (selected) => selected.id !== category.id
+          );
+
+          // If removing a parent, also remove its children
+          if (category.children && category.children.length > 0) {
+            const childIds = category.children.map((child) => child.id);
+            newSelected = newSelected.filter(
+              (selected) => !childIds.includes(selected.id)
+            );
+          }
+
+          // If removing a child, check if we should remove parent
+          if (category.parent) {
+            const parentStillHasSelectedChildren = category.children?.some(
+              (child) =>
+                child.id !== category.id &&
+                newSelected.some((selected) => selected.id === child.id)
+            );
+
+            // Remove parent if no other children are selected and parent was auto-selected
+            if (!parentStillHasSelectedChildren) {
+              newSelected = newSelected.filter(
+                (selected) => selected.id !== category.id
+              );
+            }
+          }
+        } else {
+          // Add the category
+          newSelected.push(category);
+
+          // Auto-select parent if selecting a child (optional)
+          if (
+            category.parent &&
+            !newSelected.some((selected) => selected.id === category.id)
+          ) {
+            newSelected.push(category);
+          }
+        }
+
+        return newSelected;
+      });
+
       // Clear validation error
       if (validationErrors.categories) {
         setValidationErrors((prev) => ({ ...prev, categories: '' }));
@@ -338,11 +407,31 @@ export default function AddProductPage() {
         sublocation?: number;
       };
 
+      let response;
+
+      // Delete images
+      for (const image of deletedImages) {
+        if (image.id) {
+          await deleteImage(
+            image.object_id,
+            image.id,
+            contentType,
+            image.image_path
+          );
+        } else {
+          console.error('Image ID is undefined:', image);
+        }
+      }
+
+      setDeletedImages([]);
+
+      // Prepare productData without using response before declaration
       const productData: ExtendedProductData = {
+        id: 0, // Will be set after response
         title: title.trim(),
         description: DOMPurify.sanitize(description),
         slug: slugToSave,
-        date: formatDateToISOString(date),
+        created_at: formatDateToISOString(date),
         status,
         categories: selectedCategories.map((category) => category.id),
         user: user ? user.id.toString() : '',
@@ -351,7 +440,7 @@ export default function AddProductPage() {
         additional_info: DOMPurify.sanitize(additionalInfo),
         short_description: shortDescription.trim(),
         price: price ?? 0,
-        original_price: originalPrice ?? undefined,
+        original_price: originalPrice ?? 0,
         stock_quantity: stockQuantity ?? 0,
         compare_price: originalPrice ?? price ?? 0, // Added compare_price property
         sku: sku.trim(),
@@ -359,53 +448,66 @@ export default function AddProductPage() {
         sublocation: 1,
       };
 
-      // Delete images
-      for (const image of deletedImages) {
-        if (image.id) {
-          await deleteImage(image.id);
-        }
-      }
-      setDeletedImages([]);
-
-      let response;
-
       if (isEditing && slug) {
         // Create a copy without the extended properties for the API call
-        const { original_price, ...baseProductData } = productData;
-        response = await updateProduct(slug, {
-          ...baseProductData,
-          stock_quantity: productData.stock_quantity ?? 0,
-        });
+        response = await updateProduct(slug, productData);
       } else {
         // Create a copy without the extended properties for the API call
-        const { original_price, ...baseProductData } = productData;
-        response = await createProduct({
-          ...baseProductData,
-          stock_quantity: productData.stock_quantity ?? 0,
-        });
+        response = await createProduct(productData);
+      }
+
+      // Now set productData.id if editing and response.id exists
+      if (isEditing && response?.id) {
+        productData.id = response.id;
       }
 
       const newProductId = response.id;
 
       // Upload new images
       if (selectedFiles.length > 0 && newProductId) {
-        await Promise.all(
-          selectedFiles.map(async (file) => {
-            try {
-              const uploadedImageData = await uploadImage(
-                file,
-                title,
-                newProductId,
-                contentTypeId ?? 0
-              );
-              return { ...file, uploadedImageData };
-            } catch (error) {
-              console.error('Error uploading image:', error);
-              return null;
-            }
-          })
-        );
-        setSelectedFiles([]);
+        try {
+          const uploadedResults = await Promise.all(
+            selectedFiles.map(async (file) => {
+              try {
+                const uploadedImageData = await uploadImage(
+                  file.file,
+                  title,
+                  contentType,
+                  newProductId
+                );
+                return { ...file, uploadedImageData };
+              } catch (err) {
+                return null; // allow others to continue
+              }
+            })
+          );
+
+          const successfulUploads = uploadedResults.filter(Boolean);
+
+          if (successfulUploads.length > 0) {
+            // Save each image URL to Django
+            await Promise.all(
+              successfulUploads.map((item, idx) => {
+                if (item && item.uploadedImageData) {
+                  return saveImageUrlToDB(
+                    item.uploadedImageData.url,
+                    item.uploadedImageData.title,
+                    item.uploadedImageData.contentId,
+                    contentTypeId ?? 0,
+                    idx + 1 // or uploadedImageData.order if available
+                  );
+                }
+                return Promise.resolve();
+              })
+            );
+          }
+
+          setSelectedFiles([]);
+        } catch (err) {
+          console.error('❌ Unexpected error during batch upload:', err);
+          setError('Unexpected error during image upload');
+          setShowErrorModal(true);
+        }
       }
 
       // Update image orders
@@ -416,7 +518,6 @@ export default function AddProductPage() {
               await updateImage(image.id, { order: image.order });
             }
           }
-          setGalleryImages([]);
         } catch (error) {
           console.error('Error updating image orders:', error);
         }
@@ -651,7 +752,7 @@ export default function AddProductPage() {
                             type="text"
                             value={postSlug}
                             onChange={(e) => setPostSlug(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lgborder focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="product-slug"
                           />
                           <button
@@ -666,6 +767,13 @@ export default function AddProductPage() {
                           >
                             OK
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingSlug(false)}
+                            className="px-2 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">
@@ -674,15 +782,23 @@ export default function AddProductPage() {
                               slugify(title) ||
                               'auto-generated-from-title'}
                           </span>
-                          {!isEditing && (
-                            <button
-                              type="button"
-                              onClick={() => setIsEditingSlug(true)}
-                              className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
-                            >
-                              Edit
-                            </button>
-                          )}
+                          {/* Always show edit button - remove the !isEditing condition */}
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingSlug(true)}
+                            className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
+                          >
+                            Edit
+                          </button>
+                          {/* Add regenerate button for convenience */}
+                          <button
+                            type="button"
+                            onClick={() => setPostSlug(slugify(title))}
+                            className="text-green-600 hover:text-green-800 text-sm transition-colors"
+                            title="Generate slug from title"
+                          >
+                            Regenerate
+                          </button>
                         </div>
                       )}
                     </div>
@@ -837,7 +953,7 @@ export default function AddProductPage() {
                   Product Description
                 </h2>
                 <div
-                  className={`border rounded-lg overflow-hidden ${
+                  className={`rounded-lg overflow-hidden ${
                     validationErrors.description
                       ? 'border-red-300'
                       : 'border-gray-300'
@@ -860,7 +976,7 @@ export default function AddProductPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">
                   Additional Information
                 </h2>
-                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                <div className="rounded-lg overflow-hidden">
                   <StarBoundTextEditor
                     value={additionalInfo}
                     onChange={setAdditionalInfo}
@@ -937,7 +1053,7 @@ export default function AddProductPage() {
                   type="submit"
                   onClick={handleSubmit}
                   disabled={saving || loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-2 rounded-lg transition-colors flex items-center justify-center"
                 >
                   {saving ? (
                     <>
@@ -1015,33 +1131,117 @@ export default function AddProductPage() {
               </h3>
 
               {categories.length > 0 ? (
-                <div className="max-h-64 overflow-y-auto space-y-2">
+                <div className="max-h-64 overflow-y-auto space-y-1">
                   {categories.map((category: Category) => {
-                    const isChecked = selectedCategories.some(
+                    const hasChildren =
+                      category.children && category.children.length > 0;
+                    const isParentChecked = selectedCategories.some(
                       (selectedCategory) => selectedCategory.id === category.id
                     );
+                    const isExpanded = expandedCategories.has(category.id);
+
+                    // Count selected subcategories
+                    const selectedSubcategoriesCount = hasChildren
+                      ? category.children.filter((child) =>
+                          selectedCategories.some(
+                            (selected) => selected.id === child.id
+                          )
+                        ).length
+                      : 0;
 
                     return (
-                      <label
-                        key={category.id}
-                        className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleCategoryChange(category)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700">
-                          {category.name}
-                        </span>
-                      </label>
+                      <div key={category.id} className="space-y-1">
+                        {/* Parent Category */}
+                        <div className="flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleCategoryExpansion(category.id)}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                          >
+                            {hasChildren ? (
+                              <svg
+                                className={`w-3 h-3 text-gray-400 transition-transform ${
+                                  isExpanded ? 'rotate-90' : ''
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            ) : (
+                              // Spacer div to preserve layout
+                              <div className="w-3 h-3" />
+                            )}
+                          </button>
+
+                          <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors flex-1">
+                            <input
+                              type="checkbox"
+                              checked={isParentChecked}
+                              onChange={() => handleCategoryChange(category)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-800">
+                              {category.name}
+                            </span>
+                            {hasChildren && (
+                              <span className="text-xs text-gray-500 ml-auto">
+                                ({category.children.length})
+                                {selectedSubcategoriesCount > 0 && (
+                                  <span className="bg-blue-100 text-blue-800 ml-1 px-2 py-1 rounded-full mr-2">
+                                    {selectedSubcategoriesCount} +
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </label>
+                        </div>
+
+                        {/* Subcategories */}
+                        {hasChildren && isExpanded && (
+                          <div className="ml-4 space-y-1 border-l-2 border-gray-100 pl-3">
+                            {category.children.map((subcategory: Category) => {
+                              const isSubcategoryChecked =
+                                selectedCategories.some(
+                                  (selectedCategory) =>
+                                    selectedCategory.id === subcategory.id
+                                );
+
+                              return (
+                                <label
+                                  key={subcategory.id}
+                                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors group"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSubcategoryChecked}
+                                    onChange={() =>
+                                      handleCategoryChange(subcategory)
+                                    }
+                                    className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  />
+                                  <span className="text-xs text-gray-600 group-hover:text-gray-800">
+                                    {subcategory.name}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">No categories available</p>
               )}
+
               {validationErrors.categories && (
                 <p className="mt-2 text-sm text-red-600">
                   {validationErrors.categories}
@@ -1059,6 +1259,7 @@ export default function AddProductPage() {
                 galleryImages={galleryImages}
                 setGalleryImages={setGalleryImages}
                 setDeletedImages={setDeletedImages}
+                contentType={contentType}
               />
             </div>
           </div>

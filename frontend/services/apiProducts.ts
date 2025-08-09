@@ -23,6 +23,60 @@ const convertToFormData = (data: ProductData): FormData => {
 };
 
 export const fetchProducts = async (
+  orderBy: string,
+  page: number,
+  limit: number,
+  filters: {
+    type: string;
+    id?: number;
+    min?: number;
+    max?: number;
+    name?: string;
+  }[]
+) => {
+  // Validate parameters
+  if (typeof orderBy !== 'string' || orderBy.trim() === '') {
+    throw new Error('Invalid orderBy parameter');
+  }
+  if (!Number.isInteger(page) || page <= 0) {
+    throw new Error('Invalid page parameter');
+  }
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error('Invalid limit parameter');
+  }
+
+  // Construct URL
+  let url = `/products/f/?orderBy=${encodeURIComponent(
+    orderBy
+  )}&page=${page}&limit=${limit}`;
+
+  filters.forEach((filter) => {
+    if (filter.type === 'price') {
+      if (filter.min !== undefined) {
+        url += `&minPrice=${encodeURIComponent(filter.min)}`;
+      }
+      if (filter.max !== undefined) {
+        url += `&maxPrice=${encodeURIComponent(filter.max)}`;
+      }
+    } else if (filter.type === 'query' && filter.name) {
+      url += `&query=${encodeURIComponent(filter.name)}`;
+    } else {
+      url += `&${encodeURIComponent(filter.type)}=${encodeURIComponent(
+        filter.id || ''
+      )}`;
+    }
+  });
+
+  try {
+    const response = await fetchData(url);
+    return response;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw new Error('Error fetching products');
+  }
+};
+
+export const fetchProductsAuth = async (
   page: number = 1,
   pageSize: number = 10,
   contentType: number,
@@ -35,12 +89,9 @@ export const fetchProducts = async (
   previous: string | null;
 }> => {
   try {
-    const response = await axiosInstanceNoAuth.get(
-      `/${contentType}/${filter}`,
-      {
-        params: { page, pageSize },
-      }
-    );
+    const response = await axiosInstance.get(`/${contentType}/p/${filter}`, {
+      params: { page, pageSize },
+    });
     return response.data;
   } catch (error) {
     console.error(`Error fetching ${contentType}:`, error);
@@ -61,7 +112,7 @@ export const fetchTrashedProducts = async (
   previous: string | null;
 }> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/produts/${filter}`, {
+    const response = await axiosInstance.get(`/products/p/${filter}`, {
       params: { is_deleted: isDeleted, page, page_size: pageSize },
     });
     return response.data;
@@ -73,8 +124,8 @@ export const fetchTrashedProducts = async (
 
 export const trashProduct = async (slug: string) => {
   try {
-    const response = await axiosInstanceNoAuth.patch(
-      `/posts/s/${slug}/soft-delete/`,
+    const response = await axiosInstance.patch(
+      `/posts/p/${slug}/soft-delete/`,
       {
         is_deleted: true,
       },
@@ -103,7 +154,7 @@ export const fetchProductsForSections = async (
   results: Product[];
 }> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/products/${filter}/`, {
+    const response = await axiosInstanceNoAuth.get(`/products/f/${filter}/`, {
       params: { count },
     });
     return response.data;
@@ -115,7 +166,39 @@ export const fetchProductsForSections = async (
 
 export const fetchProductBySlug = async (slug: string): Promise<Product> => {
   try {
-    const response = await axiosInstanceNoAuth.get(`/products/${slug}`);
+    const response = await axiosInstanceNoAuth.get(`/products/f/${slug}`);
+    const postData = response.data;
+
+    // Fetch category details for each category ID
+    const categoryPromises = postData.categories.map(
+      async (category: number) => {
+        const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
+          `/categories/${category}`
+        );
+        return categoryResponse.data;
+      }
+    );
+
+    const categories: Category[] = await Promise.all(categoryPromises);
+
+    // Replace response.data.categories with the fetched category details
+    const result = {
+      ...postData,
+      categories: categories,
+    };
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    throw error;
+  }
+};
+
+export const fetchProductBySlugAuth = async (
+  slug: string
+): Promise<Product> => {
+  try {
+    const response = await axiosInstance.get(`/products/p/${slug}`);
     const postData = response.data;
 
     // Fetch category details for each category ID
@@ -200,7 +283,7 @@ export const updateProduct = async (
 
     // Send the formData to the backend
     const response = await axiosInstance.put(
-      `/${data.contentType}s/${slug}/`,
+      `/${data.contentType}s/p/${slug}/`,
       formData,
       {
         headers: {
@@ -229,7 +312,7 @@ export const fetchSubLocations = async (locationId: number | string) => {
 // Helper function to handle data fetching and error handling
 
 export const fetchFeaturedAds = async () => {
-  return fetchData('/products/');
+  return fetchData('/products/f/featured/');
 };
 
 export const fetchRelatedProducts = async (slug: string) => {
@@ -357,12 +440,12 @@ export const fetchReview = async (reviewId: number): Promise<any> => {
 
 export async function updateReviewApproval(
   id: number,
-  data: { approved: boolean }
+  data: { status: number }
 ): Promise<void> {
   try {
     await axiosInstance.patch(`/reviews/${id}/`, data);
   } catch (error) {
-    throw new Error('Failed to update review approval');
+    throw new Error('Failed to update review status');
   }
 }
 
@@ -399,7 +482,7 @@ export const fetchAllReviewsWithFilters = async (params?: {
   page?: number;
   page_size?: number;
   search?: string;
-  approved?: boolean | null;
+  status?: number | null;
   rating?: number | null;
   ordering?: string;
 }): Promise<any> => {
@@ -410,8 +493,8 @@ export const fetchAllReviewsWithFilters = async (params?: {
     if (params?.page_size)
       searchParams.append('page_size', params.page_size.toString());
     if (params?.search) searchParams.append('search', params.search);
-    if (params?.approved !== undefined && params?.approved !== null) {
-      searchParams.append('approved', params.approved.toString());
+    if (params?.status !== undefined && params?.status !== null) {
+      searchParams.append('status', params.status.toString());
     }
     if (params?.rating) searchParams.append('rating', params.rating.toString());
     if (params?.ordering) searchParams.append('ordering', params.ordering);
@@ -444,18 +527,18 @@ export const bulkUpdateReviews = async (
 // Update existing updateReviewApproval to return proper response
 export async function updateReviewApprovalEnhanced(
   id: number,
-  approved: boolean
+  status: number
 ): Promise<any> {
   try {
-    const response = await axiosInstance.patch(`/reviews/${id}/`, { approved });
+    const response = await axiosInstance.patch(`/reviews/${id}/`, { status });
     return {
       id,
-      approved,
-      message: `Review ${approved ? 'approved' : 'disapproved'} successfully.`,
+      status,
+      message: `Review ${status === 1 ? 'approved' : status === 0 ? 'set to pending' : 'moved to trash'} successfully.`,
       data: response.data,
     };
   } catch (error) {
-    console.error('Failed to update review approval:', error);
-    throw new Error('Failed to update review approval');
+    console.error('Failed to update review status:', error);
+    throw new Error('Failed to update review status');
   }
 }

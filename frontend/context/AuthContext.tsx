@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<'admin' | 'customer' | null>(null);
+  const [role, setRole] = useState<'admin' | 'staff' | 'client' | null>(null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const isTokenExpired = (token: string) => {
@@ -50,11 +50,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const profileData = await fetchProfile();
       const userData = profileData.user;
-      setUser(userData);
+      setUser(userData ?? null);
       setProfile(profileData);
 
       if (Array.isArray(userData?.groups)) {
-        setRole(userData.groups.includes(1) ? 'admin' : 'customer');
+        setRole(userData.groups.includes(1) ? 'admin' : 'staff');
       } else {
         setRole(null);
       }

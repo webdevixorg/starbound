@@ -20,6 +20,7 @@ interface ShopHeaderProps {
   onClearAllFilters: () => void;
   onOrderChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onViewChange: (type: 'list' | 'grid') => void;
+  onSearch: (searchQuery: string, categorySlug?: string) => void;
 }
 
 const ShopHeader: React.FC<ShopHeaderProps> = ({
@@ -52,7 +53,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
             <div className="text-gray-600">
               {query && (
                 <span className="block text-sm mb-1">
-                  Search results for: <strong>"{query}"</strong>
+                  Search results for: <strong>&quot;{query}&quot;</strong>
                 </span>
               )}
               <span className="text-sm">

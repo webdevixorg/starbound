@@ -49,10 +49,15 @@ const ProfileLayoutClient: React.FC<ProfileLayoutProps> = ({ children }) => {
   const filteredMenuItems = React.useMemo(() => {
     return sidebarMenuItems
       .filter((item) => {
-        if (item.type === 'all') {
+        if (
+          (Array.isArray(item.type) && item.type.includes('all')) ||
+          item.type === 'all'
+        ) {
           return true;
         }
-        return item.type === role;
+        return Array.isArray(item.type)
+          ? item.type.includes(role)
+          : item.type === role;
       })
       .filter((item) => {
         // Filter out items with invalid hrefs

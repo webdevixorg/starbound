@@ -49,6 +49,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, getHtml }) => {
         class: 'editor-content',
       },
     },
+    immediatelyRender: false,
   });
 
   const [modalIsOpen, setIsOpen] = useState(false);

@@ -129,8 +129,8 @@ export default function CareerForm() {
               Submit Your Application
             </h2>
             <p className="text-gray-600">
-              Ready to join our team? Fill out the form below and we'll get back
-              to you soon.
+              Ready to join our team? Fill out the form below and we&apos;ll get
+              back to you soon.
             </p>
           </div>
 

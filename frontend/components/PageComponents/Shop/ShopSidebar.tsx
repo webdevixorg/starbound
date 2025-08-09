@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import CollapsibleSection from '@/components/PageComponents/Sidebar/ProfileSidebar/CollapsibleSection';
 import ProductListSidebar from '@/components/PageComponents/ProductListSidebar';
 import CategoryFilter from './Filters/CategoryFilter';
 import LocationFilter from './Filters/LocationFilter';

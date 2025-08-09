@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+
 import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
 import { Post } from '@/types/types';
 import { formatDate } from '@/helpers/common';
 import { CategoryName } from '@/helpers/fetching';
+import SafeImage from '../UI/SafeImage';
+import { getPublicImageUrl } from '@/helpers/media';
 
 const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -44,15 +47,21 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
                 href={`/posts/${post.slug}`}
                 className="block relative overflow-hidden w-full h-full"
               >
-                <img
+                <SafeImage
                   alt={post.title}
                   className="object-cover w-full h-full transition-transform duration-500 ease-in-out transform hover:scale-110"
-                  sizes="(max-width: 768px) 30vw, 33vw"
-                  src={
-                    post.images && post.images[0]?.image_path
-                      ? post.images[0].image_path
-                      : '/assets/image_placeholder.jpg'
-                  }
+                  images={[
+                    {
+                      image_path: getPublicImageUrl(
+                        'posts',
+                        post.id,
+                        post.images?.[0]?.image_path
+                      ),
+                    },
+                  ]}
+                  fallback="/images/placeholders/612x612.png"
+                  width={500}
+                  height={150}
                 />
               </a>
             </div>
@@ -63,7 +72,10 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
                 {post.categories && post.categories.length > 0 ? (
                   <div className="flex flex-wrap gap-2 mb-1">
                     {post.categories.map((category, index) => (
-                      <span key={`${post.id}-category-${category}-${index}`} className="text-xs font-medium tracking-wider uppercase text-blue-600">
+                      <span
+                        key={`${post.id}-category-${category}-${index}`}
+                        className="text-xs font-medium tracking-wider uppercase text-blue-600"
+                      >
                         <CategoryName categoryId={category} />
                       </span>
                     ))}
@@ -89,11 +101,22 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
                   href={`/authors/${post.author.id}`}
                   className="flex items-center gap-3"
                 >
-                  <img
-                    alt={post.author.first_name}
+                  <SafeImage
+                    alt={post.author.first_name + ' ' + post.author.last_name}
                     className="h-6 w-6 rounded-full object-cover"
-                    src={post.author.profile.image}
+                    images={[
+                      {
+                        image_path: getPublicImageUrl(
+                          'profiles',
+                          post.author.id,
+                          post.author.profile.image_path
+                        ),
+                      },
+                    ]}
+                    width={400}
+                    height={400}
                   />
+
                   <span className="truncate text-sm">
                     {post.author.first_name}
                   </span>
@@ -105,9 +128,9 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
 
                 <time
                   className="text-xs font-semibold text-gray-300 dark:text-gray-600"
-                  dateTime={post.date}
+                  dateTime={post.created_at}
                 >
-                  {formatDate(post.date)}
+                  {formatDate(post.created_at)}
                 </time>
               </div>
             </div>

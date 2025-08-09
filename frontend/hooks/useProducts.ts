@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
-import { fetchProducts } from '@/services/api';
-import { Filter, Category } from '@/types/types';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { fetchProducts } from '@/services/apiProducts';
+import { Filter, Category, Product } from '@/types/types';
 import debounce from 'lodash.debounce';
 
 interface UseProductsProps {
@@ -8,7 +8,7 @@ interface UseProductsProps {
   query: string;
   selectedCategory: string;
   categories: Category[];
-  setProducts: (products: any[]) => void;
+  setProducts: (products: Product[]) => void;
   setTotalPosts: (total: number) => void;
 }
 
@@ -59,26 +59,42 @@ export const useProducts = ({
         // Store current parameters
         currentParamsRef.current = { orderBy, page, filters };
 
-        // Build query filter
+        // Build query filter from search input
         const queryFilter = query.trim()
-          ? [{ type: 'query', id: 0, name: query }]
+          ? [{ type: 'query', id: 0, name: query.trim() }]
           : [];
 
-        // Build category filter
-        const categoryFilter =
-          selectedCategory && selectedCategory !== 'All Categories'
-            ? [{ type: 'categories', id: 0, name: selectedCategory }]
-            : [];
+        // Build category filter from selected category
+        let categoryFilter: Filter[] = [];
+        if (
+          selectedCategory &&
+          selectedCategory.trim() &&
+          categories.length > 0
+        ) {
+          // Find category by slug or name
+          const category = categories.find(
+            (cat) =>
+              cat.slug === selectedCategory.trim() ||
+              cat.name === selectedCategory.trim()
+          );
 
-        // Combine all filters
-        const combinedFilters = [...filters, ...queryFilter, ...categoryFilter];
+          if (category) {
+            categoryFilter = [
+              { type: 'categories', id: category.id, name: category.name },
+            ];
+          }
+        }
 
-        console.log('Fetching products with filters:', {
-          orderBy,
-          page,
-          pageSize,
-          combinedFilters,
-        });
+        // Combine all filters (avoid duplicates)
+        const combinedFilters = [
+          ...filters,
+          ...queryFilter,
+          ...categoryFilter,
+        ].filter(
+          (filter, index, self) =>
+            index ===
+            self.findIndex((f) => f.type === filter.type && f.id === filter.id)
+        );
 
         const data = await fetchProducts(
           orderBy,
@@ -100,18 +116,16 @@ export const useProducts = ({
             })
           );
 
-          console.log('Fetched products:', enrichedProducts);
-
           setProducts(enrichedProducts);
           setTotalPosts(data.count || 0);
         } else {
-          console.error('Unexpected data format:', data);
+          console.error('❌ Unexpected data format:', data);
           setError('Invalid data format received');
           setProducts([]);
           setTotalPosts(0);
         }
       } catch (err) {
-        console.error('Error fetching products:', err);
+        console.error('❌ Error fetching products:', err);
         setError(
           err instanceof Error ? err.message : 'Failed to fetch products'
         );
@@ -138,6 +152,16 @@ export const useProducts = ({
     const { orderBy, page, filters } = currentParamsRef.current;
     fetchData(orderBy, page, filters);
   }, [fetchData]);
+
+  // Auto-fetch when query or category changes
+  useEffect(() => {
+    // Only fetch if we have categories loaded OR if there's a search query
+    if (categories.length > 0 || query.trim()) {
+      // Use current filters from the component
+      const currentFilters = currentParamsRef.current.filters || [];
+      debouncedFetchData('id', 1, currentFilters); // Reset to first page with default sorting
+    }
+  }, [query, selectedCategory, categories, debouncedFetchData]);
 
   return {
     loading,

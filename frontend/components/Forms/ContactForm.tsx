@@ -10,7 +10,6 @@ interface ContactFormProps {
 }
 
 const ContactForm: React.FC<ContactFormProps> = ({
-  companyEmail,
   supportEmail,
   companyPhone,
 }) => {
@@ -84,8 +83,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
           Send us a Message
         </h2>
         <p className="text-gray-700 leading-relaxed text-lg mb-8">
-          Fill out the form below and we'll get back to you as soon as possible.
-          We typically respond within 24 hours during business days.
+          Fill out the form below and we&apos;ll get back to you as soon as
+          possible. We typically respond within 24 hours during business days.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -346,8 +345,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
               Can I schedule a call?
             </h4>
             <p className="text-gray-700 text-sm mb-4">
-              Absolutely! Mention your preferred time in the message and we'll
-              arrange a call.
+              Absolutely! Mention your preferred time in the message and
+              we&apos;ll arrange a call.
             </p>
 
             <h4 className="font-semibold text-gray-900 mb-2">

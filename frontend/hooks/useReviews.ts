@@ -77,25 +77,29 @@ export const useReviews = (isAuthorized: boolean, user: any) => {
 
   // Handle approval toggle
   const handleApprovalToggle = useCallback(
-    async (id: number, approved: boolean) => {
+    async (id: number, status: number) => {
       setState((prev) => ({ ...prev, updatingId: id }));
 
       try {
-        await updateReviewApproval(id, { approved });
+        await updateReviewApproval(id, { status });
 
         setState((prev) => ({
           ...prev,
           reviews: prev.reviews.map((r) =>
-            r.id === id ? { ...r, approved } : r
+            r.id === id ? { ...r, status } : r
           ),
           updatingId: null,
           success: `Review ${
-            approved ? 'approved' : 'disapproved'
+            status === 1
+              ? 'approved'
+              : status === 0
+                ? 'set to pending'
+                : 'moved to trash'
           } successfully.`,
           showSuccessModal: true,
         }));
       } catch (error) {
-        console.error('Failed to update approval:', error);
+        console.error('Failed to update status:', error);
         setState((prev) => ({
           ...prev,
           error: 'Failed to update approval status. Please try again.',

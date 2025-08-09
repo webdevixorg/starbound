@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { fetchCategories } from '@/services/api';
@@ -35,9 +35,9 @@ export default function CategoryButton() {
   }, []);
 
   return (
-    <div className="relative w-[279px] z-50">
+    <div className="relative mr-4 w-[250px]">
       <button
-        className="w-full text-left font-semibold text-sm flex items-center justify-between bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-t-md"
+        className="w-full text-left font-semibold text-sm flex items-center justify-between bg-white text-black py-3 pr-4 rounded-t-md"
         onClick={() => setMenuOpen(!menuOpen)}
       >
         <MenuIcon2 />

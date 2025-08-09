@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useContent } from '@/context/ContentContext';
-import { changePostStatus, deletePost, fetchPosts } from '@/services/api';
+import { changePostStatus, deletePost, fetchPostsAuth } from '@/services/api';
 import { Post } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -15,17 +15,19 @@ const PostListPage: React.FC = () => {
 
   const [contentTypeId, setContentTypeId] = useState<number>(0);
   const [contentType, setContentType] = useState<string>('');
-  const [nonTrashedPosts, setNonTrashedPosts] = useState<Post[]>([]);
+  const [activePosts, setActivePosts] = useState<Post[]>([]);
+  const [draftPosts, setDraftPosts] = useState<Post[]>([]);
   const [trashedPosts, setTrashedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [nonDeletedCurrentPage, setNonDeletedCurrentPage] = useState<number>(1);
-  const [deletedCurrentPage, setDeletedCurrentPage] = useState<number>(1);
-  const [nontrashedTotalPages, setNontrashedTotalPages] = useState<number>(1);
+  const [activeCurrentPage, setActiveCurrentPage] = useState<number>(1);
+  const [draftCurrentPage, setDraftCurrentPage] = useState<number>(1);
+  const [trashedCurrentPage, setTrashedCurrentPage] = useState<number>(1);
+  const [activeTotalPages, setActiveTotalPages] = useState<number>(1);
+  const [draftTotalPages, setDraftTotalPages] = useState<number>(1);
   const [trashedTotalPages, setTrashedTotalPages] = useState<number>(1);
   const [pageSize] = useState<number>(10);
   const [activeTab, setActiveTab] = useState<string>('active');
-  const [status] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
 
   // Ensure client-side rendering
@@ -46,10 +48,7 @@ const PostListPage: React.FC = () => {
   useEffect(() => {
     if (!isClient || contentLoading || !contentTypes) return;
 
-    // Extract the base path from pathname
-    const basePath = pathname.split('/')[2]; // For /profile/posts, get 'posts'
-
-    // Remove trailing "s" if it exists
+    const basePath = pathname ? pathname.split('/')[2] : '';
     let contentTypeName = basePath;
     if (basePath?.endsWith('s')) {
       contentTypeName = basePath.slice(0, -1);
@@ -70,34 +69,46 @@ const PostListPage: React.FC = () => {
 
   // Load posts function
   const loadPosts = useCallback(
-    async (page: number, isDeleted: boolean) => {
+    async (page: number, tab: 'active' | 'draft' | 'trashed') => {
       if (!matchedContentType) return;
 
       try {
         setLoading(true);
 
-        if (isDeleted) {
-          const deletedResponse = await fetchPosts(
-            page,
-            pageSize,
-            'Deleted',
-            '',
-            matchedContentType.model
-          );
-          setTrashedPosts(deletedResponse.results);
-          setTrashedTotalPages(Math.ceil(deletedResponse.count / pageSize));
-        } else {
-          const nonDeletedResponse = await fetchPosts(
-            page,
-            pageSize,
-            status,
-            '',
-            matchedContentType.model
-          );
-          setNonTrashedPosts(nonDeletedResponse.results);
-          setNontrashedTotalPages(
-            Math.ceil(nonDeletedResponse.count / pageSize)
-          );
+        let status = '';
+        switch (tab) {
+          case 'active':
+            status = 'published';
+            break;
+          case 'draft':
+            status = 'draft';
+            break;
+          case 'trashed':
+            status = 'deleted';
+            break;
+        }
+
+        const response = await fetchPostsAuth(
+          page,
+          pageSize,
+          status,
+          '',
+          matchedContentType.model
+        );
+
+        switch (tab) {
+          case 'active':
+            setActivePosts(response.results);
+            setActiveTotalPages(Math.ceil(response.count / pageSize));
+            break;
+          case 'draft':
+            setDraftPosts(response.results);
+            setDraftTotalPages(Math.ceil(response.count / pageSize));
+            break;
+          case 'trashed':
+            setTrashedPosts(response.results);
+            setTrashedTotalPages(Math.ceil(response.count / pageSize));
+            break;
         }
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -106,7 +117,7 @@ const PostListPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [matchedContentType, pageSize, status]
+    [matchedContentType, pageSize]
   );
 
   // Load posts when dependencies change
@@ -114,29 +125,58 @@ const PostListPage: React.FC = () => {
     if (!isClient || contentLoading || !matchedContentType || !contentTypeId)
       return;
 
-    if (activeTab === 'trashed') {
-      loadPosts(deletedCurrentPage, true);
-    } else {
-      loadPosts(nonDeletedCurrentPage, false);
-    }
+    loadPosts(
+      activeTab === 'active'
+        ? activeCurrentPage
+        : activeTab === 'draft'
+          ? draftCurrentPage
+          : trashedCurrentPage,
+      activeTab as 'active' | 'draft' | 'trashed'
+    );
   }, [
     isClient,
     contentTypeId,
     activeTab,
-    nonDeletedCurrentPage,
-    deletedCurrentPage,
+    activeCurrentPage,
+    draftCurrentPage,
+    trashedCurrentPage,
     loadPosts,
     contentLoading,
     matchedContentType,
   ]);
 
+  const handlePublish = useCallback(
+    async (slug: string) => {
+      try {
+        await changePostStatus(slug, contentType, 'published');
+        setDraftPosts((prevPosts) =>
+          prevPosts.filter((post) => post.slug !== slug)
+        );
+        // Refresh the active posts
+        loadPosts(activeCurrentPage, 'active');
+      } catch (error) {
+        console.error('Error publishing post:', error);
+        setError('Error publishing post');
+      }
+    },
+    [contentType, loadPosts, activeCurrentPage]
+  );
+
   const handleTrash = useCallback(
     async (slug: string) => {
       try {
-        await changePostStatus(slug, contentType, 'Deleted');
-        setNonTrashedPosts((prevPosts) =>
-          prevPosts.filter((post) => post.slug !== slug)
-        );
+        await changePostStatus(slug, contentType, 'deleted');
+
+        if (activeTab === 'active') {
+          setActivePosts((prevPosts) =>
+            prevPosts.filter((post) => post.slug !== slug)
+          );
+        } else if (activeTab === 'draft') {
+          setDraftPosts((prevPosts) =>
+            prevPosts.filter((post) => post.slug !== slug)
+          );
+        }
+
         // Refresh the trashed posts count
         setTrashedTotalPages((prev) => prev + 1);
       } catch (error) {
@@ -144,24 +184,29 @@ const PostListPage: React.FC = () => {
         setError('Error trashing post');
       }
     },
-    [contentType]
+    [contentType, activeTab]
   );
 
   const handleRestore = useCallback(
-    async (slug: string) => {
+    async (slug: string, targetStatus: 'published' | 'draft' = 'draft') => {
       try {
-        await changePostStatus(slug, contentType, 'Published');
+        await changePostStatus(slug, contentType, targetStatus);
         setTrashedPosts((prevPosts) =>
           prevPosts.filter((post) => post.slug !== slug)
         );
-        // Refresh the non-trashed posts
-        loadPosts(nonDeletedCurrentPage, false);
+
+        // Refresh the appropriate tab
+        if (targetStatus === 'published') {
+          loadPosts(activeCurrentPage, 'active');
+        } else {
+          loadPosts(draftCurrentPage, 'draft');
+        }
       } catch (error) {
         console.error('Error restoring post:', error);
         setError('Error restoring post');
       }
     },
-    [contentType, loadPosts, nonDeletedCurrentPage]
+    [contentType, loadPosts, activeCurrentPage, draftCurrentPage]
   );
 
   const handleDelete = useCallback(
@@ -184,40 +229,57 @@ const PostListPage: React.FC = () => {
   );
 
   const handlePreviousPage = useCallback(() => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage > 1) {
-        setDeletedCurrentPage((prev) => prev - 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage > 1) {
-        setNonDeletedCurrentPage((prev) => prev - 1);
-      }
+    if (activeTab === 'active' && activeCurrentPage > 1) {
+      setActiveCurrentPage((prev) => prev - 1);
+    } else if (activeTab === 'draft' && draftCurrentPage > 1) {
+      setDraftCurrentPage((prev) => prev - 1);
+    } else if (activeTab === 'trashed' && trashedCurrentPage > 1) {
+      setTrashedCurrentPage((prev) => prev - 1);
     }
-  }, [activeTab, deletedCurrentPage, nonDeletedCurrentPage]);
+  }, [activeTab, activeCurrentPage, draftCurrentPage, trashedCurrentPage]);
 
   const handleNextPage = useCallback(() => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage < trashedTotalPages) {
-        setDeletedCurrentPage((prev) => prev + 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage < nontrashedTotalPages) {
-        setNonDeletedCurrentPage((prev) => prev + 1);
-      }
+    if (activeTab === 'active' && activeCurrentPage < activeTotalPages) {
+      setActiveCurrentPage((prev) => prev + 1);
+    } else if (activeTab === 'draft' && draftCurrentPage < draftTotalPages) {
+      setDraftCurrentPage((prev) => prev + 1);
+    } else if (
+      activeTab === 'trashed' &&
+      trashedCurrentPage < trashedTotalPages
+    ) {
+      setTrashedCurrentPage((prev) => prev + 1);
     }
   }, [
     activeTab,
-    deletedCurrentPage,
+    activeCurrentPage,
+    activeTotalPages,
+    draftCurrentPage,
+    draftTotalPages,
+    trashedCurrentPage,
     trashedTotalPages,
-    nonDeletedCurrentPage,
-    nontrashedTotalPages,
   ]);
 
-  const posts = activeTab === 'active' ? nonTrashedPosts : trashedPosts;
+  // Get current tab data
+  const posts =
+    activeTab === 'active'
+      ? activePosts
+      : activeTab === 'draft'
+        ? draftPosts
+        : trashedPosts;
+
   const currentPage =
-    activeTab === 'active' ? nonDeletedCurrentPage : deletedCurrentPage;
+    activeTab === 'active'
+      ? activeCurrentPage
+      : activeTab === 'draft'
+        ? draftCurrentPage
+        : trashedCurrentPage;
+
   const totalPages =
-    activeTab === 'active' ? nontrashedTotalPages : trashedTotalPages;
+    activeTab === 'active'
+      ? activeTotalPages
+      : activeTab === 'draft'
+        ? draftTotalPages
+        : trashedTotalPages;
 
   // Show loading skeleton until client-side hydration
   if (!isClient) {
@@ -226,6 +288,7 @@ const PostListPage: React.FC = () => {
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="flex space-x-2 mb-4">
+            <div className="h-10 bg-gray-200 rounded w-20"></div>
             <div className="h-10 bg-gray-200 rounded w-20"></div>
             <div className="h-10 bg-gray-200 rounded w-20"></div>
           </div>
@@ -270,7 +333,10 @@ const PostListPage: React.FC = () => {
           <button
             onClick={() => {
               setError(null);
-              loadPosts(currentPage, activeTab === 'trashed');
+              loadPosts(
+                currentPage,
+                activeTab as 'active' | 'draft' | 'trashed'
+              );
             }}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -305,13 +371,23 @@ const PostListPage: React.FC = () => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Active Posts
+              Published
+            </button>
+            <button
+              onClick={() => setActiveTab('draft')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'draft'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Drafts
             </button>
             <button
               onClick={() => setActiveTab('trashed')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'trashed'
-                  ? 'bg-white text-blue-600 shadow-sm'
+                  ? 'bg-white text-red-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -334,24 +410,49 @@ const PostListPage: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  d={
+                    activeTab === 'draft'
+                      ? 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                      : 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                  }
                 />
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {activeTab === 'active' ? 'No posts yet' : 'No trashed posts'}
+              {activeTab === 'active'
+                ? 'No published posts yet'
+                : activeTab === 'draft'
+                  ? 'No draft posts yet'
+                  : 'No trashed posts'}
             </h3>
             <p className="text-gray-600">
               {activeTab === 'active'
-                ? 'Create your first post to get started.'
-                : 'Trashed posts will appear here.'}
+                ? 'Publish your first post to see it here.'
+                : activeTab === 'draft'
+                  ? 'Draft posts will appear here while you work on them.'
+                  : 'Trashed posts will appear here.'}
             </p>
+            {activeTab === 'draft' && (
+              <Link
+                href={`/profile/posts/create`}
+                className="inline-block mt-4 bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                Create Draft Post
+              </Link>
+            )}
           </div>
         ) : (
           <>
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                  <colgroup>
+                    <col className="w-72" />
+                    <col className="w-72" />
+                    <col className="w-32" />
+                    <col className="w-24" />
+                    <col className="w-auto" />
+                  </colgroup>
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -377,75 +478,124 @@ const PostListPage: React.FC = () => {
                         key={post.id}
                         className="hover:bg-gray-50 transition-colors"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            href={`/profile/posts/add-post?slug=${post.slug}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
-                          >
-                            {post.title}
-                          </Link>
+                        <td className="px-6 py-4">
+                          <div className="truncate pr-2" title={post.title}>
+                            <Link
+                              href={`/profile/posts/add-post?slug=${post.slug}`}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              {post.title}
+                            </Link>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="truncate pr-2">
+                            <span
+                              title={post.categories
+                                .map((cat) => `Category ${cat}`)
+                                .join(', ')}
+                            >
+                              {post.categories.map((category, index) => (
+                                <React.Fragment key={String(category)}>
+                                  <CategoryName categoryId={category} />
+                                  {index < post.categories.length - 1 && ', '}
+                                </React.Fragment>
+                              ))}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {post.categories.map((category, index) => (
-                            <React.Fragment key={String(category)}>
-                              <CategoryName categoryId={category} />
-                              {index < post.categories.length - 1 && ', '}
-                            </React.Fragment>
-                          ))}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(post.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                          <span className="text-xs">
+                            {new Date(post.created_at).toLocaleDateString(
+                              'en-US',
+                              {
+                                month: 'short',
+                                day: 'numeric',
+                                year: '2-digit',
+                              }
+                            )}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              post.status === 'Published'
+                              post.status === 'published'
                                 ? 'bg-green-100 text-green-800'
-                                : post.status === 'Draft'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
+                                : post.status === 'draft'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-red-100 text-red-800'
                             }`}
                           >
                             {post.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                          <Link
-                            href={`/${contentType}s/${post.slug}`}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            View
-                          </Link>
-
-                          {activeTab === 'active' && (
-                            <button
-                              onClick={() => handleTrash(post.slug)}
-                              className="text-red-600 hover:text-red-800"
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              href={`/${contentType}s/${post.slug}`}
+                              className="text-blue-600 hover:text-blue-800"
                             >
-                              Trash
-                            </button>
-                          )}
+                              View
+                            </Link>
 
-                          {activeTab === 'trashed' && (
-                            <>
+                            {/* Actions for Published Posts */}
+                            {activeTab === 'active' && (
                               <button
-                                onClick={() => handleRestore(post.slug)}
-                                className="text-green-600 hover:text-green-800"
-                              >
-                                Restore
-                              </button>
-                              <button
-                                onClick={() => handleDelete(post.slug)}
+                                onClick={() => handleTrash(post.slug)}
                                 className="text-red-600 hover:text-red-800"
                               >
-                                Delete
+                                Trash
                               </button>
-                            </>
-                          )}
+                            )}
+
+                            {/* Actions for Draft Posts */}
+                            {activeTab === 'draft' && (
+                              <>
+                                <button
+                                  onClick={() => handlePublish(post.slug)}
+                                  className="text-green-600 hover:text-green-800"
+                                >
+                                  Publish
+                                </button>
+                                <button
+                                  onClick={() => handleTrash(post.slug)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  Trash
+                                </button>
+                              </>
+                            )}
+
+                            {/* Actions for Trashed Posts */}
+                            {activeTab === 'trashed' && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleRestore(post.slug, 'published')
+                                  }
+                                  className="text-green-600 hover:text-green-800"
+                                  title="Restore as Published"
+                                >
+                                  Publish
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleRestore(post.slug, 'draft')
+                                  }
+                                  className="text-orange-600 hover:text-orange-800"
+                                  title="Restore as Draft"
+                                >
+                                  Draft
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(post.slug)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

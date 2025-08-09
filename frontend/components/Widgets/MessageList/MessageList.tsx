@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import './MessageList.css';
 
 const MessageList: React.FC = () => {
@@ -9,10 +10,12 @@ const MessageList: React.FC = () => {
         <ul>
           <li className="flex items-center my-6 space-x-2">
             <a href="#" className="relative block">
-              <img
+              <Image
                 alt="profile"
                 src="http://localhost:8000/media/profiles/profile_images/1.jpg"
                 className="mx-auto object-cover rounded-full h-10 w-10"
+                width={40}
+                height={40}
               />
             </a>
             <div className="flex flex-col">
@@ -26,10 +29,12 @@ const MessageList: React.FC = () => {
           </li>
           <li className="flex items-center my-6 space-x-2">
             <a href="#" className="relative block">
-              <img
+              <Image
                 alt="profile"
                 src="http://localhost:8000/media/profiles/profile_images/5.jpg"
                 className="mx-auto object-cover rounded-full h-10 w-10"
+                width={40}
+                height={40}
               />
             </a>
             <div className="flex flex-col">
@@ -43,10 +48,12 @@ const MessageList: React.FC = () => {
           </li>
           <li className="flex items-center my-6 space-x-2">
             <a href="#" className="relative block">
-              <img
+              <Image
                 alt="profile"
                 src="http://localhost:8000/media/profiles/profile_images/6.jpg"
                 className="mx-auto object-cover rounded-full h-10 w-10"
+                width={40}
+                height={40}
               />
             </a>
             <div className="flex flex-col">
@@ -60,10 +67,12 @@ const MessageList: React.FC = () => {
           </li>
           <li className="flex items-center my-6 space-x-2">
             <a href="#" className="relative block">
-              <img
+              <Image
                 alt="profile"
                 src="http://localhost:8000/media/profiles/profile_images/7.jpg"
                 className="mx-auto object-cover rounded-full h-10 w-10"
+                width={40}
+                height={40}
               />
             </a>
             <div className="flex flex-col">

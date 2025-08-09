@@ -1,10 +1,11 @@
 export interface Review {
+  verified: any;
   id: number;
   rating: number;
   comment: string;
   created_at: string;
   updated_at?: string;
-  approved: boolean;
+  status: number;
   Name: string;
   Email: string;
   ProfileImage?: string;
@@ -24,6 +25,50 @@ export interface Review {
   flagged?: boolean;
   response?: string;
   response_date?: string;
+  wouldRecommend: boolean;
+  photos?: { url: string; caption?: string }[];
+}
+
+export interface ReviewResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Review[];
+}
+
+export interface ApprovalResponse {
+  id: number;
+  status: number;
+  message: string;
+}
+
+export interface ReviewsState {
+  loading: boolean;
+  reviews: Review[];
+  filteredReviews: Review[];
+  deleting: string | null;
+  editing: string | null;
+  error: string | null;
+  success: string | null;
+  showDeleteModal: boolean;
+  showEditModal: boolean;
+  showErrorModal: boolean;
+  showSuccessModal: boolean;
+  reviewToDelete: Review | null;
+  reviewToEdit: Review | null;
+  isClient: boolean;
+  sortBy: 'newest' | 'oldest' | 'rating-high' | 'rating-low' | 'helpful';
+  filterBy: 'all' | '1' | '2' | '3' | '4' | '5';
+  searchQuery: string;
+}
+
+export interface EditReviewForm {
+  rating: number;
+  title: string;
+  content: string;
+  pros: string;
+  cons: string;
+  wouldRecommend: boolean;
 }
 
 export interface ReviewDashboardState {
@@ -57,27 +102,18 @@ export interface ReviewDashboardState {
   pageSize: number;
 }
 
-export const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'oldest', label: 'Oldest First' },
-  { value: 'rating-high', label: 'Highest Rating' },
-  { value: 'rating-low', label: 'Lowest Rating' },
-  { value: 'name', label: 'Customer Name' },
-  { value: 'product', label: 'Product Name' },
-] as const;
-
-export const FILTER_OPTIONS = [
-  { value: 'all', label: 'All Reviews' },
-  { value: 'pending', label: 'Pending Approval' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'flagged', label: 'Flagged' },
-] as const;
-
-export const RATING_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Ratings' },
-  { value: '5', label: '5 Stars' },
-  { value: '4', label: '4 Stars' },
-  { value: '3', label: '3 Stars' },
-  { value: '2', label: '2 Stars' },
-  { value: '1', label: '1 Star' },
-] as const;
+export interface TrashState {
+  loading: boolean;
+  reviews: Review[];
+  restoring: string | null;
+  deleting: string | null;
+  error: string | null;
+  success: string | null;
+  showRestoreModal: boolean;
+  showDeleteModal: boolean;
+  showErrorModal: boolean;
+  showSuccessModal: boolean;
+  reviewToRestore: Review | null;
+  reviewToDelete: Review | null;
+  isClient: boolean;
+}

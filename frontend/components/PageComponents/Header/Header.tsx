@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import UserIcon from '@/components/UI/Icons/User';
 import HeartIcon from '@/components/UI/Icons/Heart';
@@ -15,7 +15,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { headerMenuItems } from '@/lists/headerMenuItems';
 import SideBarMobile from '@/components/PageComponents/SideBarMobile';
-import SidebarCart from '@/components/PageComponents/CartSidebar';
+import SidebarCart from '@/components/PageComponents/Sidebar/CartSidebar';
 import SidebarWishlist from '@/components/PageComponents/WishlistSidebar';
 import SearchBar from './SearchBar';
 import TopBar from './TopBar';
@@ -51,7 +51,6 @@ const Header: React.FC<HeaderProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Memoized values
   const cartItemCount = useMemo(
@@ -65,7 +64,6 @@ const Header: React.FC<HeaderProps> = ({
         : 0,
     [cartState.items]
   );
-  const isHomePage = pathname === '/' || pathname === '/home';
 
   // Event handlers
   const toggleDrawer = useCallback(() => {
@@ -102,8 +100,6 @@ const Header: React.FC<HeaderProps> = ({
         setMenuItems(items);
       } catch (error) {
         console.error('Failed to load menu items:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchMenuItems();
@@ -165,14 +161,15 @@ const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center flex-shrink-0">
                 <Link href="/" className="flex items-center group">
                   <div className="relative">
-                    <Image
+                    <NextImage
                       src="/logo.png"
                       alt={
                         process.env.NEXT_PUBLIC_COMPANY_NAME || 'Company Logo'
                       }
-                      width={160}
-                      height={64}
-                      className="h-12 lg:h-16 w-auto transition-transform duration-300 group-hover:scale-105"
+                      width={76}
+                      height={32}
+                      className="h-12 lg:h-16 w-auto"
+                      style={{ width: 'auto', height: 'auto' }}
                       priority
                     />
                   </div>

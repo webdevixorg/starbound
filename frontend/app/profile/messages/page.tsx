@@ -430,7 +430,7 @@ export default function ChatPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="">
         {/* Header */}
-        <div className="mb-6">
+        <div className="p-4">
           <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
           <p className="mt-1 text-sm text-gray-600">
             Stay connected with your conversations

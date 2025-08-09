@@ -3,21 +3,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { getPublicImageUrl } from '@/helpers/media';
+import { formatDate } from '@/helpers/common';
+import HtmlContent from '@/helpers/content';
+import SafeImage from '@/components/UI/SafeImage';
+import LoadingSpinner from '@/components/Common/Loading'; // Spinner shown during loading
+
 import { useAuth } from '@/context/AuthContext'; // Import the useAuth hook
 
 import { fetchPostBySlug } from '@/services/api';
 import { Post } from '@/types/types';
-import { formatDate } from '@/helpers/common';
-import HtmlContent from '@/helpers/content';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 import PostListSidebar from '@/components/PageComponents/PostListSidebar';
 import ProductListSidebar from '@/components/PageComponents/ProductListSidebar';
-import LoadingSpinner from '@/components/Common/Loading'; // Spinner shown during loading
 
 const SinglePost: React.FC = () => {
   const { isAuthenticated } = useAuth(); // Use useAuth hook to get the current user
 
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
   const [post, setPost] = useState<Post | null>(null);
 
   useEffect(() => {
@@ -58,19 +62,31 @@ const SinglePost: React.FC = () => {
           {/* Author and Metadata */}
           <div className="mx-auto px-4 mb-8 max-w-full">
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 space-x-3">
-              <img
-                alt={post.author.first_name}
-                className="rounded-full h-10 w-10 object-cover"
-                src={post.author.profile.image}
+              <SafeImage
+                alt={post.author.first_name + ' ' + post.author.last_name}
+                className="relative rounded-full h-10 w-10 object-cover"
+                images={[
+                  {
+                    image_path: getPublicImageUrl(
+                      'profiles',
+                      post.author.id,
+                      post.author.profile.image_path
+                    ),
+                  },
+                ]}
+                width={400}
+                height={400}
               />
               <p className="font-semibold">
                 {post.author.first_name} {post.author.last_name}
               </p>
-              <time dateTime={post.date}>{formatDate(post.date)}</time>
+              <time dateTime={post.created_at}>
+                {formatDate(post.created_at)}
+              </time>
               <span> · 6 min read</span>
               {isAuthenticated && (
                 <a
-                  href={`/posts/add-post?slug=${post.slug}`}
+                  href={`/profile/posts/add-post?slug=${post.slug}`}
                   className="text-blue-500 hover:underline"
                 >
                   Edit
@@ -81,15 +97,21 @@ const SinglePost: React.FC = () => {
 
           {/* Featured Image */}
           <div className="mx-auto px-4 max-w-full">
-            <img
+            <SafeImage
               alt={post.title}
               className="inline-block mb-2 w-full mx-auto" // Added Tailwind's max-width and center alignment classes
-              src={
-                post.images && post.images[0]
-                  ? post.images[0].image_path
-                  : '/assets/image_placeholder.jpg'
-              }
-              style={{ objectFit: 'cover' }}
+              images={[
+                {
+                  image_path: getPublicImageUrl(
+                    'posts',
+                    post.id,
+                    post.images?.[0]?.image_path
+                  ),
+                },
+              ]}
+              fallback="/images/placeholders/612x612.png"
+              width={500}
+              height={150}
             />
           </div>
 
@@ -103,10 +125,20 @@ const SinglePost: React.FC = () => {
           {/* About the Author */}
           <div className="mx-auto px-4 mt-16 max-w-full">
             <div className="mb-6 flex items-start">
-              <img
-                alt={post.author.first_name}
+              <SafeImage
+                alt={post.author.first_name + ' ' + post.author.last_name}
                 className="rounded-full h-20 w-20 object-cover mb-6 mr-6"
-                src={post.author.profile.image}
+                images={[
+                  {
+                    image_path: getPublicImageUrl(
+                      'profiles',
+                      post.author.id,
+                      post.author.profile.image_path
+                    ),
+                  },
+                ]}
+                width={400}
+                height={200}
               />
               <div>
                 <h3 className="text-lg font-semibold">

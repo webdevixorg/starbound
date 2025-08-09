@@ -1,5 +1,5 @@
 import React from 'react';
-
+import SafeImage from '@/components/UI/SafeImage';
 import { useWishlist } from '@/context/WishlistContext';
 
 interface WishlistSidebarProps {
@@ -38,16 +38,14 @@ const WishlistSidebar: React.FC<WishlistSidebarProps> = ({
                 className="flex items-center justify-between border-b pb-2"
               >
                 <div className="flex items-center">
-                  <img
-                    src={
-                      Array.isArray(item.product.images) &&
-                      item.product.images.length > 0
-                        ? item.product.images[0].image_path
-                        : '/placeholder.png'
-                    }
-                    alt={item.product.title}
-                    className="h-12 w-12 rounded"
-                  />
+                  <div className="h-12 w-12 relative">
+                    <SafeImage
+                      images={item.product.images}
+                      alt={item.product.title}
+                      fill
+                      className="rounded object-cover"
+                    />
+                  </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium">{item.product.title}</p>
                     <p className="text-sm text-gray-500"></p>

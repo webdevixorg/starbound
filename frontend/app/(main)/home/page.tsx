@@ -11,21 +11,21 @@ const HomePage: React.FC = () => {
     <div>
       <BigHero filter="latest" count={5} />
       <ProductGridSection filter="latest" count={4} />
-      <PostGrid_1 filter="latest" count={4} title="Automotive Tech" />
+      <PostGrid_1 categoryId={91} count={4} title="Automotive Tech" />
       <div className="post-add mt-30">
         <div className="bg-white-50 py-6">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-row flex-wrap">
               <a href="#">
-                <img src="/images/ad-1.png" alt="ad" />
+                <img src="/images/ads/ad-1.png" alt="ad" />
               </a>
             </div>
           </div>
         </div>
       </div>
-      <PostGrid_2 filter="latest" count={4} title="How-To Guides" />
-      <PostGrid_1 filter="latest" count={4} title="Product Reviews" />
-      <PostSlider filter="latest" count={4} title="News & Updates" />
+      <PostGrid_2 categoryId={89} count={4} title="How-To Guides" />
+      <PostGrid_1 categoryId={94} count={4} title="Motorsports & Culture" />
+      <PostSlider categoryId={90} count={4} title="News & Updates" />
     </div>
   );
 };

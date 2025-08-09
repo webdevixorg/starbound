@@ -31,7 +31,7 @@ export function useAuthRedirect(
   const {
     requiredRole,
     requiredGroup,
-    redirectTo = '/auth/login',
+    redirectTo = '/signin',
     requireAuth = true,
   } = options;
 

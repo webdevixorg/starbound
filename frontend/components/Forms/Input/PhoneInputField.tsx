@@ -8,6 +8,7 @@ interface PhoneInputFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const PhoneInputField: React.FC<PhoneInputFieldProps> = ({

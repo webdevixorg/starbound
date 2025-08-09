@@ -1,11 +1,12 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
-from app.product.models import Product 
+from app.product.models import Product
+from uploads.models import UserImage 
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='profiles/profile_images/', default='default.jpg')
+    image = models.ForeignKey(UserImage, on_delete=models.CASCADE, null=True, blank=True, default=None)  # Allow null
     bio = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=255, blank=True)
@@ -18,24 +19,13 @@ class Profile(models.Model):
     def __str__(self):
         return f'{self.user.username} Profile'
 
-
-class Trip(models.Model):
-    destination = models.CharField(max_length=100)
-    date = models.DateField()
-    duration = models.IntegerField()
-    description = models.TextField()
-
-    def __str__(self):
-        return self.destination
-    
-
 class Wishlist(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)  # Link the wishlist to a user
     product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None)  # Link to the Product model
     timestamp = models.DateTimeField(auto_now_add=True)  # Track when the product was added to the wishlist
 
     def __str__(self):
-        return f"{self.product.title}"
+        return f"{self.product.title}" if self.product else "No Product"
 
 class Order(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)

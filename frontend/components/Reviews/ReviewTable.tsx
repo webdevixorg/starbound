@@ -8,7 +8,7 @@ interface ReviewTableProps {
   reviews: Review[];
   updatingId: number | null;
   deletingId: number | null;
-  onApprovalToggle: (id: number, approved: boolean) => void;
+  onApprovalToggle: (id: number, status: number) => void;
   onResponseClick: (review: Review) => void;
   onDeleteClick: (review: Review) => void;
   formatDate: (date: string) => string;
@@ -145,12 +145,18 @@ export const ReviewTable: React.FC<ReviewTableProps> = ({
                   <div className="flex flex-col space-y-1">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        review.approved
+                        review.status === 1
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          : review.status === 0
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {review.approved ? 'Approved' : 'Pending'}
+                      {review.status === 1
+                        ? 'Approved'
+                        : review.status === 0
+                          ? 'Pending'
+                          : 'Trashed'}
                     </span>
                     {review.flagged && (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
@@ -163,18 +169,18 @@ export const ReviewTable: React.FC<ReviewTableProps> = ({
                   <div className="flex justify-end space-x-2">
                     <button
                       onClick={() =>
-                        onApprovalToggle(review.id, !review.approved)
+                        onApprovalToggle(review.id, review.status === 1 ? 0 : 1)
                       }
                       disabled={updatingId === review.id}
                       className={`inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded ${
-                        review.approved
+                        review.status === 1
                           ? 'text-red-700 bg-red-100 hover:bg-red-200'
                           : 'text-green-700 bg-green-100 hover:bg-green-200'
                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50`}
                     >
                       {updatingId === review.id ? (
                         <InlineLoaderIcon className="mr-1" />
-                      ) : review.approved ? (
+                      ) : review.status === 1 ? (
                         'Disapprove'
                       ) : (
                         'Approve'

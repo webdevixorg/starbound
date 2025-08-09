@@ -183,9 +183,9 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
           />
         </div>
       ) : (
-        <div className="h-96 border border-gray-300 rounded overflow-hidden">
+        <div className="h-96 border border-gray-300 rounded">
           <TextEditor
-            key={`editor-${isEditorReady}`} // Force re-render when ready
+            key={`editor-${isEditorReady}-${htmlContent}`}
             content={htmlContent}
             getHtml={handleGetStyledTextHtml}
           />

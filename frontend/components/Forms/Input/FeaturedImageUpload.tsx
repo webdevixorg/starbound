@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import NextImage from 'next/image';
 import { Image, ImageFile } from '@/types/types';
 import placeholderImage from '@/components/assets/images/image_placeholder.jpg';
 
@@ -76,11 +77,12 @@ const FeaturedImageUpload: React.FC<FeaturedImageUploadProps> = ({
 
   return (
     <div>
-      <div className="widget-content">
-        <img
+      <div className="widget-content relative h-48">
+        <NextImage
           src={featuredImage[0]?.image_path || placeholderImage}
           alt={featuredImage.length > 0 ? 'Selected' : 'Placeholder'}
-          className="w-full h-auto"
+          fill
+          className="object-cover"
         />
       </div>
       <div className="widget-footer bg-gray-200">

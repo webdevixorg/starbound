@@ -1,65 +1,23 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
-import Image from 'next/image';
+import { EditReviewForm, Review, ReviewsState } from '@/types/review';
+import { reviewService } from '@/services/reviewService';
 
-interface Review {
-  id: string | number;
-  destination: {
-    id: string | number;
-    title: string;
-    location: string;
-    images?: { image_path: string; alt?: string }[];
-    slug?: string;
-  };
-  rating: number;
-  title: string;
-  content: string;
-  pros?: string[];
-  cons?: string[];
-  wouldRecommend: boolean;
-  visitDate: string;
-  createdAt: string;
-  updatedAt?: string;
-  likes: number;
-  helpfulVotes: number;
-  verified: boolean;
-  photos?: { url: string; caption?: string }[];
-}
-
-interface ReviewsState {
-  loading: boolean;
-  reviews: Review[];
-  filteredReviews: Review[];
-  deleting: string | null;
-  editing: string | null;
-  error: string | null;
-  success: string | null;
-  showDeleteModal: boolean;
-  showEditModal: boolean;
-  showErrorModal: boolean;
-  showSuccessModal: boolean;
-  reviewToDelete: Review | null;
-  reviewToEdit: Review | null;
-  isClient: boolean;
-  sortBy: 'newest' | 'oldest' | 'rating-high' | 'rating-low' | 'helpful';
-  filterBy: 'all' | '1' | '2' | '3' | '4' | '5';
-  searchQuery: string;
-}
-
-interface EditReviewForm {
-  rating: number;
-  title: string;
-  content: string;
-  pros: string;
-  cons: string;
-  wouldRecommend: boolean;
-}
+// Filter and Sort Options
+const FILTER_OPTIONS = [
+  { value: 'all', label: 'All Ratings' },
+  { value: '5', label: '5 Stars' },
+  { value: '4', label: '4 Stars' },
+  { value: '3', label: '3 Stars' },
+  { value: '2', label: '2 Stars' },
+  { value: '1', label: '1 Star' },
+];
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
@@ -67,73 +25,6 @@ const SORT_OPTIONS = [
   { value: 'rating-high', label: 'Highest Rating' },
   { value: 'rating-low', label: 'Lowest Rating' },
   { value: 'helpful', label: 'Most Helpful' },
-] as const;
-
-const FILTER_OPTIONS = [
-  { value: 'all', label: 'All Reviews' },
-  { value: '5', label: '5 Stars' },
-  { value: '4', label: '4 Stars' },
-  { value: '3', label: '3 Stars' },
-  { value: '2', label: '2 Stars' },
-  { value: '1', label: '1 Star' },
-] as const;
-
-// Mock data for development
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: '1',
-    destination: {
-      id: '1',
-      title: 'Santorini, Greece',
-      location: 'Cyclades, Greece',
-      images: [{ image_path: '/destinations/santorini.jpg', alt: 'Santorini' }],
-      slug: 'santorini-greece',
-    },
-    rating: 5,
-    title: 'Absolutely breathtaking!',
-    content:
-      'Our trip to Santorini was everything we dreamed of and more. The sunsets are truly spectacular, and the white-washed buildings create such a romantic atmosphere.',
-    pros: [
-      'Amazing sunsets',
-      'Beautiful architecture',
-      'Great food',
-      'Romantic atmosphere',
-    ],
-    cons: ['Can be crowded', 'Expensive dining'],
-    wouldRecommend: true,
-    visitDate: '2024-06-15',
-    createdAt: '2024-06-20T10:30:00Z',
-    likes: 24,
-    helpfulVotes: 18,
-    verified: true,
-  },
-  {
-    id: '2',
-    destination: {
-      id: '2',
-      title: 'Bali, Indonesia',
-      location: 'Indonesia',
-      images: [{ image_path: '/destinations/bali.jpg', alt: 'Bali' }],
-      slug: 'bali-indonesia',
-    },
-    rating: 4,
-    title: 'Great cultural experience',
-    content:
-      'Bali offers an incredible mix of culture, nature, and relaxation. The temples are magnificent and the people are very welcoming.',
-    pros: [
-      'Rich culture',
-      'Beautiful temples',
-      'Affordable',
-      'Friendly locals',
-    ],
-    cons: ['Traffic can be heavy', 'Some areas very touristy'],
-    wouldRecommend: true,
-    visitDate: '2024-05-10',
-    createdAt: '2024-05-15T14:20:00Z',
-    likes: 15,
-    helpfulVotes: 12,
-    verified: true,
-  },
 ];
 
 export default function ReviewsPage() {
@@ -188,25 +79,48 @@ export default function ReviewsPage() {
     setState((prev) => ({ ...prev, loading: true }));
 
     try {
-      // TODO: Replace with actual API call
-      // For now, using mock data
-      const reviews = MOCK_REVIEWS;
+      const reviewsData = await reviewService.getUserReviews();
+      let rawReviews: any[] = [];
+      if (Array.isArray(reviewsData)) {
+        rawReviews = reviewsData;
+      } else if (reviewsData && Array.isArray((reviewsData as any).results)) {
+        rawReviews = (reviewsData as any).results;
+      }
+
+      // Transform backend data to frontend format
+      const transformedReviews = Array.isArray(rawReviews)
+        ? rawReviews.map(reviewService.transformReviewData)
+        : [];
 
       setState((prev) => ({
         ...prev,
-        reviews,
+        reviews: transformedReviews,
         loading: false,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading reviews:', error);
+
+      let errorMessage = 'Failed to load your reviews. Please try again.';
+
+      if (error.response?.status === 401) {
+        errorMessage = 'Your session has expired. Please log in again.';
+        // Optionally redirect to login
+        // router.push('/auth/login');
+      } else if (error.response?.status === 404) {
+        errorMessage = 'No reviews found.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setState((prev) => ({
         ...prev,
-        error: 'Failed to load your reviews. Please try again.',
+        error: errorMessage,
         showErrorModal: true,
         loading: false,
+        reviews: [], // Set empty array on error
       }));
     }
-  }, [state.isClient, user]);
+  }, [state.isClient, user, router]);
 
   // Initial load
   useEffect(() => {
@@ -223,13 +137,10 @@ export default function ReviewsPage() {
     if (state.searchQuery) {
       filtered = filtered.filter(
         (review) =>
-          review.destination.title
-            .toLowerCase()
+          review.product?.title
+            ?.toLowerCase()
             .includes(state.searchQuery.toLowerCase()) ||
-          review.title
-            .toLowerCase()
-            .includes(state.searchQuery.toLowerCase()) ||
-          review.content.toLowerCase().includes(state.searchQuery.toLowerCase())
+          review.comment.toLowerCase().includes(state.searchQuery.toLowerCase())
       );
     }
 
@@ -245,18 +156,18 @@ export default function ReviewsPage() {
       switch (state.sortBy) {
         case 'oldest':
           return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         case 'rating-high':
           return b.rating - a.rating;
         case 'rating-low':
           return a.rating - b.rating;
         case 'helpful':
-          return b.helpfulVotes - a.helpfulVotes;
+          return (b.helpful_votes || 0) - (a.helpful_votes || 0);
         case 'newest':
         default:
           return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
       }
     });
@@ -283,22 +194,33 @@ export default function ReviewsPage() {
     }));
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      await reviewService.deleteUserReview(state.reviewToDelete.id);
 
       setState((prev) => ({
         ...prev,
         reviews: prev.reviews.filter((r) => r.id !== state.reviewToDelete!.id),
         deleting: null,
         reviewToDelete: null,
-        success: 'Review deleted successfully.',
+        success:
+          'Review moved to trash successfully. You can restore it later if needed.',
         showSuccessModal: true,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting review:', error);
+
+      let errorMessage = 'Failed to move review to trash. Please try again.';
+
+      if (error.response?.status === 401) {
+        errorMessage = 'Your session has expired. Please log in again.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Review not found.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setState((prev) => ({
         ...prev,
-        error: 'Failed to delete review. Please try again.',
+        error: errorMessage,
         showErrorModal: true,
         deleting: null,
       }));
@@ -317,10 +239,10 @@ export default function ReviewsPage() {
   const handleEditClick = useCallback((review: Review) => {
     setEditForm({
       rating: review.rating,
-      title: review.title,
-      content: review.content,
-      pros: review.pros?.join(', ') || '',
-      cons: review.cons?.join(', ') || '',
+      title: '', // Not available in Review interface
+      content: review.comment,
+      pros: '', // Not supported in current backend
+      cons: '', // Not supported in current backend
       wouldRecommend: review.wouldRecommend,
     });
 
@@ -344,8 +266,8 @@ export default function ReviewsPage() {
           type === 'checkbox'
             ? (e.target as HTMLInputElement).checked
             : name === 'rating'
-            ? parseInt(value)
-            : value,
+              ? parseInt(value)
+              : value,
       }));
     },
     []
@@ -362,31 +284,21 @@ export default function ReviewsPage() {
       }));
 
       try {
-        // TODO: Replace with actual API call
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-
-        const updatedReview: Review = {
-          ...state.reviewToEdit,
-          ...editForm,
-          pros: editForm.pros
-            ? editForm.pros
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
-          cons: editForm.cons
-            ? editForm.cons
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
-          updatedAt: new Date().toISOString(),
+        const updateData = {
+          rating: editForm.rating,
+          comment: editForm.content, // Backend uses 'comment' field
+          // Note: title, pros, cons, wouldRecommend are not supported in current backend
         };
+
+        const updatedReview = await reviewService.updateUserReview(
+          state.reviewToEdit.id,
+          updateData
+        );
 
         setState((prev) => ({
           ...prev,
           reviews: prev.reviews.map((r) =>
-            r.id === state.reviewToEdit!.id ? updatedReview : r
+            r.id === state.reviewToEdit!.id ? { ...r, ...updatedReview } : r
           ),
           editing: null,
           reviewToEdit: null,
@@ -394,11 +306,22 @@ export default function ReviewsPage() {
           success: 'Review updated successfully.',
           showSuccessModal: true,
         }));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error updating review:', error);
+
+        let errorMessage = 'Failed to update review. Please try again.';
+
+        if (error.response?.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Review not found.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
         setState((prev) => ({
           ...prev,
-          error: 'Failed to update review. Please try again.',
+          error: errorMessage,
           showErrorModal: true,
           editing: null,
         }));
@@ -637,11 +560,11 @@ export default function ReviewsPage() {
             <p className="text-gray-600 mb-4">
               {state.searchQuery
                 ? `No reviews match "${state.searchQuery}". Try a different search term.`
-                : 'Start sharing your travel experiences by writing your first review!'}
+                : 'Start sharing your experiences by writing your first review!'}
             </p>
             {!state.searchQuery && (
               <button
-                onClick={() => router.push('/destinations')}
+                onClick={() => router.push('/shop')}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <svg
@@ -657,7 +580,7 @@ export default function ReviewsPage() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-                Explore Destinations
+                Explore Products
               </button>
             )}
           </div>
@@ -673,36 +596,23 @@ export default function ReviewsPage() {
                   {/* Review Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start space-x-4">
-                      {/* Destination Image */}
+                      {/* Product Placeholder */}
                       <div className="flex-shrink-0">
-                        {review.destination.images?.[0]?.image_path ? (
-                          <Image
-                            src={review.destination.images[0].image_path}
-                            alt={
-                              review.destination.images[0].alt ||
-                              review.destination.title
-                            }
-                            width={80}
-                            height={60}
-                            className="w-20 h-15 object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-20 h-15 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
+                        <div className="w-20 h-15 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <svg
+                            className="w-6 h-6 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                        </div>
                       </div>
 
                       {/* Review Info */}
@@ -710,15 +620,17 @@ export default function ReviewsPage() {
                         <div className="flex items-center space-x-2 mb-2">
                           <h3
                             className="text-lg font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
-                            onClick={() =>
-                              router.push(
-                                `/destinations/${review.destination.slug}`
-                              )
-                            }
+                            onClick={() => {
+                              if (review.product && review.product.slug) {
+                                router.push(`/shop/${review.product.slug}`);
+                              } else {
+                                router.push(`/shop`);
+                              }
+                            }}
                           >
-                            {review.destination.title}
+                            {review.product?.title}
                           </h3>
-                          {review.verified && (
+                          {review.status === 1 && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               <svg
                                 className="w-3 h-3 mr-1"
@@ -736,19 +648,13 @@ export default function ReviewsPage() {
                           )}
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-2">
-                          {review.destination.location}
-                        </p>
-
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span>Visited: {formatDate(review.visitDate)}</span>
-                          <span>•</span>
-                          <span>Reviewed: {formatDate(review.createdAt)}</span>
-                          {review.updatedAt && (
+                          <span>Reviewed: {formatDate(review.created_at)}</span>
+                          {review.updated_at && (
                             <>
                               <span>•</span>
                               <span>
-                                Updated: {formatDate(review.updatedAt)}
+                                Updated: {formatDate(review.updated_at)}
                               </span>
                             </>
                           )}
@@ -808,79 +714,15 @@ export default function ReviewsPage() {
                     </div>
                   </div>
 
-                  {/* Rating and Title */}
+                  {/* Rating and Review Content */}
                   <div className="mb-4">
                     {renderStars(review.rating)}
-                    <h4 className="text-xl font-semibold text-gray-900 mt-2">
-                      {review.title}
-                    </h4>
-                  </div>
-
-                  {/* Review Content */}
-                  <div className="mb-4">
-                    <p className="text-gray-700 leading-relaxed">
-                      {review.content}
-                    </p>
-                  </div>
-
-                  {/* Pros and Cons */}
-                  {(review.pros?.length || review.cons?.length) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {review.pros && review.pros.length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium text-green-800 mb-2 flex items-center">
-                            <svg
-                              className="w-4 h-4 mr-1"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Pros
-                          </h5>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {review.pros.map((pro, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-green-500 mr-2">•</span>
-                                {pro}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {review.cons && review.cons.length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium text-red-800 mb-2 flex items-center">
-                            <svg
-                              className="w-4 h-4 mr-1"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Cons
-                          </h5>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {review.cons.map((con, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="text-red-500 mr-2">•</span>
-                                {con}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                    <div className="mt-3">
+                      <p className="text-gray-700 leading-relaxed">
+                        {review.comment}
+                      </p>
                     </div>
-                  )}
+                  </div>
 
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
@@ -893,7 +735,7 @@ export default function ReviewsPage() {
                         >
                           <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
                         </svg>
-                        {review.likes} likes
+                        0 likes
                       </span>
 
                       <span className="flex items-center">
@@ -908,12 +750,13 @@ export default function ReviewsPage() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        {review.helpfulVotes} found helpful
+                        {review.helpful_votes || 0} found helpful
                       </span>
                     </div>
 
                     <div className="flex items-center">
-                      {review.wouldRecommend ? (
+                      {/* Would Recommend badges hidden since not supported by current backend */}
+                      {false && review.wouldRecommend ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           <svg
                             className="w-3 h-3 mr-1"
@@ -959,7 +802,8 @@ export default function ReviewsPage() {
           <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-medium text-gray-900">
-                Edit Review for {state.reviewToEdit.destination.title}
+                Edit Review for{' '}
+                {state.reviewToEdit.product?.title || 'Unknown Product'}
               </h3>
               <button
                 onClick={cancelEdit}
@@ -982,7 +826,7 @@ export default function ReviewsPage() {
             </div>
 
             <form onSubmit={submitEdit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 {/* Rating */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1003,44 +847,6 @@ export default function ReviewsPage() {
                     ))}
                   </select>
                 </div>
-
-                {/* Would Recommend */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Would Recommend
-                  </label>
-                  <select
-                    name="wouldRecommend"
-                    value={editForm.wouldRecommend.toString()}
-                    onChange={handleEditFormChange}
-                    disabled={state.editing === String(state.reviewToEdit.id)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                  >
-                    <option value="true">Yes, I would recommend</option>
-                    <option value="false">No, I would not recommend</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label
-                  htmlFor="edit-title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Review Title *
-                </label>
-                <input
-                  type="text"
-                  id="edit-title"
-                  name="title"
-                  value={editForm.title}
-                  onChange={handleEditFormChange}
-                  disabled={state.editing === String(state.reviewToEdit.id)}
-                  placeholder="Give your review a title"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                  required
-                />
               </div>
 
               {/* Content */}
@@ -1064,48 +870,6 @@ export default function ReviewsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Pros */}
-                <div>
-                  <label
-                    htmlFor="edit-pros"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    What did you like? (Optional)
-                  </label>
-                  <textarea
-                    id="edit-pros"
-                    name="pros"
-                    rows={3}
-                    value={editForm.pros}
-                    onChange={handleEditFormChange}
-                    disabled={state.editing === String(state.reviewToEdit.id)}
-                    placeholder="Separate with commas"
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-vertical"
-                  />
-                </div>
-
-                {/* Cons */}
-                <div>
-                  <label
-                    htmlFor="edit-cons"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    What could be improved? (Optional)
-                  </label>
-                  <textarea
-                    id="edit-cons"
-                    name="cons"
-                    rows={3}
-                    value={editForm.cons}
-                    onChange={handleEditFormChange}
-                    disabled={state.editing === String(state.reviewToEdit.id)}
-                    placeholder="Separate with commas"
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-vertical"
-                  />
-                </div>
-              </div>
-
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
@@ -1120,8 +884,7 @@ export default function ReviewsPage() {
                   type="submit"
                   disabled={
                     state.editing === String(state.reviewToEdit.id) ||
-                    !editForm.title.trim() ||
-                    !editForm.content.trim()
+                    !editForm.content.trim() // Only require content since it maps to comment
                   }
                   className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -1143,11 +906,11 @@ export default function ReviewsPage() {
       {/* Delete Confirmation Modal */}
       <ModalAlert
         isOpen={state.showDeleteModal}
-        title="Delete Review"
-        message={`Are you sure you want to delete your review for "${state.reviewToDelete?.destination.title}"? This action cannot be undone.`}
+        title="Move Review to Trash"
+        message={`Are you sure you want to move your review for "${state.reviewToDelete?.product?.title || 'this product'}" to trash? You can restore it later if needed.`}
         onClose={cancelDelete}
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText="Move to Trash"
         cancelText="Cancel"
       />
 

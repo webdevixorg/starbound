@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import './TaskCard.css';
 
 const TaskCard: React.FC = () => {
@@ -100,31 +101,39 @@ const TaskCard: React.FC = () => {
         </div>
         <div className="flex -space-x-2">
           <a href="#" className="">
-            <img
+            <Image
               className="inline-block h-10 w-10 rounded-full object-cover ring-2 ring-white"
               src="http://localhost:8000/media/profiles/profile_images/1.jpg"
               alt="Guy"
+              width={40}
+              height={40}
             />
           </a>
           <a href="#" className="">
-            <img
+            <Image
               className="inline-block h-10 w-10 rounded-full object-cover ring-2 ring-white"
               src="http://localhost:8000/media/profiles/profile_images/2.jpg"
               alt="Max"
+              width={40}
+              height={40}
             />
           </a>
           <a href="#" className="">
-            <img
+            <Image
               className="inline-block h-10 w-10 rounded-full object-cover ring-2 ring-white"
               src="http://localhost:8000/media/profiles/profile_images/3.jpg"
               alt="Charles"
+              width={40}
+              height={40}
             />
           </a>
           <a href="#" className="">
-            <img
+            <Image
               className="inline-block h-10 w-10 rounded-full object-cover ring-2 ring-white"
               src="http://localhost:8000/media/profiles/profile_images/4.jpg"
               alt="Jade"
+              width={40}
+              height={40}
             />
           </a>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import NextImage from 'next/image';
 import { createReview, fetchReviewsByProductID } from '@/services/apiProducts';
 import StarIcon from '@/components/UI/Icons/Star';
 
@@ -48,12 +49,12 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
             key={review.id || review.email}
             className="review-item border-b py-4 flex items-start gap-4"
           >
-            <div className="profile-image w-12 h-12 flex-shrink-0">
-              <img
+            <div className="profile-image w-12 h-12 flex-shrink-0 relative">
+              <NextImage
                 src={review.profile_image || '/default-profile.jpg'}
                 alt={`${review.name}'s profile`}
-                className="rounded-full w-12 h-12 object-cover"
-                loading="lazy"
+                fill
+                className="rounded-full object-cover"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
                   if (!target.dataset.fallback) {
@@ -257,7 +258,7 @@ const ReviewsSystem: React.FC<ReviewsSystemProps> = ({ product }) => {
         <div className="review-form-section md:w-1/2 p-4">
           {reviews.length < 1 && !loading && (
             <h4 className="text-lg font-bold mb-2 text-gray-700">
-              Be the first to leave a review for "{product.title}".
+              Be the first to leave a review for &quot;{product.title}&quot;.
             </h4>
           )}
           <ReviewForm onSubmit={addReview} />

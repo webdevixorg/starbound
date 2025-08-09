@@ -1,22 +1,37 @@
 import { Review } from './review';
 
+export interface ValidationErrors {
+  [key: string]: string;
+}
+
+export interface UIState {
+  loading: boolean;
+  saving: boolean;
+  uploadingImage: boolean;
+  error: string | null;
+  showSuccessModal: boolean;
+  showErrorModal: boolean;
+  hasChanges: boolean;
+}
+
 export interface User {
-  role: string;
-  groups: any;
   id: number;
   username: string;
   first_name: string;
   last_name: string;
   email: string;
+  role: string;
+  groups: any[];
 }
 
 export interface SignUp extends Omit<User, 'id'> {
   password: string;
 }
-export interface Profile {
-  user: User;
+
+interface BaseProfileFields {
+  first_name: string;
+  last_name: string;
   bio: string;
-  image: string | any;
   phone: string;
   address: string;
   city: string;
@@ -26,13 +41,20 @@ export interface Profile {
   date_of_birth: string;
 }
 
+export interface Profile extends BaseProfileFields {
+  user?: User;
+  image_path: string;
+}
+
+export interface ProfileFormData extends BaseProfileFields {}
+
 export interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   signin: (tokens: { access: string; refresh: string }) => void;
   signout: () => void;
   user: User | null;
-  role: 'admin' | 'customer' | null;
+  role: 'admin' | 'staff' | 'client' | null;
   profile: Profile | null;
 }
 
@@ -48,10 +70,10 @@ export interface AuthResponse {
 
 // Define the ContentType type
 export interface ContentType {
-  model: any;
   id: number;
   name: string;
   description: string;
+  model: any;
 }
 
 export interface ContentTypes {
@@ -76,6 +98,8 @@ export interface AccountSettings {
 
 export interface ImageFile {
   file: File;
+  type: string;
+  name: string;
   order: number;
 }
 
@@ -83,21 +107,23 @@ export interface Image {
   id: number;
   alt: string;
   image_path: string;
+  object_id: number;
   order: number;
 }
 
 export interface Images {
+  image: Image;
   id: number;
   post: number;
-  image: number;
   image_path: string;
+  object_id: number;
   alt: string;
   order: number;
 }
 
 export interface Author {
   profile: {
-    image: string;
+    image_path: string;
     bio: string;
   };
   id: number;
@@ -120,21 +146,21 @@ interface CommonParams {
   title: string;
   description: string;
   slug: string;
-  date: string;
+  created_at: string;
   status: string;
   user: string;
 }
 
 export interface Post extends CommonParams {
-  likes: number;
-  comments: number;
-  views: number;
   id: number;
   categories: Category[];
   author: Author;
   images: Images[];
   featured_image: string;
   aggregated_visitor_counts: number;
+  likes: number;
+  comments: number;
+  views: number;
 }
 
 export interface PostData extends CommonParams {
@@ -158,14 +184,14 @@ export interface BaseProduct {
   additional_info: string;
   sku: string;
   status: string;
-  date: string;
+  created_at: string;
   featured_image?: string;
 }
 
 // Product pricing and inventory
 export interface ProductPricing {
   price: number;
-  original_price?: number;
+  sale_price?: number;
   compare_price?: number;
   discount?: number;
 }
@@ -220,18 +246,17 @@ export interface Product
     ProductInventory,
     ProductLocationDetails,
     ProductMetadata {
-  categories: Category[]; // For display (full category objects)
+  categories: Category[];
   images: Images[];
   author: Author;
 }
 
 // Extended interfaces for specific use cases
 export interface ExtendedProduct extends Product {
-  // Additional fields that might come from API
   views?: number;
   likes?: number;
   comments_count?: number;
-  created_at?: string;
+  created_at: string;
   updated_at?: string;
 }
 
@@ -273,10 +298,32 @@ export type ProductSortBy =
 export type ProductFilterBy = 'all' | 'in_stock' | 'on_sale' | 'featured';
 
 export interface FAQ {
-  id: number;
+  id: string | number;
   question: string;
   answer: string;
-  created_at: string;
+  category?: string;
+  order?: number;
+  updated_at?: string;
+  is_featured?: boolean;
+}
+
+export interface FAQCategory {
+  id: string;
+  name: string;
+  description?: string;
+  faqs: FAQ[];
+}
+
+export interface FAQPageState {
+  loading: boolean;
+  faqs: FAQ[];
+  categories: FAQCategory[];
+  error: string | null;
+  showErrorModal: boolean;
+  isClient: boolean;
+  searchQuery: string;
+  selectedCategory: string;
+  expandedFAQ: string | number | null;
 }
 
 export interface Participant {

@@ -33,89 +33,61 @@ interface RouteParams {
 }
 
 const ProductSingle: React.FC = () => {
-  const { isAuthenticated } = useAuth(); // Use useAuth hook to get the current user
+  const { isAuthenticated } = useAuth();
   const { state } = useCart();
   const router = useRouter();
 
-  const { slug } = useParams<RouteParams>(); // Get the product slug from the URL params
+  const { slug } = useParams<RouteParams>();
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = (index: React.SetStateAction<number>) => {
-    setActiveTab(index);
-  };
-
   const [quantity, setQuantity] = useState<number>(1);
 
-  const handleIncrement = () => {
-    setQuantity((prevQuantity) => prevQuantity + 1);
-  };
-
-  const handleDecrement = () => {
-    setQuantity((prevQuantity) => (prevQuantity > 1 ? prevQuantity - 1 : 1));
-  };
+  const handleTabChange = (index: number) => setActiveTab(index);
+  const handleIncrement = () => setQuantity((q) => q + 1);
+  const handleDecrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!slug) return;
       try {
-        if (slug) {
-          // Fetch the main product details
-          const adData = await fetchProductBySlug(slug);
-          setProduct(adData);
-
-          // Fetch related products
-          const relatedData = await fetchRelatedProducts(slug);
-          setRelatedProducts(relatedData);
-        }
+        const adData = await fetchProductBySlug(slug);
+        setProduct(adData);
+        const relatedData = await fetchRelatedProducts(slug);
+        setRelatedProducts(relatedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
     fetchData();
   }, [slug]);
 
   useEffect(() => {
     if (!product) return;
-
     const visitKey = 'visited_products';
     const stored = sessionStorage.getItem(visitKey);
-
-    const visitedArray: {
-      id: number;
-      name: string;
-      visited_at: string;
-    }[] = stored ? JSON.parse(stored) : [];
-
-    const alreadyVisited = visitedArray.some(
-      (entry) => entry.id === product.id
-    );
-
-    if (!alreadyVisited) {
+    const visitedArray: { id: number; name: string; visited_at: string }[] =
+      stored ? JSON.parse(stored) : [];
+    if (!visitedArray.some((entry) => entry.id === product.id)) {
       const visitDetails = {
         id: product.id,
         name: product.title,
         visited_at: new Date().toISOString(),
       };
-
-      // Save locally
       visitedArray.push(visitDetails);
       sessionStorage.setItem(visitKey, JSON.stringify(visitedArray));
-
-      // Save to backend if logged in
       if (isAuthenticated) {
         createVisit({
           item_id: product.id,
           item_type: 'product',
           timestamp: visitDetails.visited_at,
-        }).catch(console.error); // optional error logging
+        }).catch(console.error);
       }
     }
   }, [product, isAuthenticated]);
 
   return (
-    <div className="product-page">
+    <div className="product-page mb-20">
       <section
         role="banner"
         className="entry-hero product-hero-section entry-hero-layout-standard bg-gray-100"
@@ -134,7 +106,6 @@ const ProductSingle: React.FC = () => {
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  {/* Key added here to reset ProductGallery on product change */}
                   <ProductGallery key={product.id} product={product} />
                 </div>
                 <div className="px-4">
@@ -142,7 +113,7 @@ const ProductSingle: React.FC = () => {
                     <h2 className="text-xl text-blue-600">{product.title}</h2>
                     {isAuthenticated && (
                       <a
-                        href={`/profile/products/add-product?slug${product.slug}/edit`}
+                        href={`/profile/products/add-product?slug=${product.slug}`}
                         className="text-blue-500 hover:underline"
                       >
                         Edit
@@ -150,7 +121,7 @@ const ProductSingle: React.FC = () => {
                     )}
                   </div>
                   <div className="mb-4">
-                    <Rating reviews={0}></Rating>
+                    <Rating reviews={0} />
                   </div>
                   <div className="mb-4">
                     <p className="text-secondary mb-2 pb-2 font-bold border-b">
@@ -169,7 +140,6 @@ const ProductSingle: React.FC = () => {
                       >
                         -
                       </button>
-
                       <input
                         type="number"
                         id="quantity"
@@ -178,9 +148,7 @@ const ProductSingle: React.FC = () => {
                         value={quantity}
                         aria-label="Product quantity"
                         min="1"
-                        max=""
                         step="1"
-                        placeholder=""
                         inputMode="numeric"
                         autoComplete="off"
                         onChange={(e) => setQuantity(Number(e.target.value))}
@@ -208,21 +176,20 @@ const ProductSingle: React.FC = () => {
                   <div className="flex space-x-4 py-2 mb-4 border-b">
                     <button
                       className="flex items-center space-x-2 font-bold rounded border-r pr-4"
-                      data-id="{product.id}"
-                      data-product_name="{product.title}"
-                      data-product_image="{product.images[0].image}"
+                      data-id={product.id}
+                      data-product_name={product.title}
+                      data-product_image={product.images[0]?.image}
                     >
                       <span className="starbound-btn-icon starbound-icon-1">
                         <Compare />
                       </span>
                       <span className="starbound-btn-text">Compare</span>
                     </button>
-
                     <button
                       className="flex items-center space-x-2 font-bold rounded"
-                      data-id="{product.id}"
-                      data-product_name="{product.title}"
-                      data-product_image="{product.images[0].image}"
+                      data-id={product.id}
+                      data-product_name={product.title}
+                      data-product_image={product.images[0]?.image}
                     >
                       <span className="starbound-btn-icon starbound-icon-1">
                         <HeartIcon />
@@ -232,7 +199,6 @@ const ProductSingle: React.FC = () => {
                       </span>
                     </button>
                   </div>
-
                   <ul className="mb-4 list-none p-0">
                     <li className="flex items-center mb-2">
                       <TickSheildIcon />
@@ -247,21 +213,20 @@ const ProductSingle: React.FC = () => {
                       </p>
                     </li>
                   </ul>
-
                   <PaymentMethods />
                   <div className="product_meta mt-4 text-gray-600 text-sm">
                     <span className="sku_wrapper block">
                       SKU: <span className="sku">{product.sku}</span>
                     </span>
-
                     <span className="posted_in block">
                       Categories:
                       {product.categories.map((category, index) => (
-                        <React.Fragment key={category.slug}>
+                        <React.Fragment
+                          key={`category.id ?? category.slug-${index}`}
+                        >
                           <Link
-                            href={`/products/categories/${category.slug}`}
-                            rel="tag"
-                            className="text-gray-500 underline hover:text-primary-500 ml-1"
+                            href={`/shop/category/${category.slug}`}
+                            className="text-blue-500 hover:underline ml-1"
                           >
                             {category.name}
                           </Link>
@@ -270,7 +235,6 @@ const ProductSingle: React.FC = () => {
                       ))}
                     </span>
                   </div>
-
                   <ShareSection product={product} />
                 </div>
               </div>
@@ -313,7 +277,6 @@ const ProductSingle: React.FC = () => {
             {/* Tab content */}
             <div className="mt-4">
               {activeTab === 0 && <ReviewsSystem product={product} />}
-
               {activeTab === 1 && (
                 <div className="starbound-product-table">
                   <HtmlContent htmlContent={product.description} />
@@ -333,7 +296,6 @@ const ProductSingle: React.FC = () => {
         ) : (
           <h3 className="text-lg text-red-500">product not found</h3>
         )}
-
         {/* Render related products */}
         <h2 className="text-2xl my-4">Related Products</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-2">

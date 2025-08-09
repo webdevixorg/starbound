@@ -1,13 +1,16 @@
 import React, { useRef, useCallback } from 'react';
+import NextImage from 'next/image';
 import { Image, ImageFile } from '@/types/types';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface ImageUploadProps {
   setSelectedFiles: React.Dispatch<React.SetStateAction<ImageFile[]>>;
   galleryImages: Image[];
   setGalleryImages: React.Dispatch<React.SetStateAction<Image[]>>;
   setDeletedImages: React.Dispatch<React.SetStateAction<Image[]>>;
+  contentType: string;
 }
 
 const ItemType = {
@@ -19,7 +22,8 @@ const DraggableImage: React.FC<{
   index: number;
   moveImage: (dragIndex: number, hoverIndex: number) => void;
   handleRemoveImage: (index: number) => void;
-}> = ({ image, index, moveImage, handleRemoveImage }) => {
+  contentType: string;
+}> = ({ image, index, moveImage, handleRemoveImage, contentType }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [, drop] = useDrop({
     accept: ItemType.IMAGE,
@@ -50,10 +54,22 @@ const DraggableImage: React.FC<{
   return (
     <div
       ref={ref}
-      className="border border-gray-300 relative m-1"
+      className="relative h-full w-full cursor-pointer"
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      <img src={image.image_path} alt={image.alt} className="w-full h-auto" />
+      <NextImage
+        src={
+          image.object_id === 0
+            ? image.image_path
+            : getPublicImageUrl(contentType, image.object_id, image.image_path)
+        }
+        alt={image.alt}
+        sizes="(max-width: 640px) 100vw, 640px"
+        fill
+        className="object-cover rounded"
+        priority={index === 0}
+      />
+
       <button
         onClick={() => handleRemoveImage(index)}
         className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full w-6 h-6 flex items-center justify-center"
@@ -82,6 +98,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   galleryImages,
   setGalleryImages,
   setDeletedImages,
+  contentType = 'posts', // Default content type, can be overridden
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,6 +116,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       const imageFiles: ImageFile[] = files.map((file, index) => ({
         file,
         order: galleryImages.length + index + 1, // Ensure unique order starting from the next available position
+        type: file.type,
+        name: file.name,
       }));
       setSelectedFiles((prevFiles) => [...prevFiles, ...imageFiles]);
 
@@ -106,6 +125,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         id: 0, // Temporary ID for new images
         image_path: URL.createObjectURL(file),
         alt: file.name,
+        object_id: 0, // Temporary object_id for new images
         order: galleryImages.length + 1, // Ensure unique order starting from the next available position
       }));
 
@@ -162,27 +182,32 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div>
-        <div className="widget-content">
-          <div className="grid grid-cols-2 gap-1">
-            {galleryImages
-              .slice() // Create a shallow copy to avoid mutating the original array
-              .sort((a, b) => a.order - b.order) // Sort by the order property
-              .map((image, index) => (
+      <div className="widget-content">
+        <div className="grid grid-cols-2 gap-3">
+          {galleryImages
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((image, index) => (
+              <div
+                key={index}
+                className="aspect-square border border-dashed border-gray-300 flex items-center justify-center cursor-pointer rounded bg-gray-50 hover:bg-gray-100 transition"
+              >
                 <DraggableImage
-                  key={index}
                   index={index}
                   image={image}
                   moveImage={moveImage}
                   handleRemoveImage={handleRemoveImageInternal}
+                  contentType={`${contentType}s`} // Adjust contentType as needed
                 />
-              ))}
-            <div
-              className="border border-gray-300 relative m-1 flex items-center justify-center cursor-pointer h-[95px]"
-              onClick={handleClick}
-            >
-              <div className="text-gray-500 text-4xl">+</div>
-            </div>
+              </div>
+            ))}
+          <div
+            className="aspect-square  border border-dashed border-gray-300 flex items-center justify-center cursor-pointer rounded bg-gray-50 hover:bg-gray-100 transition"
+            onClick={handleClick}
+          >
+            <span className="text-gray-400 text-4xl font-bold select-none">
+              +
+            </span>
           </div>
         </div>
         <input

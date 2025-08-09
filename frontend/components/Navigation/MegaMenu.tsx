@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPosts } from '@/services/api';
+import BlogPostCard from '@/components/UI/Cards/BlogPostCard';
+import FeaturedProductCard from '@/components/UI/Cards/FeaturedProductCard';
 import { Post, Product } from '@/types/types';
-import { formatDate } from '@/helpers/common';
-import ProductCardGrid from '@/components/PageComponents/ProdutctCardGrid';
-import HtmlContent from '@/helpers/content';
+import { fetchPosts } from '@/services/api';
 import { fetchFeaturedAds } from '@/services/apiProducts';
 
 interface SubItem {
@@ -36,30 +35,36 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
   useEffect(() => {
     const loadPosts = async () => {
       try {
+        setLoadingPosts(true);
         const data = await fetchPosts(page, pageSize, status, filter, 'post');
-
-        setPosts(data.results);
-        setLoadingPosts(false);
-      } catch (error) {
+        setPosts(data.results || []);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
         setError('Error fetching posts');
+      } finally {
         setLoadingPosts(false);
       }
     };
 
     const loadFeaturedProducts = async () => {
       try {
+        setLoadingProducts(true);
         const data = await fetchFeaturedAds();
-        setFeaturedProducts(data.results.slice(0, 2)); // Slice the array to get the latest two products
-        setLoadingProducts(false);
-      } catch (error) {
+        console.log('Featured products data:', data);
+        setFeaturedProducts(data.slice(0, 2));
+      } catch (err) {
+        console.error('Error fetching featured products:', err);
         setError('Error fetching featured products');
+      } finally {
         setLoadingProducts(false);
       }
     };
 
-    loadPosts();
-    loadFeaturedProducts();
-  }, []);
+    if (isOpen) {
+      loadPosts();
+      loadFeaturedProducts();
+    }
+  }, [page, pageSize, status, filter, isOpen]);
 
   return (
     <div
@@ -70,17 +75,18 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
       <div className="bg-white dark:bg-neutral-900 shadow-lg">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <div className="flex text-sm border-slate-200 dark:border-slate-700 py-6">
+            {/* Menu Items */}
             <div className="flex-1 grid grid-cols-4 gap-6 pr-6 xl:pr-8">
               {menuItems.map((menu, index) => (
                 <div key={index}>
                   <p className="font-medium text-slate-900 dark:text-neutral-200">
                     {menu.title}
                   </p>
-                  <ul className="grid mt-4">
+                  <ul className="grid mt-4 space-y-2">
                     {menu.items.map((item, idx) => (
                       <li key={idx}>
                         <a
-                          className="font-normal text-slate-600 hover:text-black dark:text-slate-400 dark:hover:text-white"
+                          className="font-normal text-slate-600 hover:text-black dark:text-slate-400 dark:hover:text-white transition-colors"
                           href={item.href}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -93,89 +99,90 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
                 </div>
               ))}
             </div>
+
+            {/* Blog Posts Section */}
             {label.toLowerCase() === 'blog' && (
               <div className="w-[40%]">
-                <div className="grid grid-cols-1 gap-10 sm:gap-8 lg:grid-cols-2">
-                  <h3 className="sr-only">Recent posts</h3>
-                  {loadingPosts && <p>Loading posts...</p>}
-                  {error && <p>{error}</p>}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-200">
+                    Latest Posts
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-neutral-400">
+                    Stay updated with our recent articles
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  {loadingPosts && (
+                    <div className="col-span-full">
+                      <div className="animate-pulse space-y-4">
+                        <div className="h-32 bg-gray-200 rounded-lg"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && !loadingPosts && (
+                    <div className="col-span-full">
+                      <p className="text-red-600 text-sm">{error}</p>
+                    </div>
+                  )}
+
                   {!loadingPosts &&
                     !error &&
                     posts.map((post) => (
-                      <article
+                      <BlogPostCard
                         key={post.id}
-                        className="relative isolate flex max-w-2xl flex-col gap-x-8 gap-y-6 sm:flex-row sm:items-start lg:flex-col lg:items-stretch"
-                      >
-                        <div className="relative flex-none">
-                          <div className="aspect-[2/1] w-full rounded-xl bg-gray-100 sm:aspect-[16/9] sm:h-32 lg:h-auto z-0">
-                            <a href={`posts/${post.slug}`}>
-                              <img
-                                alt={post.title}
-                                className="object-cover object-cover absolute inset-0 w-full h-full"
-                                sizes="300px"
-                                src={
-                                  post.images &&
-                                  post.images[0] &&
-                                  post.images[0] &&
-                                  post.images[0]
-                                    ? post.images[0].image_path
-                                    : '/assets/image_placeholder.jpg'
-                                }
-                              />
-                            </a>
-                          </div>
-                          <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-gray-900/10"></div>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-x-4">
-                            <time
-                              dateTime={post.date}
-                              className="text-sm leading-6 text-gray-600"
-                            >
-                              {formatDate(post.date)}
-                            </time>
-                            <a
-                              className="relative z-10 rounded-full bg-gray-50 py-1.5 px-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
-                              href={
-                                post.categories && post.categories.length > 0
-                                  ? `/category/${post.categories[0].slug}`
-                                  : '#'
-                              }
-                            >
-                              {post.categories && post.categories.length > 0
-                                ? post.categories[0].name
-                                : 'Default'}
-                            </a>
-                          </div>
-                          <h4 className="mt-2 text-sm font-semibold leading-6 text-gray-900">
-                            <a href={`/posts/${post.slug}`}>
-                              <span className="absolute inset-0"></span>
-                              {post.title}
-                            </a>
-                          </h4>
-                          <p className="text-sm leading-6 text-gray-600">
-                            <HtmlContent htmlContent={post.description} />
-                          </p>
-                        </div>
-                      </article>
+                        post={post}
+                        variant="compact"
+                        showExcerpt={true}
+                        excerptLength={100}
+                      />
                     ))}
                 </div>
               </div>
             )}
-            {label.toLowerCase() === 'products' && (
+
+            {/* Featured Products Section */}
+            {label.toLowerCase() === 'categories' && (
               <div className="w-[40%]">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Featured Products
-                </h3>
-                {loadingProducts && <p>Loading products...</p>}
-                {error && <p>{error}</p>}
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 mt-4">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-200">
+                    Featured Products
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-neutral-400">
+                    Check out our top picks
+                  </p>
+                </div>
+
+                {loadingProducts && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-32 bg-gray-200 rounded-lg mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {error && !loadingProducts && (
+                  <p className="text-red-600 text-sm">{error}</p>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
                   {!loadingProducts &&
                     !error &&
                     featuredProducts.map((product) => (
-                      <div key={product.id} className="col-span-1">
-                        <ProductCardGrid product={product} imageHeight={'32'} />
-                      </div>
+                      <FeaturedProductCard
+                        key={product.id}
+                        product={product}
+                        variant="compact"
+                        showPrice={true}
+                        showCategory={true}
+                      />
                     ))}
                 </div>
               </div>

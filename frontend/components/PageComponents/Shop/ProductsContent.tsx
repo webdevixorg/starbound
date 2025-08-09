@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchCategories, fetchSubCategories } from '@/services/api';
-import { fetchLocations, fetchSubLocations } from '@/services/apiProducts';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { fetchCategories } from '@/services/api';
+import { fetchLocations } from '@/services/apiProducts';
 import {
   Category,
   SubCategory,
@@ -17,6 +18,9 @@ import { useProducts } from '@/hooks/useProducts';
 import useFilters from '@/hooks/useFilters';
 
 const ProductsContent: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [viewType, setViewType] = useState<'list' | 'grid'>('list');
   const [orderBy, setOrderBy] = useState('id');
   const [page, setPage] = useState(1);
@@ -53,15 +57,38 @@ const ProductsContent: React.FC = () => {
     setSubLocations,
   });
 
-  const { loading, error, fetchData, debouncedFetchData, refetch } =
-    useProducts({
-      pageSize,
-      query,
-      selectedCategory,
-      categories,
-      setProducts,
-      setTotalPosts,
-    });
+  const { loading, error, debouncedFetchData, refetch } = useProducts({
+    pageSize,
+    query,
+    selectedCategory,
+    categories,
+    setProducts,
+    setTotalPosts,
+  });
+
+  // Handle URL search parameters synchronization
+  useEffect(() => {
+    if (!searchParams) return;
+
+    const urlQuery = searchParams.get('query')?.trim() || '';
+    const urlCategory = searchParams.get('category')?.trim() || '';
+
+    // Update local state from URL
+    setQuery(urlQuery);
+    setSelectedCategory(urlCategory);
+
+    // If there's a category in URL, find and set it in filters
+    if (urlCategory && categories.length > 0) {
+      const matchedCategory = categories.find(
+        (cat) => cat.slug === urlCategory || cat.name === urlCategory
+      );
+
+      if (matchedCategory) {
+        console.log('🎯 Matched category from URL:', matchedCategory);
+        handleFilterChange('categories', matchedCategory.id);
+      }
+    }
+  }, [searchParams, categories, handleFilterChange]);
 
   // Fetch initial data
   useEffect(() => {
@@ -71,40 +98,16 @@ const ProductsContent: React.FC = () => {
           fetchLocations(),
           fetchCategories(0, 0, 16),
         ]);
+
         setLocations(locationsData.results || []);
         setCategories(categoriesData || []);
       } catch (error) {
-        console.error('Error fetching initial data:', error);
+        console.error('❌ Error fetching initial data:', error);
       }
     };
 
     fetchInitialData();
   }, []);
-
-  // Handle URL search parameters
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const params = new URLSearchParams(window.location.search);
-    const searchQuery = params.get('query')?.trim() || '';
-    const categorySlug = params.get('category')?.trim() || '';
-
-    setQuery(searchQuery);
-    setSelectedCategory(categorySlug);
-
-    if (categorySlug && categories.length > 0) {
-      const matched = categories.find(
-        (cat) => cat.slug.trim() === categorySlug
-      );
-
-      if (matched) {
-        handleFilterChange('categories', matched.id);
-        return;
-      }
-    }
-
-    debouncedFetchData(orderBy, page, filters);
-  }, [categories]); // Only depend on categories
 
   // Trigger fetch when filters, orderBy, or page change
   useEffect(() => {
@@ -125,6 +128,8 @@ const ProductsContent: React.FC = () => {
       const category = categories.find((cat) => cat.slug === categorySlug);
 
       if (category) {
+        console.log('🔗 Category from pathname:', category);
+        setSelectedCategory(category.slug);
         handleFilterChange('categories', category.id);
       }
     }
@@ -137,14 +142,55 @@ const ProductsContent: React.FC = () => {
   );
 
   const handleOrderChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) =>
-      setOrderBy(event.target.value),
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setOrderBy(event.target.value);
+      setPage(1); // Reset to first page when changing order
+    },
     []
   );
 
   const handlePageChange = useCallback(
     (newPage: number) => setPage(newPage),
     []
+  );
+
+  // Update URL when search/filters change
+  const updateURL = useCallback(
+    (searchQuery: string, categorySlug: string) => {
+      const params = new URLSearchParams();
+
+      if (searchQuery.trim()) {
+        params.set('query', searchQuery.trim());
+      }
+
+      if (categorySlug.trim()) {
+        params.set('category', categorySlug.trim());
+      }
+
+      const newURL = params.toString() ? `/shop?${params.toString()}` : '/shop';
+
+      // Only update URL if it's different from current
+      const currentURL = `${window.location.pathname}${window.location.search}`;
+      if (newURL !== currentURL) {
+        router.push(newURL, { scroll: false });
+      }
+    },
+    [router]
+  );
+
+  // Handle search from SearchBar component
+  const handleSearch = useCallback(
+    (searchQuery: string, categorySlug?: string) => {
+      console.log('🔍 Search triggered:', { searchQuery, categorySlug });
+
+      setQuery(searchQuery);
+      setSelectedCategory(categorySlug || '');
+      setPage(1); // Reset to first page
+
+      // Update URL
+      updateURL(searchQuery, categorySlug || '');
+    },
+    [updateURL]
   );
 
   const start = (page - 1) * pageSize + 1;
@@ -198,6 +244,7 @@ const ProductsContent: React.FC = () => {
         onClearAllFilters={handleClearAllFilters}
         onOrderChange={handleOrderChange}
         onViewChange={handleViewChange}
+        onSearch={handleSearch} // Pass search handler to header
       />
 
       <div className="grid grid-cols-12 gap-6">
@@ -218,7 +265,14 @@ const ProductsContent: React.FC = () => {
           onMinPriceChange={setMinPrice}
           onMaxPriceChange={setMaxPrice}
           onFilterChange={(type: string, id: number) => {
-            void handleFilterChange(type as any, id);
+            void handleFilterChange(
+              type as
+                | 'categories'
+                | 'locations'
+                | 'subcategories'
+                | 'sublocations',
+              id
+            );
           }}
           onBack={handleBack}
           onPriceFilter={(min, max) => {
@@ -228,6 +282,8 @@ const ProductsContent: React.FC = () => {
                 type: 'price',
                 id: 0,
                 name: `${min}-${max}`,
+                min,
+                max,
               },
             ]);
           }}

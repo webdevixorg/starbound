@@ -5,27 +5,31 @@ from profiles.models import Profile
 from uploads.serializers import ImageSerializer
 from .models import Post, AggregatedVisitorCount
 from categories.models import Category
-from uploads.models import Image
+from uploads.models import Image, UserImage
+
 import bleach
 from django.utils.safestring import mark_safe
 
 class ProfileSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    image_path = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['image', 'bio']
+        fields = ['image_path', 'bio']
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        media_url = settings.MEDIA_URL
-        if request:
-            # Build the absolute URI for the media URL
-            absolute_media_url = request.build_absolute_uri(media_url)
-            image_url = f"{absolute_media_url}profiles/profile_images/{obj.image}"
-            return image_url
-        return f"{media_url}profiles/profile_images/{obj.image}"
-
+    def get_image_path(self, obj):
+        """Get the image path from the UserImage model using image_id (legacy support)"""
+        try:
+            if obj.image_id:
+                user_image = UserImage.objects.select_related().get(id=obj.image_id)
+                return user_image.image_path if hasattr(user_image, 'image_path') else user_image.image_path
+            return None
+        except UserImage.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error fetching image path for profile {obj.id}: {e}")
+            return None
+            
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
 

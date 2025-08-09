@@ -1,45 +1,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { Product } from '@/types/types';
 import { formatCurrency } from '@/helpers/common';
 import AddToCartButton from '@/components/UI/Buttons/AddToCartButton';
 import QuickViewIcon from '@/components/UI/Icons/QuickView';
 import QuickViewModal from '@/components/Modals/QuickView';
+import { getPublicImageUrl } from '@/helpers/media';
+import SafeImage from '../UI/SafeImage';
 
 const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [imageError, setImageError] = useState<boolean>(false);
-  const [secondaryImageError, setSecondaryImageError] =
-    useState<boolean>(false);
-
-  // Primary image with fallback logic
-  const primaryImage = product.images?.find(
-    (img) => img.order === 1
-  )?.image_path;
-  const fallbackImage = '/images/placeholder-product.png';
-
-  // Secondary image for hover effect
-  const secondaryImage = product.images?.find(
-    (img) => img.order === 2
-  )?.image_path;
-
-  // Determine which image to show for primary
-  const displayPrimaryImage =
-    imageError || !primaryImage ? fallbackImage : primaryImage;
-
-  // Determine which image to show for secondary (only if primary is not fallback)
-  const displaySecondaryImage =
-    secondaryImageError || !secondaryImage || imageError || !primaryImage
-      ? null
-      : secondaryImage;
-
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
-  const handleSecondaryImageError = () => {
-    setSecondaryImageError(true);
-  };
 
   return (
     <div className="product-card product-card-list relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col md:flex-row overflow-hidden">
@@ -59,42 +30,21 @@ const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
         className="w-full md:w-1/3 relative group overflow-hidden"
       >
         <div className="relative aspect-[4/3] md:aspect-square bg-gray-100">
-          <img
-            src={displayPrimaryImage}
+          <SafeImage
             alt={product.title || 'Product Image'}
             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-            onError={handleImageError}
-            loading="lazy"
+            images={[
+              {
+                image_path: getPublicImageUrl(
+                  'products',
+                  product.id,
+                  product.images[0]?.image_path
+                ),
+              },
+            ]}
+            width={400}
+            height={200}
           />
-          {displaySecondaryImage && (
-            <img
-              src={displaySecondaryImage}
-              alt={`${product.title} - Alternative view`}
-              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              onError={handleSecondaryImageError}
-              loading="lazy"
-            />
-          )}
-
-          {/* Image placeholder overlay when using fallback */}
-          {(imageError || !primaryImage) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="text-center text-gray-400">
-                <svg
-                  className="w-12 h-12 mx-auto mb-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-xs">No Image</span>
-              </div>
-            </div>
-          )}
         </div>
       </Link>
 
@@ -104,9 +54,9 @@ const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
           {/* Category Badges */}
           <div className="flex flex-wrap gap-1 mb-2">
             {product.categories && product.categories.length > 0 ? (
-              product.categories.map((category) => (
+              product.categories.map((category, index) => (
                 <span
-                  key={category.id}
+                  key={`${product.id}-category-${category.id || category.slug || category.name || index}`}
                   className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
                 >
                   {category.name || category.slug}
@@ -179,12 +129,11 @@ const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
           <div className="mt-4">
             <div className="flex items-center justify-between">
               <div>
-                {product.original_price &&
-                  product.original_price > product.price && (
-                    <span className="text-sm text-gray-400 line-through mr-2">
-                      {formatCurrency(product.original_price)}
-                    </span>
-                  )}
+                {product.sale_price && product.sale_price > product.price && (
+                  <span className="text-sm text-gray-400 line-through mr-2">
+                    {formatCurrency(product.sale_price)}
+                  </span>
+                )}
                 <span className="text-xl font-bold text-green-600">
                   {product.price
                     ? formatCurrency(product.price)
@@ -193,17 +142,16 @@ const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
               </div>
 
               {/* Discount Badge */}
-              {product.original_price &&
-                product.original_price > product.price && (
-                  <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full">
-                    {Math.round(
-                      ((product.original_price - product.price) /
-                        product.original_price) *
-                        100
-                    )}
-                    % OFF
-                  </span>
-                )}
+              {product.sale_price && product.sale_price > product.price && (
+                <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {Math.round(
+                    ((product.sale_price - product.price) /
+                      product.sale_price) *
+                      100
+                  )}
+                  % OFF
+                </span>
+              )}
             </div>
           </div>
 

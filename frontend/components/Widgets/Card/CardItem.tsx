@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface CardItemProps {
@@ -12,19 +13,21 @@ const CardItem: React.FC<CardItemProps> = ({ path, label, src, text }) => {
   const renderImages = (src: string | string[]) => {
     if (Array.isArray(src)) {
       return src.map((image_url, index) => (
-        <img
+        <Image
           key={index}
           src={image_url}
           alt="Travel destination"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-200 hover:scale-110"
         />
       ));
     } else {
       return (
-        <img
+        <Image
           src={src}
           alt="Travel destination"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-200 hover:scale-110"
         />
       );
     }

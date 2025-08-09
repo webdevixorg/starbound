@@ -7,7 +7,9 @@ import { SidebarItem } from '@/components/PageComponents/Sidebar/ProfileSidebar/
 import sidebarMenuItems from '@/lists/sidebarMenuItems'; // Sidebar item list with role-based visibility
 import LoadingSpinner from '@/components/Common/Loading'; // Spinner shown during loading
 
-const ProfileLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProfileLayout: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { role, loading } = useAuth(); // Get user role and loading state from context
   const [error, setError] = useState<string | null>(null); // Optional error state
 
@@ -18,12 +20,14 @@ const ProfileLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }
   }, [loading, role]);
 
-  // Dynamically filter sidebar items based on user role ('admin', 'customer', etc.)
+  // Dynamically filter sidebar items based on user role ('admin', 'staff', etc.)
   const filteredMenuItems = sidebarMenuItems.filter((item) => {
-    if (item.type === 'all') {
-      return true; // Show item to all roles
+    if (Array.isArray(item.type)) {
+      return (
+        item.type.includes('all') || (role !== null && item.type.includes(role))
+      );
     }
-    return item.type === role; // Only show item if role matches
+    return item.type === 'all' || item.type === role;
   });
 
   return (

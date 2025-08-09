@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { Image, Product, Visit } from '@/types/types'; // Adjust the import path as necessary
+import { Product, Visit } from '@/types/types'; // Adjust the import path as necessary
 import axiosInstance from './AxiosInstance';
 import axiosInstanceNoAuth from './AxiosInstanceNoAuth';
 import {
@@ -14,7 +14,6 @@ import {
   Post,
   Category,
   PostData,
-  ImageFile,
 } from '@/types/types'; // Adjust the import path as necessary
 
 export const fetchData = async (url: string) => {
@@ -159,92 +158,6 @@ export const updateAccountSettings = async (
   }
 };
 
-export const uploadImage = async (
-  file: ImageFile,
-  title: string,
-  id: number,
-  type: number
-) => {
-  const formData = new FormData();
-  formData.append('image_path', file.file); // Correct field name for the file
-  formData.append('alt', title);
-  formData.append('object_id', id.toString()); // Correct field name for the object ID
-  formData.append('order', file.order.toString()); // Correct field name for the object ID
-  formData.append('content_type', type.toString()); // Correct field name for the content type
-
-  try {
-    const response = await axiosInstance.post('/images/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    if (response.status !== 201) {
-      throw new Error('Image upload failed');
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
-  }
-};
-
-export const fetchImagesByObjectId = async (
-  objectId: number
-): Promise<Image> => {
-  try {
-    const response: AxiosResponse = await axiosInstanceNoAuth.get('/images/', {
-      params: {
-        object_id: objectId,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching image by object ID:', error);
-    throw error;
-  }
-};
-
-// Function to update the image order
-export const updateImage = async (imageId: number, data: { order: number }) => {
-  try {
-    const response = await axiosInstance.patch(`/images/${imageId}`, data);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating order for image ${imageId}:`, error);
-    throw error;
-  }
-};
-
-export const deleteImage = async (imageId: number) => {
-  try {
-    const response = await axiosInstance.delete(`/images/${imageId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.status !== 204) {
-      throw new Error('Image deletion failed');
-    }
-
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error(
-        'Error deleting image:',
-        error.response?.data || error.message
-      );
-    } else {
-      console.error('Unexpected error deleting image:', error);
-    }
-    throw error;
-  }
-};
-
-// api.tsx
-
 export const fetchPosts = async (
   page: number = 1,
   pageSize: number = 10,
@@ -260,7 +173,7 @@ export const fetchPosts = async (
 }> => {
   try {
     const response: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/${modelName}s/${filter}`,
+      `/${modelName}s/f/${filter}`,
       {
         params: { page, pageSize, status: status },
       }
@@ -268,6 +181,51 @@ export const fetchPosts = async (
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+export const fetchPostsAuth = async (
+  page: number = 1,
+  pageSize: number = 10,
+  status: string,
+  filter: string = '',
+  modelName: string
+): Promise<{
+  page_size: number;
+  results: Post[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}> => {
+  try {
+    const response: AxiosResponse = await axiosInstance.get(
+      `/${modelName}s/p/${filter}`,
+      {
+        params: { page, pageSize, status: status },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+export const fetchPostsByCategory = async (
+  categoryId: number,
+  count?: number
+) => {
+  try {
+    const params: any = { category_id: categoryId };
+    if (count) params.count = count;
+
+    const response = await axiosInstance.get('/posts/f/by_category/', {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts by category:', error);
     throw error;
   }
 };
@@ -280,7 +238,7 @@ export const fetchPostsForSections = async (
 }> => {
   try {
     const response: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/posts/${filter}/`,
+      `/posts/f/${filter}/`,
       {
         params: { count },
       }
@@ -295,7 +253,7 @@ export const fetchPostsForSections = async (
 export const fetchPostBySlug = async (slug: string): Promise<Post> => {
   try {
     const { data: postData }: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/posts/${slug}`
+      `/posts/f/${slug}`
     );
 
     // Fetch category details in parallel
@@ -308,7 +266,6 @@ export const fetchPostBySlug = async (slug: string): Promise<Post> => {
     );
 
     return { ...postData, categories };
-    alert(categories);
   } catch (error) {
     console.error('Error fetching post:', error);
     throw error;
@@ -333,7 +290,7 @@ export const createPost = async (data: PostData): Promise<Post> => {
 
     // Send the formData to the backend
     const response = await axiosInstance.post(
-      `/${data.contentType}s/`,
+      `/${data.contentType}s/p/`,
       formData,
       {
         headers: {
@@ -373,7 +330,7 @@ export const updatePost = async (
 
     // Send the formData to the backend
     const response = await axiosInstance.put(
-      `/${data.contentType}s/${slug}/`,
+      `/${data.contentType}s/p/${slug}/`,
       formData,
       {
         headers: {
@@ -405,8 +362,8 @@ export const changePostStatus = async (
   status: string
 ) => {
   try {
-    const response: AxiosResponse = await axiosInstanceNoAuth.patch(
-      `/${contentType}s/${slug}/change-status/`,
+    const response: AxiosResponse = await axiosInstance.patch(
+      `/${contentType}s/p/${slug}/change-status/`,
       {
         status: status,
       },
@@ -432,23 +389,14 @@ export const deletePost = async (
 ): Promise<void> => {
   try {
     const response = await axiosInstance.delete(
-      `/${contentType}s/${slug}/delete/`
+      `/${contentType}s/p/${slug}/permanent_delete/`
     );
+
     if (response.status !== 204) {
-      throw new Error('Failed to delete post');
+      throw new Error('Failed to permanently delete post');
     }
   } catch (error) {
-    console.error('Error deleting post:', error);
-    throw error;
-  }
-};
-
-export const fetchTrips = async (): Promise<any> => {
-  try {
-    const response = await axiosInstance.get('/trips');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching trips:', error);
+    console.error('Error permanently deleting post:', error);
     throw error;
   }
 };
@@ -650,80 +598,6 @@ export const markUpdateAsRead = async (Id: number): Promise<void> => {
   }
 };
 
-export const fetchProducts = async (
-  orderBy: string,
-  page: number,
-  limit: number,
-  filters: {
-    type: string;
-    id?: number;
-    min?: number;
-    max?: number;
-    name?: string;
-  }[]
-) => {
-  // Validate parameters
-  if (typeof orderBy !== 'string' || orderBy.trim() === '') {
-    throw new Error('Invalid orderBy parameter');
-  }
-  if (!Number.isInteger(page) || page <= 0) {
-    throw new Error('Invalid page parameter');
-  }
-  if (!Number.isInteger(limit) || limit <= 0) {
-    throw new Error('Invalid limit parameter');
-  }
-
-  // Construct URL
-  let url = `/products/?orderBy=${encodeURIComponent(
-    orderBy
-  )}&page=${page}&limit=${limit}`;
-
-  filters.forEach((filter) => {
-    if (filter.type === 'price') {
-      if (filter.min !== undefined) {
-        url += `&minPrice=${encodeURIComponent(filter.min)}`;
-      }
-      if (filter.max !== undefined) {
-        url += `&maxPrice=${encodeURIComponent(filter.max)}`;
-      }
-    } else if (filter.type === 'query' && filter.name) {
-      url += `&query=${encodeURIComponent(filter.name)}`;
-    } else {
-      url += `&${encodeURIComponent(filter.type)}=${encodeURIComponent(
-        filter.id || ''
-      )}`;
-    }
-  });
-
-  try {
-    const response = await fetchData(url);
-    return response;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    throw new Error('Error fetching products');
-  }
-};
-
-export const fetchProductsForSections = async (
-  filter: string,
-  count: number
-): Promise<{
-  results: Product[];
-}> => {
-  try {
-    const response: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/products/${filter}/`,
-      {
-        params: { count },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    throw error;
-  }
-};
-
 export const fetchContentTypes = async () => {
   try {
     const response = await axiosInstanceNoAuth.get('/content-type');
@@ -835,6 +709,20 @@ export const createVisit = async (payload: Visit): Promise<any> => {
 };
 
 /**
+ * Convert legacy visit format to new Visit interface format
+ */
+const convertLegacyVisit = (legacyVisit: any): Visit => {
+  return {
+    item_id: legacyVisit.id || legacyVisit.item_id,
+    item_type: 'product', // Default to product for legacy visits
+    timestamp:
+      legacyVisit.visited_at ||
+      legacyVisit.timestamp ||
+      new Date().toISOString(),
+  };
+};
+
+/**
  * Sync visits bi-directionally between frontend storage and backend.
  *
  * @param useSessionStorage - true to use sessionStorage, false for localStorage
@@ -842,9 +730,7 @@ export const createVisit = async (payload: Visit): Promise<any> => {
 export const biDirectionalSyncVisits = async (useSessionStorage = true) => {
   try {
     // 1. Get visits from backend
-    const backendResponse = await axiosInstance.get<Visit[]>(
-      '/visits/user-visits/'
-    );
+    const backendResponse = await axiosInstance.get<Visit[]>('/visits/');
     if (backendResponse.status !== 200) {
       throw new Error('Failed to fetch visits from backend');
     }
@@ -853,7 +739,21 @@ export const biDirectionalSyncVisits = async (useSessionStorage = true) => {
     // 2. Get visits from frontend storage
     const storage = useSessionStorage ? sessionStorage : localStorage;
     const storedRaw = storage.getItem('visited_products');
-    const frontendVisits: Visit[] = storedRaw ? JSON.parse(storedRaw) : [];
+    let frontendVisits: Visit[] = [];
+
+    if (storedRaw) {
+      const rawVisits = JSON.parse(storedRaw);
+      // Convert legacy format to new format if needed
+      frontendVisits = rawVisits.map((visit: any) => {
+        // Check if it's already in the correct format
+        if (visit.item_id && visit.item_type && visit.timestamp) {
+          return visit as Visit;
+        } else {
+          // Convert legacy format
+          return convertLegacyVisit(visit);
+        }
+      });
+    }
 
     // 3. Merge unique visits by a unique key (item_id + item_type + timestamp)
     // Create helper function to identify visit uniqueness
@@ -898,4 +798,94 @@ export const biDirectionalSyncVisits = async (useSessionStorage = true) => {
 export const fetchVisitHistory = async () => {
   const response = await axiosInstance.get('/visits/');
   return response.data; // expects VisitSerializer[] with embedded product info
+};
+
+/**
+ * Record a visit when user views a product
+ */
+export const recordProductVisit = (
+  productId: number,
+  useSessionStorage = true
+) => {
+  const storage = useSessionStorage ? sessionStorage : localStorage;
+  const visitKey = 'visited_products';
+  const stored = storage.getItem(visitKey);
+
+  let visits: Visit[] = [];
+  if (stored) {
+    const rawVisits = JSON.parse(stored);
+    visits = rawVisits.map((visit: any) => {
+      if (visit.item_id && visit.item_type && visit.timestamp) {
+        return visit as Visit;
+      } else {
+        return convertLegacyVisit(visit);
+      }
+    });
+  }
+
+  // Check if this product was already visited
+  const alreadyVisited = visits.some(
+    (visit) => visit.item_id === productId && visit.item_type === 'product'
+  );
+
+  if (!alreadyVisited) {
+    const newVisit: Visit = {
+      item_id: productId,
+      item_type: 'product',
+      timestamp: new Date().toISOString(),
+    };
+
+    visits.push(newVisit);
+    storage.setItem(visitKey, JSON.stringify(visits));
+  }
+};
+
+/**
+ * Test function to create a visit record - for debugging
+ */
+export const testCreateVisit = async (itemId = 1) => {
+  try {
+    const testVisit = {
+      item_id: itemId,
+      item_type: 'product',
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('Sending test visit:', testVisit);
+    const response = await axiosInstance.post('/visits/', testVisit);
+    console.log('Test visit response:', response.data);
+    console.log('Response status:', response.status);
+    return response.data;
+  } catch (error: any) {
+    console.error('Test visit error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * Test duplicate visit handling
+ */
+export const testDuplicateVisit = async (itemId = 1) => {
+  try {
+    console.log('Testing duplicate visit handling...');
+
+    // First visit
+    const firstResponse = await testCreateVisit(itemId);
+    console.log('First visit:', firstResponse);
+
+    // Wait a moment, then try the same visit again
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Second visit (should update the first)
+    const secondResponse = await testCreateVisit(itemId);
+    console.log('Second visit (duplicate):', secondResponse);
+
+    return { first: firstResponse, second: secondResponse };
+  } catch (error: any) {
+    console.error(
+      'Duplicate visit test error:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface Category {
   href: string;
@@ -34,21 +35,13 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({ post }) => {
     <div className="group cursor-pointer">
       <div className="overflow-hidden rounded-md bg-gray-100 transition-all hover:scale-105 dark:bg-gray-800">
         <a className="relative block aspect-video" href={post.href}>
-          <img
+          <Image
             alt="Thumbnail"
-            fetchPriority="high"
-            decoding="async"
+            priority
+            fill
             className="object-cover transition-all"
             sizes="(max-width: 768px) 30vw, 33vw"
-            srcSet={post.srcSet}
             src={post.src}
-            style={{
-              position: 'absolute',
-              height: '100%',
-              width: '100%',
-              inset: '0px',
-              color: 'transparent',
-            }}
           />
         </a>
       </div>
@@ -81,21 +74,12 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({ post }) => {
             <a href={post.author.href}>
               <div className="flex items-center gap-3">
                 <div className="relative h-5 w-5 flex-shrink-0">
-                  <img
+                  <Image
                     alt={post.author.name}
-                    loading="lazy"
-                    decoding="async"
+                    fill
                     className="rounded-full object-cover"
                     sizes="20px"
-                    srcSet={post.author.srcSet}
                     src={post.author.src}
-                    style={{
-                      position: 'absolute',
-                      height: '100%',
-                      width: '100%',
-                      inset: '0px',
-                      color: 'transparent',
-                    }}
                   />
                 </div>
                 <span className="truncate text-sm">{post.author.name}</span>

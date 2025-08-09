@@ -1,6 +1,7 @@
 'use client';
-
 import { useState, useEffect } from 'react';
+
+import SafeImage from '@/components/UI/SafeImage';
 
 const TopBar = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -95,18 +96,24 @@ const TopBar = () => {
               onClick={() => setLanguageOpen(!languageOpen)}
               className="flex items-center space-x-1"
             >
-              <img
-                src={`https://demos.codezeel.com/prestashop/PRS21/PRS210514/img/l/${
-                  selectedLanguage === 'EN'
-                    ? '1'
-                    : selectedLanguage === 'FR'
-                    ? '2'
-                    : selectedLanguage === 'ES'
-                    ? '3'
-                    : '1'
-                }.jpg`}
-                className="w-5 h-5 rounded-full"
+              <SafeImage
                 alt={selectedLanguage}
+                className="w-5 h-5 rounded-full"
+                images={[
+                  {
+                    image_path: `/images/flags/4x3/${
+                      selectedLanguage === 'EN'
+                        ? 'gb'
+                        : selectedLanguage === 'FR'
+                          ? 'fr'
+                          : selectedLanguage === 'ES'
+                            ? 'es'
+                            : '1'
+                    }.svg`,
+                  },
+                ]}
+                width={300}
+                height={300}
               />
               <span>{selectedLanguage}</span> <span>&#9662;</span>
             </button>

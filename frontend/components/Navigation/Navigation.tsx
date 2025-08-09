@@ -50,7 +50,7 @@ const Navigation: React.FC<NavigationProps> = ({ item }) => {
   return (
     <Popover
       as="li"
-      className={`menu-item ${!item.megaMenu ? 'relative' : ''}`}
+      className={`menu-item`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

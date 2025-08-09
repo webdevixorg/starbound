@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const Footer: React.FC = () => {
   return (
@@ -16,10 +17,13 @@ const Footer: React.FC = () => {
                 <span className="text-3xl leading-normal mb-2 font-bold text-gray-100 mt-2">
                   {/* Logo */}
                   <Link href="/" className="flex items-center p-2">
-                    <img
+                    <Image
                       src="/logo_white.png"
                       alt="Logivis Automotive"
+                      height={80} // adjust as needed
+                      width={160} // adjust as needed
                       className="h-20 sm:h-32 w-auto"
+                      priority
                     />
                   </Link>
                 </span>
@@ -171,9 +175,6 @@ const Footer: React.FC = () => {
 
                     <li className="py-1 hover:text-white">
                       <a href="/warranty-and-return">Warranty & Returns</a>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <a href="/faq">FAQs</a>
                     </li>
                   </ul>
                 </div>

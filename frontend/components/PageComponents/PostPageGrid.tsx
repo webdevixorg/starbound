@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import NextImage from 'next/image';
 import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
 import { Post } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import Link from 'next/link';
 import HtmlContent from '@/helpers/content';
+import { getPublicImageUrl } from '@/helpers/media';
+import SafeImage from '../UI/SafeImage';
 
 const LatestNews: React.FC<{
   filter: string;
@@ -24,7 +27,7 @@ const LatestNews: React.FC<{
     };
 
     loadPosts();
-  }, [filter]);
+  }, [filter, count]);
 
   const popularPosts = posts
     .filter(
@@ -57,15 +60,22 @@ const LatestNews: React.FC<{
                       href={`posts/${post.slug}`}
                       className="h-full w-full block"
                     >
-                      <img
+                      <SafeImage
                         alt={post.title}
                         className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
                         sizes="(max-width: 768px) 30vw, 33vw"
-                        src={
-                          post.images && post.images[0]?.image_path
-                            ? post.images[0].image_path
-                            : '/assets/image_placeholder.jpg'
-                        }
+                        images={[
+                          {
+                            image_path: getPublicImageUrl(
+                              'posts',
+                              post.id,
+                              post.images?.[0]?.image_path
+                            ),
+                          },
+                        ]}
+                        fill
+                        width={400} // or your preferred width
+                        height={300} // or your preferred height
                       />
                     </a>
                   </div>
@@ -73,7 +83,10 @@ const LatestNews: React.FC<{
                     <div className="text-gray-600 dark:text-gray-400 mb-4">
                       {post.categories && post.categories.length > 0 ? (
                         post.categories.map((category, index) => (
-                          <span key={`${post.id}-category-${category}-${index}`} className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600">
+                          <span
+                            key={`${post.id}-category-${category}-${index}`}
+                            className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
+                          >
                             <CategoryName categoryId={category} />
                           </span>
                         ))
@@ -121,10 +134,12 @@ const LatestNews: React.FC<{
           <div className="text-sm sticky">
             <div className="w-full text-center">
               <a href="#">
-                <img
+                <NextImage
                   className="mx-auto w-full"
                   src="/images/ads/250.jpg"
                   alt="advertisement area"
+                  width={250}
+                  height={200}
                 />
               </a>
             </div>

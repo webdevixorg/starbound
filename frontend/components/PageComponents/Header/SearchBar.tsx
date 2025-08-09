@@ -14,12 +14,12 @@ import { fetchCategories } from '@/services/api';
 import { Category } from '@/types/types';
 
 // Custom debounce function to replace lodash
-function debounce<T extends (...args: any[]) => void>(
-  func: T,
+function debounce<T extends unknown[]>(
+  func: (...args: T) => void,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: T) => void {
   let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
+  return (...args: T) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
@@ -58,6 +58,8 @@ function SearchBarContent({
 
   // Initialize from URL params
   useEffect(() => {
+    if (!searchParams) return;
+
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category') || '';
 
@@ -266,7 +268,7 @@ function SearchBarContent({
 
   const inputClasses = useMemo(() => {
     const base =
-      'w-full h-full flex items-center bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md focus-within:border-blue-500 transition-all duration-200';
+      'w-full h-full flex items-center bg-white border border-gray-300 rounded-lg transition-all duration-200';
     return `${base} ${className}`;
   }, [className]);
 
@@ -422,7 +424,7 @@ function SearchBarContent({
           {/* Search Button */}
           <button
             type="submit"
-            className="flex items-center justify-center px-4 lg:px-6 h-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-r-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="flex items-center justify-center px-4 lg:px-6 h-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-r-lg transition-colors duration-200"
             aria-label="Search"
             disabled={!query.trim()}
           >

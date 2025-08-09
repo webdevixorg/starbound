@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User, Group 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import Order, Notification, Profile, Update, Trip, Wishlist
+from .models import Order, Notification, Profile, Update, Wishlist
+from uploads.models import UserImage
 from app.product.serializers import ProductSerializer
 from django.conf import settings
 
@@ -57,56 +58,46 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    image_url = serializers.SerializerMethodField()
+    image_path = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['user', 'image', 'image_url', 'bio', 'phone', 'address', 'city', 'region', 'postal_code', 'country', 'date_of_birth']
+        fields = ['user', 'image_path', 'bio', 'phone', 'address', 'city', 'region', 'postal_code', 'country', 'date_of_birth']
 
-    def get_image_url(self, obj):
-        request = self.context.get('request')
-        media_url = settings.MEDIA_URL
-        if obj.image:
-            if request:
-                # Build the absolute URI for the media URL
-                return request.build_absolute_uri(obj.image.url)
-            return f"{media_url}{obj.image}"
-        return None
-
+    def get_image_path(self, obj):
+        """Get the image path from the UserImage model using image_id (legacy support)"""
+        try:
+            if obj.image_id:
+                user_image = UserImage.objects.select_related().get(id=obj.image_id)
+                return user_image.image_path if hasattr(user_image, 'image_path') else user_image.image_path
+            return None
+        except UserImage.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error fetching image path for profile {obj.id}: {e}")
+            return None
+            
     def update(self, instance, validated_data):
+        # Handle user data updates
         user_data = validated_data.pop('user', {})
-        user = instance.user
+        if user_data:
+            user = instance.user
+            user.email = user_data.get('email', user.email)
+            user.first_name = user_data.get('first_name', user.first_name)
+            user.last_name = user_data.get('last_name', user.last_name)
+            user.save()
 
-        user.email = user_data.get('email', user.email)
-        user.first_name = user_data.get('first_name', user.first_name)
-        user.last_name = user_data.get('last_name', user.last_name)
-        user.save()
 
-        instance.bio = validated_data.get('bio', instance.bio)
-        instance.phone = validated_data.get('phone', instance.phone)
-        instance.address = validated_data.get('address', instance.address)
-        instance.city = validated_data.get('city', instance.city)
-        instance.region = validated_data.get('region', instance.region)
-        instance.postal_code = validated_data.get('postal_code', instance.postal_code)
-        instance.country = validated_data.get('country', instance.country)
-        instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
-        
-        # Handle image field properly
-        if 'image' in validated_data:
-            image_data = validated_data.get('image')
-            if image_data is None or image_data == '':
-                instance.image = None
-            else:
-                instance.image = image_data
-        
+        # Update other profile fields
+        profile_fields = ['bio', 'phone', 'address', 'city', 'region', 'postal_code', 'country', 'date_of_birth', 'image_id']
+        for field in profile_fields:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+
         instance.save()
         return instance
 
 
-class TripSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Trip
-        fields = '__all__'
 
 class WishlistSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)  # Nest the ProductSerializer

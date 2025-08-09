@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { fetchProductsForSections } from '@/services/api'; // Ensure this path is correct
 import { Product } from '@/types/types';
 import Link from 'next/link';
 import { formatCurrency } from '@/helpers/common';
+import SafeImage from '../UI/SafeImage';
+import { getPublicImageUrl } from '@/helpers/media';
+
+import { fetchProductsForSections } from '@/services/apiProducts'; // Ensure this path is correct
 
 const ProductListSidebar: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -44,15 +47,20 @@ const ProductListSidebar: React.FC<{ filter: string; count: number }> = ({
                 href={`/shop/${product.slug}`}
                 className="block relative overflow-hidden w-full h-full"
               >
-                <img
+                <SafeImage
                   alt={product.title}
                   className="object-cover w-full h-full transition-transform duration-500 ease-in-out transform hover:scale-110"
-                  sizes="(max-width: 768px) 30vw, 33vw"
-                  src={
-                    product.images && product.images[0]?.image_path
-                      ? product.images[0].image_path
-                      : '/assets/image_placeholder.jpg'
-                  }
+                  images={[
+                    {
+                      image_path: getPublicImageUrl(
+                        'products',
+                        product.id,
+                        product.images[0]?.image_path
+                      ),
+                    },
+                  ]}
+                  width={400}
+                  height={400}
                 />
               </Link>
             </div>
