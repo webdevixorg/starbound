@@ -26,7 +26,6 @@ import {
 } from '@/helpers/common';
 import {
   createHandleDateChange,
-  toggleCategorySelection,
   useEventListener,
 } from '@/helpers/fromSubmission';
 import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
@@ -165,7 +164,7 @@ const AddPostPage: React.FC = () => {
     };
 
     loadCategories();
-  }, [currentPage, contentTypeId, isClient]);
+  }, [currentPage, contentTypeId, isClient, pageSize]);
 
   // Load post data when editing
   useEffect(() => {
@@ -347,6 +346,7 @@ const AddPostPage: React.FC = () => {
                 );
                 return { file, uploadedImageData };
               } catch (err) {
+                console.error('Error uploading image:', err);
                 return null; // allow others to continue
               }
             })
@@ -408,7 +408,11 @@ const AddPostPage: React.FC = () => {
           )} ID is not set. Navigation will not occur.`
         );
       }
-    } catch (error) {
+    } catch (err) {
+      console.error(
+        `Error ${slug ? 'updating' : 'creating'} ${contentType}:`,
+        err
+      );
       setError(`Error ${slug ? 'updating' : 'creating'} ${contentType}`);
       setShowErrorModal(true);
     } finally {

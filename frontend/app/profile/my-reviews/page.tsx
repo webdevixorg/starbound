@@ -80,11 +80,14 @@ export default function ReviewsPage() {
 
     try {
       const reviewsData = await reviewService.getUserReviews();
-      let rawReviews: any[] = [];
+      let rawReviews: Review[] = [];
       if (Array.isArray(reviewsData)) {
         rawReviews = reviewsData;
-      } else if (reviewsData && Array.isArray((reviewsData as any).results)) {
-        rawReviews = (reviewsData as any).results;
+      } else if (
+        reviewsData &&
+        Array.isArray((reviewsData as { results: Review[] }).results)
+      ) {
+        rawReviews = (reviewsData as { results: Review[] }).results;
       }
 
       // Transform backend data to frontend format

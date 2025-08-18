@@ -76,6 +76,36 @@ export const fetchProducts = async (
   }
 };
 
+export const fetchProductsList = async (
+  page: number = 1,
+  pageSize: number = 10,
+  filter: string = '',
+  modelName: string
+): Promise<{
+  page_size: number;
+  results: Product[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}> => {
+  try {
+    const params: any = {
+      page,
+      pageSize,
+    };
+
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/${modelName}s/f/${filter}`,
+      { params }
+    );
+    console.log('filter posts:', params);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
 export const fetchProductsAuth = async (
   page: number = 1,
   pageSize: number = 10,
@@ -321,7 +351,7 @@ export const fetchRelatedProducts = async (slug: string) => {
 
 export const createOrder = async (transactionData: any): Promise<any> => {
   try {
-    const response = await axiosInstanceNoAuth.post(
+    const response = await axiosInstance.post(
       '/product-orders/',
       transactionData,
       {
@@ -355,12 +385,71 @@ export const fetchOrders = async (): Promise<any> => {
 
 export const fetchOrder = async (orderId: number) => {
   try {
-    const response = await axiosInstanceNoAuth.get(
-      `/product-orders/${orderId}/`
-    );
+    const response = await axiosInstance.get(`/product-orders/${orderId}/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching order:', error);
+    throw error;
+  }
+};
+
+export const updateOrderFulfillment = async (
+  orderId: number,
+  fulfillmentStatus: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
+      fulfillment: fulfillmentStatus,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating order fulfillment:', error);
+    throw error;
+  }
+};
+
+export const updateOrderTracking = async (
+  orderId: number,
+  trackingNumber: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
+      tracking_number: trackingNumber,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating order tracking:', error);
+    throw error;
+  }
+};
+
+export const addOrderNote = async (
+  orderId: number,
+  note: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
+      notes: note,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding order note:', error);
+    throw error;
+  }
+};
+
+export const bulkUpdateOrderStatus = async (
+  orderIds: number[],
+  fulfillmentStatus: string
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/product-orders/bulk-update/', {
+      order_ids: orderIds,
+      fulfillment: fulfillmentStatus,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error bulk updating orders:', error);
     throw error;
   }
 };

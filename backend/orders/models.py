@@ -1,6 +1,16 @@
 from django.db import models
 
 class Order(models.Model):
+    # Fulfillment status choices
+    FULFILLMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
     # Primary key field, auto-incrementing integer (default Django behavior)
     id = models.AutoField(primary_key=True)
     
@@ -21,6 +31,14 @@ class Order(models.Model):
     
     # Flag to indicate if shipping address is different from billing address
     ship_to_different_address = models.BooleanField(default=False)
+    
+    # Fulfillment status of the order
+    fulfillment = models.CharField(
+        max_length=20,
+        choices=FULFILLMENT_STATUS_CHOICES,
+        default='pending',
+        help_text='Current fulfillment status of the order'
+    )
     
     # Timestamp when the order was created; set automatically on record creation
     created_at = models.DateTimeField(auto_now_add=True)

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image'; // Add this import
+
 import { useRouter } from 'next/navigation';
 import { signin as signinApi } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
@@ -67,10 +69,11 @@ const SignIn: React.FC = () => {
       } else {
         setError('Login failed: Missing token.');
       }
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      if (err.response?.status === 401) {
         setError('Invalid username or password.');
-      } else if (error.response?.status >= 500) {
+      } else if (err.response?.status && err.response.status >= 500) {
         setError('Server error. Try again later.');
       } else {
         setError('Unexpected error occurred.');
@@ -107,10 +110,12 @@ const SignIn: React.FC = () => {
           {/* Form */}
           <div className="max-w-md w-full">
             <Link href="/" className="flex items-center justify-center mb-6">
-              <img
+              <NextImage
                 src="/logo.png"
                 alt="Logivis Automotive"
                 className="h-10 sm:h-16 w-auto"
+                width={64}
+                height={40}
               />
             </Link>
 

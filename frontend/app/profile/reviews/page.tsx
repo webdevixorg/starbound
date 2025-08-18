@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useRef } from 'react';
-import { useAdminAuth } from '@/hooks/useAuthRedirect';
+import { useAdminOrStaffAuth } from '@/hooks/useAuthRedirect';
 import { useReviews } from '@/hooks/useReviews';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -12,18 +12,19 @@ import { ReviewFilters } from '@/components/Reviews/ReviewFilters';
 import { ReviewTable } from '@/components/Reviews/ReviewTable';
 import { ReviewPagination } from '@/components/Reviews/ReviewPagination';
 import { ReviewResponseModal } from '@/components/Reviews/ReviewResponseModal';
+import { Review, ReviewDashboardState } from '@/types/review';
 
 export default function ReviewDashboardPage() {
   // ✅ Track if data has been loaded to prevent multiple calls
   const hasLoadedRef = useRef(false);
 
-  // ✅ Using the custom authentication hook
+  // ✅ Using the custom authentication hook for admin and staff access
   const {
     isClient,
     isLoading: authLoading,
     isAuthorized,
     user,
-  } = useAdminAuth();
+  } = useAdminOrStaffAuth();
 
   // ✅ Using custom review management hook
   const {
@@ -55,7 +56,7 @@ export default function ReviewDashboardPage() {
       totalPages: Math.max(1, totalPages),
       currentPage: Math.min(prev.currentPage, Math.max(1, totalPages)),
     }));
-  }, [paginatedReviews, totalCount, totalPages]); // ✅ Removed setState from dependencies
+  }, [paginatedReviews, totalCount, totalPages, setState]);
 
   // ✅ Initial load when authorized - Fixed to prevent infinite loops
   useEffect(() => {
@@ -72,7 +73,7 @@ export default function ReviewDashboardPage() {
 
   // ✅ Handle modal actions
   const handleDeleteClick = useCallback(
-    (review: any) => {
+    (review: Review) => {
       setState((prev) => ({
         ...prev,
         reviewToDelete: review,
@@ -97,7 +98,7 @@ export default function ReviewDashboardPage() {
   }, [setState]);
 
   const handleResponseClick = useCallback(
-    (review: any) => {
+    (review: Review) => {
       setState((prev) => ({
         ...prev,
         reviewToRespond: review,
@@ -133,7 +134,7 @@ export default function ReviewDashboardPage() {
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       setState((prev) => ({
         ...prev,
-        sortBy: e.target.value as any,
+        sortBy: e.target.value as ReviewDashboardState['sortBy'],
         currentPage: 1,
       }));
     },
@@ -144,7 +145,7 @@ export default function ReviewDashboardPage() {
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       setState((prev) => ({
         ...prev,
-        filterBy: e.target.value as any,
+        filterBy: e.target.value as ReviewDashboardState['filterBy'],
         currentPage: 1,
       }));
     },
@@ -155,7 +156,7 @@ export default function ReviewDashboardPage() {
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       setState((prev) => ({
         ...prev,
-        ratingFilter: e.target.value as any,
+        ratingFilter: e.target.value as ReviewDashboardState['ratingFilter'],
         currentPage: 1,
       }));
     },

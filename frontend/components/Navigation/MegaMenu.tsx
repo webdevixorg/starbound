@@ -12,6 +12,7 @@ interface SubItem {
 
 interface MenuItem {
   title: string;
+  href: string;
   items: SubItem[];
 }
 
@@ -36,7 +37,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
     const loadPosts = async () => {
       try {
         setLoadingPosts(true);
-        const data = await fetchPosts(page, pageSize, status, filter, 'post');
+        const data = await fetchPosts(page, pageSize, filter, 'post');
         setPosts(data.results || []);
       } catch (err) {
         console.error('Error fetching posts:', err);
@@ -50,7 +51,6 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
       try {
         setLoadingProducts(true);
         const data = await fetchFeaturedAds();
-        console.log('Featured products data:', data);
         setFeaturedProducts(data.slice(0, 2));
       } catch (err) {
         console.error('Error fetching featured products:', err);
@@ -78,11 +78,14 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
             {/* Menu Items */}
             <div className="flex-1 grid grid-cols-4 gap-6 pr-6 xl:pr-8">
               {menuItems.map((menu, index) => (
-                <div key={index}>
-                  <p className="font-medium text-slate-900 dark:text-neutral-200">
+                <div key={index} className="mb-4">
+                  <a
+                    href={menu.href}
+                    className="font-bold text-slate-900 dark:text-neutral-200"
+                  >
                     {menu.title}
-                  </p>
-                  <ul className="grid mt-4 space-y-2">
+                  </a>
+                  <ul className="grid mt-4">
                     {menu.items.map((item, idx) => (
                       <li key={idx}>
                         <a
@@ -105,7 +108,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
               <div className="w-[40%]">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-neutral-200">
-                    Latest Posts
+                    Featured Posts
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-neutral-400">
                     Stay updated with our recent articles

@@ -143,20 +143,19 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="/about-us">About Us</a>
+                      <Link href="/about-us">About Us</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="/career">Career</a>
+                      <Link href="/career">Career</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="/posts">News & Blog</a>
-                    </li>
-
-                    <li className="py-1 hover:text-white">
-                      <a href="/privacy-policy">Privacy Policy</a>
+                      <Link href="/posts">News & Blog</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="/terms-of-use">Terms of Use</a>
+                      <Link href="/privacy-policy">Privacy Policy</Link>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <Link href="/terms-of-use">Terms of Use</Link>
                     </li>
                   </ul>
                 </div>
@@ -167,14 +166,15 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="/contact-support">Contact Us</a>
+                      <Link href="/contact-support">Contact Us</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="/help-center">Help Center</a>
+                      <Link href="/help-center">Help Center</Link>
                     </li>
-
                     <li className="py-1 hover:text-white">
-                      <a href="/warranty-and-return">Warranty & Returns</a>
+                      <Link href="/warranty-and-return">
+                        Warranty & Returns
+                      </Link>
                     </li>
                   </ul>
                 </div>
@@ -185,16 +185,24 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Vehicle Diagnostics</a>
+                      <Link href="/services/vehicle-diagnostics">
+                        Vehicle Diagnostics
+                      </Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Custom Installation</a>
+                      <Link href="/services/custom-installation">
+                        Custom Installation
+                      </Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Repair & Maintenance</a>
+                      <Link href="/services/repair-maintenance">
+                        Repair & Maintenance
+                      </Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Software Updates</a>
+                      <Link href="/services/software-updates">
+                        Software Updates
+                      </Link>
                     </li>
                   </ul>
                 </div>
@@ -205,19 +213,21 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <a href="#">User Manuals</a>
+                      <Link href="/resources/user-manuals">User Manuals</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Product Reviews</a>
+                      <Link href="/resources/product-reviews">
+                        Product Reviews
+                      </Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">How-To Videos</a>
+                      <Link href="/resources/how-to-videos">How-To Videos</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="/forum">Community Forum</a>
+                      <Link href="/forum">Community Forum</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <a href="#">Feedback</a>
+                      <Link href="/feedback">Feedback</Link>
                     </li>
                   </ul>
                 </div>

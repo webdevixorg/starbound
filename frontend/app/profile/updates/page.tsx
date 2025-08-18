@@ -11,10 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetchUpdates, markUpdateAsRead } from '@/services/api';
 import { Update } from '@/types/types';
-import ProfileImage from '@/components/UI/ProfileImage/ProfileImage';
+import SafeImage from '@/components/UI/SafeImage';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface UpdatesState {
   updates: Update[];
@@ -291,13 +292,20 @@ export default function UpdatesPage() {
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden">
-                <ProfileImage
-                  alt="Update profile"
-                  src={
-                    typeof update.profile_image === 'string'
-                      ? update.profile_image
-                      : ''
-                  }
+                <SafeImage
+                  alt={update.profile_image}
+                  className="relative rounded-full h-10 w-10 object-cover"
+                  images={[
+                    {
+                      image_path: getPublicImageUrl(
+                        'update',
+                        update.id,
+                        update.profile_image
+                      ),
+                    },
+                  ]}
+                  width={40}
+                  height={40}
                 />
               </div>
             </div>
@@ -538,7 +546,7 @@ export default function UpdatesPage() {
                 No travel updates yet
               </h3>
               <p className="text-gray-600">
-                When you receive travel updates, they'll appear here.
+                When you receive travel updates, they&apos;ll appear here.
               </p>
             </div>
           )}

@@ -4,8 +4,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
-import { changePostStatus, deletePost, fetchPosts } from '@/services/api';
-import { Post } from '@/types/types';
+import { changePostStatus, deletePost } from '@/services/api';
+import { fetchProductsList } from '@/services/apiProducts';
+import { Product } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
 import SafeImage from '@/components/UI/SafeImage';
@@ -17,8 +18,8 @@ const ProductsListPage: React.FC = () => {
 
   const [contentTypeId, setContentTypeId] = useState<number>(0);
   const [contentType, setContentType] = useState<string>('');
-  const [nonTrashedPosts, setNonTrashedPosts] = useState<Post[]>([]);
-  const [trashedPosts, setTrashedPosts] = useState<Post[]>([]);
+  const [nonTrashedPosts, setNonTrashedPosts] = useState<Product[]>([]);
+  const [trashedPosts, setTrashedPosts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [nonDeletedCurrentPage, setNonDeletedCurrentPage] = useState<number>(1);
@@ -32,7 +33,7 @@ const ProductsListPage: React.FC = () => {
   const matchedContentType = useMemo(() => {
     if (Array.isArray(contentTypes)) {
       return contentTypes.find(
-        (contentType: any) => contentType.id === contentTypeId
+        (contentType: { id: number }) => contentType.id === contentTypeId
       );
     }
     return null;
@@ -74,21 +75,19 @@ const ProductsListPage: React.FC = () => {
 
         if (isDeleted) {
           const status = 'Deleted';
-          const deletedResponse = await fetchPosts(
+          const deletedResponse = await fetchProductsList(
             page,
             pageSize,
             status,
-            '',
             matchedContentType.model
           );
           setTrashedPosts(deletedResponse.results);
           setTrashedTotalPages(Math.ceil(deletedResponse.count / pageSize));
         } else {
-          const nonDeletedResponse = await fetchPosts(
+          const nonDeletedResponse = await fetchProductsList(
             page,
             pageSize,
             status,
-            '',
             matchedContentType.model
           );
           setNonTrashedPosts(nonDeletedResponse.results);
@@ -119,6 +118,7 @@ const ProductsListPage: React.FC = () => {
     matchedContentType,
     pageSize,
     status,
+    contentLoading,
   ]);
 
   const handleTrash = async (slug: string) => {
@@ -377,10 +377,8 @@ const ProductsListPage: React.FC = () => {
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {/* Fix 1: Safe property access with optional chaining */}
-                                  {(post as any).short_description?.substring(
-                                    0,
-                                    50
-                                  ) || 'No description'}
+                                  {post.short_description?.substring(0, 50) ||
+                                    'No description'}
                                   ...
                                 </div>
                               </div>
@@ -389,7 +387,7 @@ const ProductsListPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
                               {/* Fix 2: Proper key handling for categories */}
-                              {post.categories.map((category, index) => (
+                              {post.categories.map((category) => (
                                 <span
                                   key={
                                     typeof category === 'object'
@@ -405,8 +403,8 @@ const ProductsListPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {/* Fix 3: Safe property access for price */}
-                            {(post as any).price
-                              ? `$${(post as any).price}`
+                            {post.price
+                              ? `$${post.price}`
                               : 'Contact for Price'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -477,13 +475,22 @@ const ProductsListPage: React.FC = () => {
                       className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                     >
                       <div className="flex items-start space-x-3">
-                        <img
-                          className="h-16 w-16 rounded-lg object-cover"
-                          src={
-                            post.featured_image ||
-                            '/images/placeholder-product.png'
-                          }
+                        <SafeImage
                           alt={post.title}
+                          className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
+                          sizes="(max-width: 768px) 30vw, 33vw"
+                          images={[
+                            {
+                              image_path: getPublicImageUrl(
+                                'products',
+                                post.id,
+                                post.images?.[0]?.image_path
+                              ),
+                            },
+                          ]}
+                          fill
+                          width={400} // or your preferred width
+                          height={300} // or your preferred height
                         />
                         <div className="flex-1 min-w-0">
                           <Link
@@ -494,17 +501,15 @@ const ProductsListPage: React.FC = () => {
                           </Link>
                           <p className="text-sm text-gray-500 mt-1">
                             {/* Fix 4: Safe property access for mobile view */}
-                            {(post as any).short_description?.substring(
-                              0,
-                              80
-                            ) || 'No description'}
+                            {post.short_description?.substring(0, 80) ||
+                              'No description'}
                             ...
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-sm font-medium text-gray-900">
                               {/* Fix 5: Safe property access for mobile price */}
-                              {(post as any).price
-                                ? `$${(post as any).price}`
+                              {post.price
+                                ? `$${post.price}`
                                 : 'Contact for Price'}
                             </span>
                             <span

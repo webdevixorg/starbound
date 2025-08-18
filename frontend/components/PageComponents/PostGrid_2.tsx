@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-
+import NextImage from 'next/image';
 import SafeImage from '../UI/SafeImage';
 import HtmlContent from '@/helpers/content';
 import { CategoryName } from '@/helpers/fetching';
@@ -33,7 +33,7 @@ const LatestNews: React.FC<{
     };
 
     loadPosts();
-  }, [categoryId]);
+  }, [categoryId, count]);
 
   const popularPosts = posts
     .filter(
@@ -45,117 +45,118 @@ const LatestNews: React.FC<{
     .map((news) => news);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-      <div className="flex flex-row flex-wrap">
-        <div className="flex-shrink max-w-full w-full lg:w-2/3 order-first lg:pr-8 lg:pb-8">
-          <div className="border-b flex justify-between items-end mb-8 pb-6">
-            <h2 className="text-gray-800 text-3xl">{title}</h2>
-            <Link
-              className="text-blue-500 hover:text-blue-700 font-semibold capitalize"
-              href={safeViewAllLink}
+    <div className="flex flex-row flex-wrap  mb-10">
+      <div className="flex-shrink max-w-full w-full lg:w-2/3 order-first lg:pr-8 lg:pb-8">
+        <div className="border-b flex justify-between items-end mb-8 pb-6">
+          <h2 className="text-gray-800 text-3xl">{title}</h2>
+          <Link
+            className="text-blue-500 hover:text-blue-700 font-semibold capitalize"
+            href={safeViewAllLink}
+          >
+            View All
+          </Link>
+        </div>
+        <div className="flex flex-row flex-wrap">
+          {posts.map((post) => (
+            <div
+              key={post.id}
+              className="group cursor-pointer w-full px-3 mb-8"
             >
-              View All
-            </Link>
-          </div>
-          <div className="flex flex-row flex-wrap">
-            {posts.map((post) => (
               <div
                 key={post.id}
-                className="group cursor-pointer w-full px-3 mb-8"
+                className="flex flex-col sm:flex-row max-w-full w-full pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100"
               >
                 <div
-                  key={post.id}
-                  className="flex flex-col sm:flex-row max-w-full w-full pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100"
+                  className="relative overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0"
+                  style={{ height: '250px', width: '300px' }} // Set a fixed height and width for consistency
                 >
-                  <div
-                    className="relative overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0"
-                    style={{ height: '250px', width: '300px' }} // Set a fixed height and width for consistency
+                  <a
+                    href={`posts/${post.slug}`}
+                    className="h-full w-full block"
                   >
-                    <a
-                      href={`posts/${post.slug}`}
-                      className="h-full w-full block"
-                    >
-                      <SafeImage
-                        alt={post.title}
-                        className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
-                        sizes="(max-width: 768px) 30vw, 33vw"
-                        images={[
-                          {
-                            image_path: getPublicImageUrl(
-                              'posts',
-                              post.id,
-                              post.images?.[0]?.image_path
-                            ),
-                          },
-                        ]}
-                        fill
-                        width={400} // or your preferred width
-                        height={300} // or your preferred height
-                      />
-                    </a>
-                  </div>
-                  <div className="flex-grow sm:pl-6 sm:mt-0">
-                    <div className="text-gray-600 dark:text-gray-400 mb-4">
-                      {post.categories && post.categories.length > 0 ? (
-                        post.categories.map((category, index) => (
-                          <span
-                            key={`${post.id}-category-${category}-${index}`}
-                            className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
-                          >
-                            <CategoryName categoryId={category} />
-                          </span>
-                        ))
-                      ) : (
-                        <span className="inline-block text-xs font-medium tracking-wider uppercase text-gray-600">
-                          No categories available
+                    <SafeImage
+                      alt={post.title}
+                      className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
+                      sizes="(max-width: 768px) 30vw, 33vw"
+                      images={[
+                        {
+                          image_path: getPublicImageUrl(
+                            'posts',
+                            post.id,
+                            post.images?.[0]?.image_path
+                          ),
+                        },
+                      ]}
+                      fill
+                      width={400} // or your preferred width
+                      height={300} // or your preferred height
+                    />
+                  </a>
+                </div>
+                <div className="flex-grow sm:pl-6 sm:mt-0">
+                  <div className="text-gray-600 dark:text-gray-400 mb-4">
+                    {post.categories && post.categories.length > 0 ? (
+                      post.categories.map((category, index) => (
+                        <span
+                          key={`${post.id}-category-${category}-${index}`}
+                          className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
+                        >
+                          <CategoryName categoryId={category} />
                         </span>
-                      )}
-                    </div>
-                    <Link href={`/posts/${post.slug}`}>
-                      <h2 className="text-2xl font-bold capitalize text-gray-800 dark:text-white mb-3">
-                        {post.title}
-                      </h2>
-                    </Link>
-                    <p className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">
-                      <HtmlContent htmlContent={post.description} />
-                    </p>
+                      ))
+                    ) : (
+                      <span className="inline-block text-xs font-medium tracking-wider uppercase text-gray-600">
+                        No categories available
+                      </span>
+                    )}
+                  </div>
+                  <Link href={`/posts/${post.slug}`}>
+                    <h2 className="text-2xl font-bold capitalize text-gray-800 dark:text-white mb-3">
+                      {post.title}
+                    </h2>
+                  </Link>
+                  <div className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">
+                    <HtmlContent htmlContent={post.description} />
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-        <div className="flex-shrink max-w-full w-full lg:w-1/3">
-          <div className="w-full bg-white mb-6">
-            <div className="p-4 bg-gray-100">
-              <h2 className="text-lg font-bold">Most Popular</h2>
-            </div>
-            <ul className="post-number">
-              {popularPosts.map((post, index) => (
-                <li
-                  key={index}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <a
-                    className="text-sm font-semibold px-6 py-3 flex flex-row items-center"
-                    href={`posts/${post.slug}`}
-                  >
-                    {post.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
+      </div>
+      <div className="flex-shrink max-w-full w-full lg:w-1/3">
+        <div className="w-full bg-white mb-6">
+          <div className="p-4 bg-gray-100">
+            <h2 className="text-lg font-bold">Most Popular</h2>
           </div>
-          <div className="text-sm sticky">
-            <div className="w-full text-center">
-              <a href="#">
-                <img
-                  className="mx-auto w-full"
-                  src="/images/ads/250.jpg"
-                  alt="advertisement area"
-                />
-              </a>
-            </div>
+          <ul className="post-number">
+            {popularPosts.map((post, index) => (
+              <li
+                key={index}
+                className="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <a
+                  className="text-sm font-semibold px-6 py-3 flex flex-row items-center"
+                  href={`posts/${post.slug}`}
+                >
+                  {post.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="text-sm sticky">
+          <div className="w-full text-center">
+            <Link href="#" className="block">
+              <NextImage
+                className="mx-auto w-full"
+                src="/images/ads/250.jpg"
+                alt="advertisement area"
+                width={250}
+                height={300}
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </Link>
           </div>
         </div>
       </div>

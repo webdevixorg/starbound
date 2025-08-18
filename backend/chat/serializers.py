@@ -25,7 +25,7 @@ class ConversationSerializer(serializers.Serializer):
     def get_participants(self, obj):
         participant_ids = obj.get('participants', [])  # Assuming participant IDs are in conversation data
         participants = User.objects.filter(id__in=participant_ids).values(
-            'id', 'first_name', 'last_name', 'profile__image'
+            'id', 'first_name', 'last_name', 'profile__image__image_path'
         )
         # Construct the list of participants with image URLs
         return [
@@ -39,10 +39,7 @@ class ConversationSerializer(serializers.Serializer):
         ]
 
     def get_image(self, participant):
-        request = self.context.get('request')
-        if participant.get('profile__image'):
-            return request.build_absolute_uri(settings.MEDIA_URL + 'profiles/profile_images/' + participant['profile__image'])
-        return None
+        return participant.get('profile__image__image_path')
 
 
 class ConversationDetailSerializer(serializers.Serializer):

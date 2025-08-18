@@ -1,69 +1,470 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import NextImage from 'next/image';
-import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
-import { Post } from '@/types/types';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Post, Category } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import Link from 'next/link';
 import HtmlContent from '@/helpers/content';
 import { getPublicImageUrl } from '@/helpers/media';
-import SafeImage from '../UI/SafeImage';
+import SafeImage from '@/components/UI/SafeImage';
+import ArrowRotateIcon from '@/components/UI/Icons/ArrowRotate';
+import ChapterIcon from '../UI/Icons/Chapter';
+import BookIcon from '../UI/Icons/Book';
+import LibraryIcon from '../UI/Icons/Library';
+import FilterIcon from '../UI/Icons/Filter';
+import { fetchPosts, fetchCategories } from '@/services/api';
 
-const LatestNews: React.FC<{
+const Posts: React.FC<{
   filter: string;
   count: number;
 }> = ({ filter, count }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
+    new Set()
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Add function to toggle category expansion
+  const toggleCategoryExpansion = (categoryId: number) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  // Initialize expanded categories from URL params
+  useEffect(() => {
+    const subcategoryParam = searchParams?.get('subcategory');
+    if (subcategoryParam) {
+      // Find parent category and expand it
+      categories.forEach((cat) => {
+        if (cat.children?.some((child) => child.slug === subcategoryParam)) {
+          setExpandedCategories((prev) => new Set(prev).add(cat.id));
+        }
+      });
+    }
+  }, [searchParams, categories]);
+
+  // Initialize search from URL params
+  useEffect(() => {
+    const searchParam = searchParams?.get('query') || '';
+    setSearchQuery(searchParam);
+  }, [searchParams]);
 
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPostsForSections(filter, count);
+        setLoading(true);
+        const data = await fetchPosts(1, count, filter, 'post');
         setPosts(data.results);
+        setFilteredPosts(data.results);
+        setLoading(false);
       } catch (error) {
-        console.error(`Error fetching ${filter} news:`, error);
+        console.error(`Error fetching ${filter} posts:`, error);
+        setLoading(false);
+      }
+    };
+
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories(1, 20, 14);
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
       }
     };
 
     loadPosts();
+    loadCategories();
   }, [filter, count]);
 
-  const popularPosts = posts
-    .filter(
-      (post) =>
-        post.categories &&
-        post.categories.length > 0 &&
-        post.categories[0].slug === 'web-development'
-    )
-    .map((news) => news);
+  const handleCategoryFilter = useCallback(
+    async (categorySlug: string) => {
+      setSelectedCategory(categorySlug);
+      setLoading(true);
+
+      try {
+        // Get current search query
+        const searchParam = searchParams?.get('query') || '';
+
+        // Pass search query along with category filter
+        const data = await fetchPosts(
+          1,
+          count,
+          `?category=${categorySlug}&query=${searchParam}`,
+          'post'
+        );
+        setFilteredPosts(data.results);
+      } catch (error) {
+        console.error(
+          'Backend filtering failed, using client-side filtering:',
+          error
+        );
+        // Fallback to client-side filtering with search
+        let filtered = posts.filter((post) =>
+          post.categories?.some((cat) => {
+            const category = categories.find(
+              (c) => c.id === (typeof cat === 'number' ? cat : cat.id)
+            );
+            return category?.slug === categorySlug;
+          })
+        );
+
+        // Apply search filter if there's a search query
+        const searchString = searchParams?.get('query')?.toLowerCase() || '';
+        if (searchString) {
+          filtered = filtered.filter(
+            (post) =>
+              post.title.toLowerCase().includes(searchString) ||
+              post.slug?.toLowerCase().includes(searchString) ||
+              post.description.toLowerCase().includes(searchString)
+          );
+        }
+
+        setFilteredPosts(filtered);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [posts, categories, count, searchParams]
+  );
+
+  // Initialize category from URL params
+  useEffect(() => {
+    const categoryParam = searchParams?.get('category');
+    const subcategoryParam = searchParams?.get('subcategory');
+
+    if (subcategoryParam && categories.length > 0) {
+      // If there's a subcategory, use it as the selected category
+      handleCategoryFilter(subcategoryParam);
+    } else if (categoryParam && categories.length > 0) {
+      // If there's only a category, use it as the selected category
+      handleCategoryFilter(categoryParam);
+    } else if (!categoryParam && !subcategoryParam) {
+      setSelectedCategory(null);
+      setFilteredPosts(posts);
+    }
+  }, [searchParams, categories, posts, handleCategoryFilter]);
+
+  const handleCategoryClick = (categorySlug: string) => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+
+    // Find if this is a subcategory
+    let parentCategory: Category | undefined;
+    let isSubcategory = false;
+
+    categories.forEach((cat) => {
+      if (cat.children?.some((child) => child.slug === categorySlug)) {
+        parentCategory = cat;
+        isSubcategory = true;
+      }
+    });
+
+    if (isSubcategory && parentCategory) {
+      // If it's a subcategory, set both parent and subcategory
+      params.set('category', parentCategory.slug);
+      params.set('subcategory', categorySlug);
+    } else {
+      // If it's a parent category, only set category and remove subcategory
+      params.set('category', categorySlug);
+      params.delete('subcategory');
+    }
+
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleShowAll = () => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    params.delete('category');
+    router.push(`/posts`);
+  };
+
+  const featuredPosts = filteredPosts.filter((post) => post.is_featured);
+  const popularPosts = [...filteredPosts]
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
+    .slice(0, 5);
 
   return (
     <div className="container mx-auto py-4 sm:py-6 lg:py-8">
-      <div className="flex flex-row flex-wrap">
-        <div className="flex-shrink max-w-full w-full lg:w-2/3 order-first lg:pr-8 lg:pb-8">
-          <div className="flex flex-row flex-wrap">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="group cursor-pointer w-full px-3 mb-8"
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main Content */}
+        <div className="lg:w-2/3 space-y-10">
+          {selectedCategory && (
+            <div className="flex justify-between border-b mb-8 pb-4">
+              {/* Filter indicator */}
+              {selectedCategory && (
+                <>
+                  <div className="flex items-center gap-3">
+                    {/* Modern filter chip */}
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-sm font-medium text-blue-700 dark:text-blue-300">
+                      <FilterIcon className="w-4 h-4" />
+                      <span>
+                        {(() => {
+                          const categoryParam = searchParams?.get('category');
+                          const subcategoryParam =
+                            searchParams?.get('subcategory');
+
+                          if (subcategoryParam) {
+                            const parentCat = categories.find(
+                              (cat) => cat.slug === categoryParam
+                            );
+                            const subCat = categories
+                              .flatMap((cat) => cat.children || [])
+                              .find((child) => child.slug === subcategoryParam);
+                            return (
+                              <>
+                                <span className="font-bold">
+                                  {parentCat?.name}
+                                </span>
+                                <span className="font-normal">
+                                  {' '}
+                                  / {subCat?.name}
+                                </span>
+                              </>
+                            );
+                          } else {
+                            return (
+                              <span className="font-bold">
+                                {
+                                  categories.find(
+                                    (cat) => cat.slug === selectedCategory
+                                  )?.name
+                                }
+                              </span>
+                            );
+                          }
+                        })()}
+                      </span>
+                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-xs font-semibold ml-1">
+                        {filteredPosts.length}
+                      </span>
+
+                      {/* Back button - only show when viewing a subcategory */}
+                      {searchParams?.get('subcategory') && (
+                        <button
+                          onClick={() => {
+                            const params = new URLSearchParams(
+                              searchParams?.toString() ?? ''
+                            );
+                            params.delete('subcategory');
+                            router.push(`?${params.toString()}`);
+                          }}
+                          className="ml-1 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
+                          title="Go back to parent category"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={handleShowAll}
+                        className="ml-1 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
+                        title="View all posts"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {loading && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin mr-2"></div>
+                        Filtering...
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleShowAll}
+                      className={`block mb-3 text-sm ${
+                        !selectedCategory
+                          ? 'text-blue-600'
+                          : 'hover:text-blue-600'
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Add this after the category filter chip */}
+          {searchParams?.get('query') && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full text-sm font-medium text-green-700 dark:text-green-300">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <div
-                  key={post.id}
-                  className="flex flex-col sm:flex-row max-w-full w-full pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100"
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <span>Search: `{searchParams.get('query')}`</span>
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams(
+                    searchParams?.toString() ?? ''
+                  );
+                  params.delete('query');
+                  router.push(`?${params.toString()}`);
+                }}
+                className="ml-1 p-0.5 hover:bg-green-200 dark:hover:bg-green-800 rounded-full transition-colors"
+              >
+                <svg
+                  className="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  <div
-                    className="relative overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0"
-                    style={{ height: '250px', width: '300px' }} // Set a fixed height and width for consistency
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
+          {/* Featured Section */}
+          {featuredPosts.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Featured Posts</h2>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {featuredPosts.map((post) => (
+                  <Link key={post.id} href={`/posts/${post.slug}`}>
+                    <div className="group overflow-hidden rounded-lg shadow hover:shadow-lg transition">
+                      <SafeImage
+                        alt={post.title}
+                        className="h-48 w-full object-cover group-hover:scale-105 transition-transform"
+                        images={[
+                          {
+                            image_path: getPublicImageUrl(
+                              'posts',
+                              post.id,
+                              post.images?.[0]?.image_path
+                            ),
+                          },
+                        ]}
+                        width={400}
+                        height={300}
+                      />
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold group-hover:text-blue-600">
+                          {post.title}
+                        </h3>
+                        <div className="mt-1 text-sm text-gray-500 line-clamp-2">
+                          <HtmlContent htmlContent={post.description} />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* All Posts */}
+          <section>
+            <div className="space-y-6">
+              {filteredPosts.length === 0 && !loading ? (
+                <div className="text-center py-12">
+                  <svg
+                    className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <a
-                      href={`posts/${post.slug}`}
-                      className="h-full w-full block"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    No posts available
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    {selectedCategory
+                      ? 'No posts found in this category. Try browsing other categories or check back later.'
+                      : 'No posts are currently available. Check back later for new content.'}
+                  </p>
+                  {selectedCategory && (
+                    <button
+                      onClick={handleShowAll}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        />
+                      </svg>
+                      View All Posts
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex flex-col sm:flex-row border-b pb-4 gap-4"
+                  >
+                    <Link
+                      href={`/posts/${post.slug}`}
+                      className="relative w-full sm:w-60 h-40 flex-shrink-0"
                     >
                       <SafeImage
                         alt={post.title}
-                        className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
-                        sizes="(max-width: 768px) 30vw, 33vw"
+                        className="h-full w-full object-cover rounded"
                         images={[
                           {
                             image_path: getPublicImageUrl(
@@ -74,80 +475,390 @@ const LatestNews: React.FC<{
                           },
                         ]}
                         fill
-                        width={400} // or your preferred width
-                        height={300} // or your preferred height
                       />
-                    </a>
-                  </div>
-                  <div className="flex-grow sm:pl-6 sm:mt-0">
-                    <div className="text-gray-600 dark:text-gray-400 mb-4">
-                      {post.categories && post.categories.length > 0 ? (
-                        post.categories.map((category, index) => (
-                          <span
-                            key={`${post.id}-category-${category}-${index}`}
-                            className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
-                          >
-                            <CategoryName categoryId={category} />
-                          </span>
-                        ))
-                      ) : (
-                        <span className="inline-block text-xs font-medium tracking-wider uppercase text-gray-600">
-                          No categories available
-                        </span>
-                      )}
-                    </div>
-                    <Link href={`/posts/${post.slug}`}>
-                      <h2 className="text-2xl font-bold capitalize text-gray-800 dark:text-white mb-3">
-                        {post.title}
-                      </h2>
                     </Link>
-                    <p className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400">
-                      <HtmlContent htmlContent={post.description} />
-                    </p>
+                    <div className="flex-1">
+                      <div className="text-xs text-blue-600 uppercase mb-2">
+                        {post.categories?.map((category, i) => (
+                          <span key={i}>
+                            <CategoryName categoryId={category} />
+                            {i < post.categories.length - 1 && ', '}
+                          </span>
+                        ))}
+                      </div>
+                      <Link href={`/posts/${post.slug}`}>
+                        <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+                      </Link>
+                      <div className="text-sm text-gray-500 line-clamp-3">
+                        <HtmlContent htmlContent={post.description} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex-shrink max-w-full w-full lg:w-1/3">
-          <div className="w-full bg-white mb-6">
-            <div className="p-4 bg-gray-100">
-              <h2 className="text-lg font-bold">Most Popular</h2>
+                ))
+              )}
             </div>
-            <ul className="post-number">
-              {popularPosts.map((post, index) => (
-                <li
-                  key={index}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <a
-                    className="text-sm font-semibold px-6 py-3 flex flex-row items-center"
-                    href={`posts/${post.slug}`}
+          </section>
+        </div>
+
+        {/* Sidebar */}
+        <aside className="lg:w-1/3 space-y-8">
+          {/* Search Bar */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            <div className="p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const params = new URLSearchParams(
+                    searchParams?.toString() ?? ''
+                  );
+
+                  if (searchQuery.trim()) {
+                    params.set('query', searchQuery.trim());
+                  } else {
+                    params.delete('query');
+                  }
+
+                  router.push(`?${params.toString()}`);
+                }}
+                className="relative"
+              >
+                <div className="relative flex items-center">
+                  {/* Search Icon */}
+                  <div className="absolute left-4 pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Input Field */}
+                  <input
+                    type="text"
+                    placeholder="Search technical guides..."
+                    className="w-full pl-12 pr-20 py-3.5 bg-gray-50/50 border border-gray-200/60 rounded-xl text-sm 
+                   placeholder:text-gray-400 text-gray-900
+                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 focus:bg-white/80
+                   transition-all duration-200 ease-out"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+
+                  {/* Search Button */}
+                  <button
+                    type="submit"
+                    className="absolute right-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg 
+                   transition-all duration-200 ease-out font-medium text-sm
+                   shadow-sm hover:shadow-md active:scale-95"
                   >
-                    {post.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="text-sm sticky">
-            <div className="w-full text-center">
-              <a href="#">
-                <NextImage
-                  className="mx-auto w-full"
-                  src="/images/ads/250.jpg"
-                  alt="advertisement area"
-                  width={250}
-                  height={200}
-                />
-              </a>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Clear Button - shows when there's text */}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        const params = new URLSearchParams(
+                          searchParams?.toString() ?? ''
+                        );
+                        params.delete('query');
+                        router.push(`?${params.toString()}`);
+                      }}
+                      className="absolute right-16 p-1 hover:bg-gray-200/60 rounded-full transition-colors duration-200"
+                    >
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Search suggestions or recent searches could go here */}
+                {searchQuery.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-xl border border-gray-200/50 shadow-lg z-10 max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      <div className="px-3 py-2 text-xs text-gray-500 font-medium uppercase tracking-wider">
+                        Quick Actions
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50/60 rounded-lg transition-colors duration-200"
+                      >
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                        <span className="text-sm">
+                          Search for
+                          <span className="font-medium">
+                            `&quot;{searchQuery}&quot;
+                          </span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </form>
             </div>
           </div>
-        </div>
+          {/* Categories */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+              <h2 className="text-lg font-semibold text-gray-900 tracking-tight">
+                Technical Library
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Browse Handbooks & Chapters
+              </p>
+            </div>
+
+            <div className="p-2">
+              {/* All Categories Button */}
+              <button
+                onClick={handleShowAll}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 mb-1 ${
+                  !selectedCategory
+                    ? 'bg-blue-50/80 text-blue-700 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50/60'
+                }`}
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <LibraryIcon className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-medium">Complete Library</span>
+              </button>
+
+              {/* Category List */}
+              <div className="space-y-1">
+                {categories.map((cat) => {
+                  const isActive = searchParams?.get('category') === cat.slug;
+                  const hasActiveChild = cat.children?.some(
+                    (child) => searchParams?.get('subcategory') === child.slug
+                  );
+                  const isExpanded = expandedCategories.has(cat.id);
+
+                  return (
+                    <div key={cat.id}>
+                      {/* Parent Category */}
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => handleCategoryClick(cat.slug)}
+                          className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                            isActive && !searchParams?.get('subcategory')
+                              ? 'font-medium'
+                              : hasActiveChild
+                                ? 'bg-gray-50/60 text-gray-800 font-medium'
+                                : 'text-gray-700'
+                          }`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              isActive || hasActiveChild
+                                ? 'bg-gradient-to-br from-orange-400 to-orange-500'
+                                : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                            }`}
+                          >
+                            <BookIcon className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium block">
+                              {cat.name}
+                            </span>
+                            {cat.children && cat.children.length > 0 && (
+                              <span className="text-xs text-gray-500">
+                                {cat.children.length} chapters
+                              </span>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Clickable Arrow Button */}
+                        {cat.children && cat.children.length > 0 && (
+                          <button
+                            onClick={() => toggleCategoryExpansion(cat.id)}
+                            className="p-2 hover:bg-gray-100/60 rounded-lg transition-all duration-200 mr-2"
+                          >
+                            <ArrowRotateIcon isExpanded={isExpanded} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Subcategories */}
+                      {cat.children &&
+                        cat.children.length > 0 &&
+                        isExpanded && (
+                          <div className="ml-11 space-y-1 mt-1 mb-2 animate-in slide-in-from-top-2 duration-200">
+                            {cat.children.map((sub) => {
+                              const isSubActive =
+                                searchParams?.get('subcategory') === sub.slug;
+                              return (
+                                <button
+                                  key={sub.id}
+                                  onClick={() => handleCategoryClick(sub.slug)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-200 ${
+                                    isSubActive
+                                      ? 'bg-blue-50/80 text-blue-700 font-medium'
+                                      : 'text-gray-600 hover:bg-gray-50/60 hover:text-gray-800'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                                      isSubActive
+                                        ? 'bg-gradient-to-br from-blue-400 to-blue-500'
+                                        : 'bg-gradient-to-br from-gray-300 to-gray-400'
+                                    }`}
+                                  >
+                                    <ChapterIcon className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-sm">
+                                    Ch. {sub.name}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          {/* Popular */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+              <h2 className="text-lg font-semibold text-gray-900 tracking-tight">
+                Most Popular
+              </h2>
+            </div>
+            <div className="divide-y divide-gray-100/70">
+              {popularPosts.map((post, index) => (
+                <div key={post.id} className="group">
+                  <Link
+                    href={`/posts/${post.slug}`}
+                    className="flex items-center gap-4 px-4 py-6 hover:bg-gray-50/60 transition-all duration-300 ease-out"
+                  >
+                    {/* Ranking Badge */}
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium shadow-sm">
+                      {index + 1}
+                    </div>
+
+                    {/* Image */}
+                    <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                      <SafeImage
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                        images={[
+                          {
+                            image_path: getPublicImageUrl(
+                              'posts',
+                              post.id,
+                              post.images?.[0]?.image_path
+                            ),
+                          },
+                        ]}
+                        fallback="/images/placeholder-post.jpg"
+                        fill
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-snug mb-1">
+                        {post.title}
+                      </h3>
+
+                      {/* Meta info */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1.5 text-gray-500">
+                          <span className="font-medium">
+                            {post.views || 0} views
+                          </span>
+                        </div>
+
+                        {/* Category */}
+                        {post.categories && post.categories.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-gray-500">
+                            <CategoryName categoryId={post.categories[0]} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Arrow indicator */}
+                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Ad */}
+          <div className="text-sm">
+            <NextImage
+              className="mx-auto w-full"
+              src="/images/ads/250.jpg"
+              alt="advertisement area"
+              width={250}
+              height={200}
+            />
+          </div>
+        </aside>
       </div>
     </div>
   );
 };
 
-export default LatestNews;
+export default Posts;

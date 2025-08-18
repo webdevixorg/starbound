@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { fetchPostsForSections } from '@/services/api'; // Ensure this path is correct
+import { fetchPosts } from '@/services/api'; // Ensure this path is correct
 import { Post } from '@/types/types';
 import { formatDate } from '@/helpers/common';
 import { CategoryName } from '@/helpers/fetching';
@@ -16,7 +16,7 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPostsForSections(filter, count);
+        const data = await fetchPosts(1, count, filter, 'post');
         setPosts(data.results);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -24,7 +24,7 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
     };
 
     loadPosts();
-  }, [filter]);
+  }, [filter, count]);
 
   return (
     <div className="container mb-10">

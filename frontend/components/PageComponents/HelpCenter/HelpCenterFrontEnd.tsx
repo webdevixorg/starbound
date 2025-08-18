@@ -85,8 +85,8 @@ const SubmitTicketForm: React.FC = () => {
                 accessories or installation.
               </li>
               <li>
-                <strong>Other:</strong> Don’t see your issue? Choose "Other" and
-                explain clearly.
+                <strong>Other:</strong> Don&apos;t see your issue? Choose
+                `&quot;Other&quot;` and explain clearly.
               </li>
             </ul>
           </div>

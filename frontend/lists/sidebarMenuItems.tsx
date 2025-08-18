@@ -20,7 +20,7 @@ interface SubLink {
   label: string;
 }
 
-interface MenuItem {
+export interface MenuItem {
   alert: boolean | undefined;
   href: string;
   icon: ReactNode;

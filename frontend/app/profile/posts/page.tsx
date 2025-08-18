@@ -38,7 +38,7 @@ const PostListPage: React.FC = () => {
   const matchedContentType = useMemo(() => {
     if (Array.isArray(contentTypes)) {
       return contentTypes.find(
-        (contentType: any) => contentType.id === contentTypeId
+        (contentType: { id: number }) => contentType.id === contentTypeId
       );
     }
     return null;

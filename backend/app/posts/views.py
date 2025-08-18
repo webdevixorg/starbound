@@ -38,18 +38,34 @@ class FrontendPostView(viewsets.ReadOnlyModelViewSet):
         queryset = Post.objects.filter(status='Published').order_by('-created_at')
         
         # Search functionality
-        search = self.request.GET.get('search', '')
+        search = self.request.GET.get('query', '')
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) | 
-                Q(content__icontains=search) |
-                Q(excerpt__icontains=search)
+                Q(slug__icontains=search) |
+                Q(description__icontains=search)
             )
         
-        # Category filtering
+        # Category filtering - subcategory takes priority
         category = self.request.GET.get('category', '')
-        if category:
-            queryset = queryset.filter(categories__id=category)
+        subcategory = self.request.GET.get('subcategory', '')
+        
+        if subcategory:
+            # If subcategory is present, ignore category and filter only by subcategory
+            if subcategory.isdigit():
+                # If it's a number, filter by ID
+                queryset = queryset.filter(categories__id=subcategory)
+            else:
+                # If it's text, filter by slug
+                queryset = queryset.filter(categories__slug=subcategory)
+        elif category:
+            # Only apply category filter if no subcategory is present
+            if category.isdigit():
+                # If it's a number, filter by ID
+                queryset = queryset.filter(categories__id=category)
+            else:
+                # If it's text, filter by slug
+                queryset = queryset.filter(categories__slug=category)
         
         # Content type filtering
         content_type_id = self.request.GET.get('content_type_id', '')

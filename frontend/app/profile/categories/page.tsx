@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   fetchCategories,
   deleteCategory,
@@ -16,10 +16,9 @@ import ModalAlert from '@/components/Modals/ModalAlert';
 
 const CategoriesPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
 
   // Get content type from URL params or default to 'post'
-  const contentTypeParam = searchParams.get('type') || 'post';
+  const contentTypeParam = searchParams?.get('type') || 'post';
 
   const { contentTypes, loading: contentLoading } = useContent();
 
@@ -56,9 +55,11 @@ const CategoriesPage: React.FC = () => {
     if (contentLoading || !contentTypes) return;
 
     const matched = Array.isArray(contentTypes)
-      ? contentTypes.find((ct: any) => ct.model === contentTypeParam)
+      ? contentTypes.find(
+          (ct: { model: string }) => ct.model === contentTypeParam
+        )
       : Object.values(contentTypes).find(
-          (ct: any) => ct.model === contentTypeParam
+          (ct: { model: string }) => ct.model === contentTypeParam
         );
 
     if (matched) {

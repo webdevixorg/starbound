@@ -36,7 +36,7 @@ const SlideCard: React.FC<{ post: Post; index: number }> = ({
     : 'Jan'; // Fallback to 'Jan' if invalid
 
   return (
-    <div className="relative group rounded-lg overflow-hidden shadow-lg bg-white h-full flex flex-col">
+    <div className="relative group rounded-lg overflow-hidden bg-white h-full flex flex-col">
       {/* Image */}
       <div className="relative h-56 w-full overflow-hidden">
         <Link href={`/posts/${post.slug}`}>
@@ -72,16 +72,16 @@ const SlideCard: React.FC<{ post: Post; index: number }> = ({
       </div>
 
       {/* Text Content */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
+      <div className="py-4 flex-1 flex flex-col justify-between">
         <Link href={`/posts/${post.slug}`}>
           <h3 className="text-lg font-bold text-gray-800 line-clamp-2 group-hover:text-blue-500 transition-colors">
             {post.title}
           </h3>
         </Link>
         {post.description && (
-          <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+          <div className="text-sm text-gray-600 mt-2 line-clamp-3">
             <HtmlContent htmlContent={post.description} />
-          </p>
+          </div>
         )}
       </div>
     </div>
@@ -166,35 +166,23 @@ const SliderNews: React.FC<SliderNewsProps> = ({
   }
 
   return (
-    <div
-      className="relative bg-gray-50"
-      style={{
-        backgroundImage: "url('/images/bg.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }}
-    >
-      <div className="bg-black/70">
-        <div className="container mx-auto px-5 py-8 lg:py-12">
-          {/* Title */}
-          <div className="mb-8">
-            <h2 className="text-white text-2xl lg:text-3xl font-bold">
-              <span className="inline-block h-5 border-l-4 border-red-600 mr-3" />
-              {title}
-            </h2>
-          </div>
-
-          {/* Slider */}
-          <Splide options={splideOptions}>
-            {posts.map((post, index) => (
-              <SplideSlide key={post.id}>
-                <SlideCard post={post} index={index} />
-              </SplideSlide>
-            ))}
-          </Splide>
-        </div>
+    <div className="relative">
+      {/* Title */}
+      <div className="my-8">
+        <h2 className="text-2xl lg:text-3xl font-bold">
+          <span className="inline-block h-5 border-l-4 border-red-600 mr-3" />
+          {title}
+        </h2>
       </div>
+
+      {/* Slider */}
+      <Splide options={splideOptions}>
+        {posts.map((post, index) => (
+          <SplideSlide key={post.id}>
+            <SlideCard post={post} index={index} />
+          </SplideSlide>
+        ))}
+      </Splide>
     </div>
   );
 };

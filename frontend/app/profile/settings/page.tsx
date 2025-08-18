@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
 
   // Get active tab from URL params or default to 'basic-info'
-  const tabParam = searchParams.get('tab') as TabType;
+  const tabParam = searchParams?.get('tab') as TabType;
   const initialTab = VALID_TABS.includes(tabParam) ? tabParam : 'basic-info';
 
   const [formData, setFormData] = useState<AccountSettingsData>({
@@ -81,7 +81,7 @@ export default function SettingsPage() {
         ? (tab as TabType)
         : 'basic-info';
       setActiveTab(validTab);
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
       params.set('tab', validTab);
       router.push(`/profile/settings?${params.toString()}`, { scroll: false });
     },
@@ -162,7 +162,7 @@ export default function SettingsPage() {
         new_password: '',
         confirm_password: '',
       }));
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating account settings:', error);
       setError('Failed to update account settings. Please try again.');
       setShowErrorModal(true);
@@ -170,24 +170,6 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
-  // Enhanced error handler
-  const handleApiError = useCallback((error: any, context: string) => {
-    console.error(`${context} error:`, error);
-
-    let errorMessage = `Error in ${context}`;
-
-    if (error?.response?.status === 403) {
-      errorMessage = `Access denied for ${context}. Please check your permissions.`;
-    } else if (error?.response?.status >= 500) {
-      errorMessage = `Server error for ${context}. Please try again later.`;
-    } else if (error?.message) {
-      errorMessage = `${context}: ${error.message}`;
-    }
-
-    setError(errorMessage);
-    setShowErrorModal(true);
-  }, []);
 
   // Loading skeleton for SSR compatibility
   if (!isClient) {

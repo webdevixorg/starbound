@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import NextImage from 'next/image';
 import { Product } from '@/types/types';
 import { formatCurrency } from '@/helpers/common';
 import AddToCartButton from '@/components/UI/Buttons/AddToCartButton';

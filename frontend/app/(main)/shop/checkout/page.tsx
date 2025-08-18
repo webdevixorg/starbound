@@ -2,11 +2,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import NextImage from 'next/image'; // Add this import at the top
+
 import { formatCurrency } from '@/helpers/common';
 import { useCart } from '@/context/CartContext';
 import { createOrder } from '@/services/apiProducts';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 import { countries } from '@/modules/country';
+import SafeImage from '@/components/UI/SafeImage';
+import { getPublicImageUrl } from '@/helpers/media';
 
 const CheckoutPage: React.FC = () => {
   const router = useRouter();
@@ -172,13 +176,18 @@ const CheckoutPage: React.FC = () => {
   }, [state.items, subtotal, shipping, discount]);
 
   const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<any>>) =>
+    <T extends Record<string, string>>(
+      setter: React.Dispatch<React.SetStateAction<T>>
+    ) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
-      setter((prevData: any) => ({
-        ...prevData,
-        [name]: value,
-      }));
+      setter(
+        (prevData: T) =>
+          ({
+            ...prevData,
+            [name]: value,
+          }) as T
+      );
     };
 
   const handleshipToDifferentAddressChange = () => {
@@ -805,10 +814,20 @@ const CheckoutPage: React.FC = () => {
                   className="flex items-center space-x-3 pb-4 border-b"
                 >
                   <div className="relative">
-                    <img
-                      className="h-12 w-12 rounded object-cover"
-                      src={item.image}
+                    <SafeImage
                       alt={item.name}
+                      className="h-12 w-12 rounded object-cover"
+                      images={[
+                        {
+                          image_path: getPublicImageUrl(
+                            'products',
+                            item.id,
+                            item.image
+                          ),
+                        },
+                      ]}
+                      width={48}
+                      height={48}
                     />
                     <span className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                       {item.quantity}

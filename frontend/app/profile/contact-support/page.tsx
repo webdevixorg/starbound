@@ -25,15 +25,6 @@ interface ContactSupportState {
   isClient: boolean;
 }
 
-const SUPPORT_CATEGORIES = [
-  { value: 'general', label: 'General Inquiry' },
-  { value: 'technical', label: 'Technical Issue' },
-  { value: 'billing', label: 'Billing Question' },
-  { value: 'account', label: 'Account Issue' },
-  { value: 'feature', label: 'Feature Request' },
-  { value: 'bug', label: 'Bug Report' },
-] as const;
-
 const PRIORITY_LEVELS = [
   { value: 'low', label: 'Low', color: 'text-green-600' },
   { value: 'medium', label: 'Medium', color: 'text-yellow-600' },
@@ -80,9 +71,9 @@ export default function ContactSupportPage() {
       setFormData((prev) => ({
         ...prev,
         name:
-          `${profile.user.first_name} ${profile.user.last_name}`.trim() ||
+          `${profile.user?.first_name ?? ''} ${profile.user?.last_name ?? ''}`.trim() ||
           prev.name,
-        email: profile.user.email || prev.email,
+        email: profile.user?.email || prev.email,
       }));
 
       setState((prev) => ({ ...prev, loading: false }));
@@ -240,8 +231,8 @@ export default function ContactSupportPage() {
                 Contact Support
               </h1>
               <p className="mt-1 text-sm text-gray-600">
-                Need help? Send us a message and we'll get back to you within 24
-                hours.
+                Need help? Send us a message and we&apos;ll get back to you
+                within 24 hours.
               </p>
             </div>
 

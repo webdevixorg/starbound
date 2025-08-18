@@ -43,7 +43,7 @@ class FrontendProductView(viewsets.ReadOnlyModelViewSet):
         ).order_by('-created_at')
         
         # Search functionality
-        search = self.request.GET.get('search', '')
+        search = self.request.GET.get('query', '')
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) | 

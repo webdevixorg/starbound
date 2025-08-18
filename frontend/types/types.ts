@@ -152,6 +152,7 @@ interface CommonParams {
 }
 
 export interface Post extends CommonParams {
+  is_featured: unknown;
   id: number;
   categories: Category[];
   author: Author;
@@ -435,4 +436,32 @@ export interface Visit {
   item_type: string;
   timestamp: string; // ISO string
   [key: string]: any; // extra fields allowed
+}
+
+export interface ForumPost {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+  };
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  replies_count: number;
+  views_count: number;
+}
+
+export interface ForumPostsResponse {
+  results: ForumPost[];
+  count: number;
+  next: string | null;
+  previous: string | null;
 }

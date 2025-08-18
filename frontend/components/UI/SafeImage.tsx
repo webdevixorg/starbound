@@ -98,7 +98,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
   // If fill is used, wrap in a relatively positioned container
   if (fill) {
     return (
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full z-0">
         <NextImage {...imageProps} />
       </div>
     );

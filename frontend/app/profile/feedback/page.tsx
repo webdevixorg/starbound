@@ -537,7 +537,8 @@ export default function FeedbackPage() {
               <li>• Helps us understand your experience and needs</li>
               <li>• Guides our product development and service improvements</li>
               <li>
-                • Ensures we're delivering the best possible travel experience
+                • Ensures we&apos;re delivering the best possible travel
+                experience
               </li>
               <li>• Connects us with our community of travelers</li>
             </ul>

@@ -90,153 +90,149 @@ const ProductSingle: React.FC = () => {
     <div className="product-page mb-20">
       <section
         role="banner"
-        className="entry-hero product-hero-section entry-hero-layout-standard bg-gray-100"
+        className="entry-hero product-hero-section entry-hero-layout-standard"
       >
         <div className="relative">
-          <div className="container mx-auto px-4 py-8">
+          <div className="container mx-auto py-8">
             <header className="text-left">
               <BreadcrumbsComponent product={product} />
             </header>
           </div>
         </div>
       </section>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="container mx-auto">
         {product ? (
           <div className="mb-5">
-            <div className="p-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <ProductGallery key={product.id} product={product} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <ProductGallery key={product.id} product={product} />
+              </div>
+              <div className="px-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-xl text-blue-600">{product.title}</h2>
+                  {isAuthenticated && (
+                    <a
+                      href={`/profile/products/add-product?slug=${product.slug}`}
+                      className="text-blue-500 hover:underline"
+                    >
+                      Edit
+                    </a>
+                  )}
                 </div>
-                <div className="px-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-xl text-blue-600">{product.title}</h2>
-                    {isAuthenticated && (
-                      <a
-                        href={`/profile/products/add-product?slug=${product.slug}`}
-                        className="text-blue-500 hover:underline"
-                      >
-                        Edit
-                      </a>
-                    )}
-                  </div>
-                  <div className="mb-4">
-                    <Rating reviews={0} />
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-secondary mb-2 pb-2 font-bold border-b">
-                      {formatCurrency(product.price)}
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-8">
-                    {product.short_description}
+                <div className="mb-4">
+                  <Rating reviews={0} />
+                </div>
+                <div className="mb-4">
+                  <p className="text-secondary mb-2 pb-2 font-bold border-b">
+                    {formatCurrency(product.price)}
                   </p>
-                  <div className="cart flex items-center mb-1">
-                    <div className="quantity flex items-center border border-gray-300 mr-4">
-                      <button
-                        type="button"
-                        className="minus bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2"
-                        onClick={handleDecrement}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        id="quantity"
-                        className="input-text qty bg-gray-200 text-center py-1 px-1 w-10"
-                        name="quantity"
-                        value={quantity}
-                        aria-label="Product quantity"
-                        min="1"
-                        step="1"
-                        inputMode="numeric"
-                        autoComplete="off"
-                        onChange={(e) => setQuantity(Number(e.target.value))}
-                      />
-                      <button
-                        type="button"
-                        className="plus bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2"
-                        onClick={handleIncrement}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <AddToCartButton product={product} />
-                  </div>
-                  <div className="flex justify-end">
-                    {state.items.length > 0 && (
-                      <a
-                        onClick={() => router.push('/shop/cart')}
-                        className="mt-4 text-blue-500 underline hover:text-blue-700 cursor-pointer"
-                      >
-                        View Cart
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex space-x-4 py-2 mb-4 border-b">
-                    <button
-                      className="flex items-center space-x-2 font-bold rounded border-r pr-4"
-                      data-id={product.id}
-                      data-product_name={product.title}
-                      data-product_image={product.images[0]?.image}
-                    >
-                      <span className="starbound-btn-icon starbound-icon-1">
-                        <Compare />
-                      </span>
-                      <span className="starbound-btn-text">Compare</span>
-                    </button>
-                    <button
-                      className="flex items-center space-x-2 font-bold rounded"
-                      data-id={product.id}
-                      data-product_name={product.title}
-                      data-product_image={product.images[0]?.image}
-                    >
-                      <span className="starbound-btn-icon starbound-icon-1">
-                        <HeartIcon />
-                      </span>
-                      <span className="starbound-btn-text">
-                        Add to wishlist
-                      </span>
-                    </button>
-                  </div>
-                  <ul className="mb-4 list-none p-0">
-                    <li className="flex items-center mb-2">
-                      <TickSheildIcon />
-                      <p className="text-sm text-gray-600 ml-2">
-                        Estimated Delivery : Up to 4 business days
-                      </p>
-                    </li>
-                    <li className="flex items-center mb-2">
-                      <TickSheildIcon />
-                      <p className="text-sm text-gray-600 ml-2">
-                        Shipping & Returns : On all orders over Rs. 20,000
-                      </p>
-                    </li>
-                  </ul>
-                  <PaymentMethods />
-                  <div className="product_meta mt-4 text-gray-600 text-sm">
-                    <span className="sku_wrapper block">
-                      SKU: <span className="sku">{product.sku}</span>
-                    </span>
-                    <span className="posted_in block">
-                      Categories:
-                      {product.categories.map((category, index) => (
-                        <React.Fragment
-                          key={`category.id ?? category.slug-${index}`}
-                        >
-                          <Link
-                            href={`/shop/category/${category.slug}`}
-                            className="text-blue-500 hover:underline ml-1"
-                          >
-                            {category.name}
-                          </Link>
-                          {index < product.categories.length - 1 && ', '}
-                        </React.Fragment>
-                      ))}
-                    </span>
-                  </div>
-                  <ShareSection product={product} />
                 </div>
+                <p className="text-sm text-gray-500 mb-8">
+                  {product.short_description}
+                </p>
+                <div className="cart flex items-center mb-1">
+                  <div className="quantity flex items-center border border-gray-300 mr-4">
+                    <button
+                      type="button"
+                      className="minus bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2"
+                      onClick={handleDecrement}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      id="quantity"
+                      className="input-text qty bg-gray-200 text-center py-1 px-1 w-10"
+                      name="quantity"
+                      value={quantity}
+                      aria-label="Product quantity"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                    />
+                    <button
+                      type="button"
+                      className="plus bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2"
+                      onClick={handleIncrement}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <AddToCartButton product={product} />
+                </div>
+                <div className="flex justify-end">
+                  {state.items.length > 0 && (
+                    <a
+                      onClick={() => router.push('/shop/cart')}
+                      className="mt-4 text-blue-500 underline hover:text-blue-700 cursor-pointer"
+                    >
+                      View Cart
+                    </a>
+                  )}
+                </div>
+                <div className="flex space-x-4 py-2 mb-4 border-b">
+                  <button
+                    className="flex items-center space-x-2 font-bold rounded border-r pr-4"
+                    data-id={product.id}
+                    data-product_name={product.title}
+                    data-product_image={product.images[0]?.image}
+                  >
+                    <span className="starbound-btn-icon starbound-icon-1">
+                      <Compare />
+                    </span>
+                    <span className="starbound-btn-text">Compare</span>
+                  </button>
+                  <button
+                    className="flex items-center space-x-2 font-bold rounded"
+                    data-id={product.id}
+                    data-product_name={product.title}
+                    data-product_image={product.images[0]?.image}
+                  >
+                    <span className="starbound-btn-icon starbound-icon-1">
+                      <HeartIcon />
+                    </span>
+                    <span className="starbound-btn-text">Add to wishlist</span>
+                  </button>
+                </div>
+                <ul className="mb-4 list-none p-0">
+                  <li className="flex items-center mb-2">
+                    <TickSheildIcon />
+                    <p className="text-sm text-gray-600 ml-2">
+                      Estimated Delivery : Up to 4 business days
+                    </p>
+                  </li>
+                  <li className="flex items-center mb-2">
+                    <TickSheildIcon />
+                    <p className="text-sm text-gray-600 ml-2">
+                      Shipping & Returns : On all orders over Rs. 20,000
+                    </p>
+                  </li>
+                </ul>
+                <PaymentMethods />
+                <div className="product_meta mt-4 text-gray-600 text-sm">
+                  <span className="sku_wrapper block">
+                    SKU: <span className="sku">{product.sku}</span>
+                  </span>
+                  <span className="posted_in block">
+                    Categories:
+                    {product.categories.map((category, index) => (
+                      <React.Fragment
+                        key={`category.id ?? category.slug-${index}`}
+                      >
+                        <Link
+                          href={`/shop/category/${category.slug}`}
+                          className="text-blue-500 hover:underline ml-1"
+                        >
+                          {category.name}
+                        </Link>
+                        {index < product.categories.length - 1 && ', '}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                </div>
+                <ShareSection product={product} />
               </div>
             </div>
             {/* Tabs for additional content */}

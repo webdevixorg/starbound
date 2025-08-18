@@ -11,10 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetchNotifications, markNotificationAsRead } from '@/services/api';
 import { Notification } from '@/types/types';
-import ProfileImage from '@/components/UI/ProfileImage/ProfileImage';
+import SafeImage from '@/components/UI/SafeImage';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface NotificationsState {
   notifications: Notification[];
@@ -296,13 +297,20 @@ export default function NotificationsPage() {
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden">
-                <ProfileImage
-                  alt="Notification profile"
-                  src={
-                    typeof notification.profile_image === 'string'
-                      ? notification.profile_image
-                      : ''
-                  }
+                <SafeImage
+                  alt={notification.profile_image}
+                  className="relative rounded-full h-10 w-10 object-cover"
+                  images={[
+                    {
+                      image_path: getPublicImageUrl(
+                        'notification',
+                        notification.id,
+                        notification.profile_image
+                      ),
+                    },
+                  ]}
+                  width={40}
+                  height={40}
                 />
               </div>
             </div>
@@ -548,7 +556,7 @@ export default function NotificationsPage() {
                 No notifications yet
               </h3>
               <p className="text-gray-600">
-                When you receive notifications, they'll appear here.
+                When you receive notifications, they&apos;ll appear here.
               </p>
             </div>
           )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 
 // SEO Metadata
@@ -56,8 +57,6 @@ const structuredData = {
 };
 
 export default function AboutUsPage() {
-  const companyName =
-    process.env.NEXT_PUBLIC_COMPANY_NAME || 'Logivis Automotive';
   const foundingDate = 'February 28, 2024';
 
   return (
@@ -294,7 +293,7 @@ export default function AboutUsPage() {
                             Our Vision
                           </h3>
                           <p className="text-green-800 leading-relaxed">
-                            To be Sri Lanka's leading automotive service
+                            To be Sri Lanka&apos;s leading automotive service
                             provider—renowned for excellence, innovation, and a
                             relentless commitment to raising service standards
                             and building lasting relationships.
@@ -384,7 +383,7 @@ export default function AboutUsPage() {
                           },
                           {
                             title: 'Expert Consultations',
-                            desc: "Professional advice tailored to each customer's needs",
+                            desc: 'Professional advice tailored to each customer&apos;s needs',
                             icon: '💡',
                             features: [
                               'Vehicle assessment',
@@ -436,8 +435,9 @@ export default function AboutUsPage() {
                         Our Future Goals
                       </h2>
                       <p className="text-gray-700 leading-relaxed mb-6 text-lg">
-                        We're constantly evolving and expanding our capabilities
-                        to better serve Sri Lanka's automotive community.
+                        We&apos;re constantly evolving and expanding our
+                        capabilities to better serve Sri Lanka&apos;s automotive
+                        community.
                       </p>
 
                       <div className="space-y-6">
@@ -487,8 +487,8 @@ export default function AboutUsPage() {
                                         goal.status === 'In Progress'
                                           ? 'bg-yellow-100 text-yellow-800'
                                           : goal.status === 'Planning'
-                                          ? 'bg-blue-100 text-blue-800'
-                                          : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-gray-100 text-gray-800'
                                       }`}
                                     >
                                       {goal.status}
@@ -505,12 +505,12 @@ export default function AboutUsPage() {
                     {/* Addressing Sri Lanka's Challenges */}
                     <section id="sri-lanka-challenges" className="mb-12">
                       <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                        Addressing Sri Lanka's Automotive Challenges
+                        Addressing Sri Lanka&apos;s Automotive Challenges
                       </h2>
                       <p className="text-gray-700 leading-relaxed mb-6 text-lg">
                         Logivis Automotive is more than a service provider—we
                         are a problem solver, addressing key challenges in Sri
-                        Lanka's automotive industry.
+                        Lanka&apos;s automotive industry.
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -591,8 +591,8 @@ export default function AboutUsPage() {
                         At <strong>Logivis Automotive</strong>, we aim to
                         transform the vehicle service industry in Sri Lanka
                         through excellence, innovation, and customer-first
-                        thinking. We're not just providing automotive
-                        services—we're building a community and shaping the
+                        thinking. We&apos;re not just providing automotive
+                        services—we&apos;re building a community and shaping the
                         future of vehicle care in Sri Lanka.
                       </p>
                       <div className="flex flex-wrap gap-4">
@@ -654,12 +654,12 @@ export default function AboutUsPage() {
                           <p className="text-gray-600 text-sm mb-3">
                             Find genuine parts for your vehicle
                           </p>
-                          <a
+                          <Link
                             href="/shop"
                             className="text-green-600 hover:text-green-800 font-medium"
                           >
                             Browse Parts →
-                          </a>
+                          </Link>
                         </div>
                         <div className="bg-white rounded-lg p-6 border border-gray-200 text-center">
                           <div className="text-3xl mb-3">💬</div>

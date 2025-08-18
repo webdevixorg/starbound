@@ -46,7 +46,8 @@ class VisitSerializer(serializers.ModelSerializer):
         result = {
             'title': str(product.title),               # ensure it's a string
             'price': str(product.price),               # convert Decimal to str
-            'image': None
+            'image': None,
+            'slug': str(product.slug)
         }
 
         # If your Product has a direct ImageField called `image`

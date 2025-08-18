@@ -135,7 +135,7 @@ export const updateProfile = async (profileData: FormData): Promise<void> => {
 
 export const fetchAccountSettings = async (): Promise<AccountSettings> => {
   try {
-    const response = await axiosInstance.get('/account-settings');
+    const response = await axiosInstance.get('/account');
     return response.data;
   } catch (error) {
     console.error('Error fetching account settings:', error);
@@ -147,10 +147,7 @@ export const updateAccountSettings = async (
   settingsData: Partial<AccountSettings>
 ): Promise<void> => {
   try {
-    const response = await axiosInstance.put(
-      '/account-settings/update/',
-      settingsData
-    );
+    const response = await axiosInstance.put('/account/update/', settingsData);
     return response.data;
   } catch (error) {
     console.error('Error updating account settings:', error);
@@ -161,7 +158,6 @@ export const updateAccountSettings = async (
 export const fetchPosts = async (
   page: number = 1,
   pageSize: number = 10,
-  status: string,
   filter: string = '',
   modelName: string
 ): Promise<{
@@ -172,12 +168,16 @@ export const fetchPosts = async (
   previous: string | null;
 }> => {
   try {
+    const params: any = {
+      page,
+      pageSize,
+    };
+
     const response: AxiosResponse = await axiosInstanceNoAuth.get(
       `/${modelName}s/f/${filter}`,
-      {
-        params: { page, pageSize, status: status },
-      }
+      { params }
     );
+    console.log('filter posts:', params);
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -226,26 +226,6 @@ export const fetchPostsByCategory = async (
     return response.data;
   } catch (error) {
     console.error('Error fetching posts by category:', error);
-    throw error;
-  }
-};
-
-export const fetchPostsForSections = async (
-  filter: string,
-  count: number
-): Promise<{
-  results: Post[];
-}> => {
-  try {
-    const response: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/posts/f/${filter}/`,
-      {
-        params: { count },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching posts:', error);
     throw error;
   }
 };
@@ -632,7 +612,7 @@ export const fetchCategories = async (
     if (contentTypeId) {
       params.content_type_id = contentTypeId;
     }
-    const response = await axiosInstance.get('/categories/', { params });
+    const response = await axiosInstanceNoAuth.get('/categories/', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);

@@ -35,7 +35,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
   };
 
   return (
-    <article className={`${cardClasses[variant]} ${className}`}>
+    <div className={`${cardClasses[variant]} ${className}`}>
       {/* Image Section */}
       <div className="relative flex-none">
         <div className={imageClasses[variant]}>
@@ -98,7 +98,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
 
         {/* Excerpt */}
         {showExcerpt && post.description && (
-          <p
+          <div
             className={`leading-6 text-gray-600 ${
               variant === 'featured' ? 'text-base mt-3' : 'text-sm mt-2'
             }`}
@@ -108,10 +108,10 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
               maxLength={excerptLength}
               showReadMore={false}
             />
-          </p>
+          </div>
         )}
       </div>
-    </article>
+    </div>
   );
 };
 

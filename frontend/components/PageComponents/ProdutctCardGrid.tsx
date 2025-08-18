@@ -41,7 +41,7 @@ const ProductCardGrid: React.FC<{ product: Product; imageHeight: string }> = ({
             {/* First image: fades out on hover */}
             <SafeImage
               alt={product.title}
-              className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-500 ease-in-out z-20 ${
+              className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-500 ease-in-out ${
                 hasSecondImage
                   ? 'opacity-100 group-hover:opacity-0'
                   : 'opacity-100'

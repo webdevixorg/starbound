@@ -29,6 +29,8 @@ urlpatterns = [
     path('api/', include('orders.urls')),  # Order processing
     path('api/', include('reviews.urls')),  # Review system
     path('api/', include('visits.urls')),  # Visit tracking or analytics
+    path('api/', include('forum.urls')),  # Forum system
+    path('api/', include('entities.urls')),  # Entity management
 
     # JWT Authentication endpoints
     # Default JWT token obtain view (commented out, using custom view instead)

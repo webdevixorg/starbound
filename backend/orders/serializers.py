@@ -27,6 +27,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'selected_payment_method',   # Payment method chosen
             'coupon_code',               # Coupon applied if any
             'ship_to_different_address',# Boolean flag for shipping address
+            'fulfillment',               # Fulfillment status
             'created_at',                # Timestamp of order creation
         ]
 
@@ -73,16 +74,13 @@ class OrderSerializer(serializers.ModelSerializer):
             # The 'order=1' filter likely means only the first/main image
             image = Image.objects.filter(content_type=content_type, object_id=item['id'], order=1).first()
             
-            # Build absolute URL for the image if available and request context exists
-            image_url = request.build_absolute_uri(f"{media_url}{image.image_path}") if image and request else None
-
             # Append detailed item data to the list
             order_data_with_details.append({
                 'id': item['id'],
                 'quantity': item['quantity'],
                 'price': float(product.price),  # Convert Decimal to float for JSON serialization
                 'name': product.title,
-                'image_url': image_url,
+                'image_url': image.image_path if image else None,
             })
         
         # Replace the order_data field with detailed product info

@@ -54,7 +54,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setProfile(profileData);
 
       if (Array.isArray(userData?.groups)) {
-        setRole(userData.groups.includes(1) ? 'admin' : 'staff');
+        if (userData.groups.includes(1)) {
+          setRole('admin'); // Group 1 = Admin
+        } else if (userData.groups.includes(2)) {
+          setRole('staff'); // Group 2 = Staff
+        } else if (userData.groups.includes(3)) {
+          setRole('client'); // Group 3 = Client
+        } else {
+          setRole('client'); // default to client
+        }
       } else {
         setRole(null);
       }

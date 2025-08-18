@@ -68,9 +68,7 @@ export function SidebarItem({
         </span>
 
         <button onClick={() => setExpanded((curr) => !curr)}>
-          {subLinks && expanded && (
-            <ArrowRotateIcon rotation={isSubmenuOpen ? 0 : 90} />
-          )}
+          {subLinks && <ArrowRotateIcon isExpanded={isSubmenuOpen} />}
         </button>
       </div>
 

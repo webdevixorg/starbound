@@ -66,9 +66,11 @@ INSTALLED_APPS = [
     'uploads',
     'categories',
     'locations',
+    'entities',
     'orders',
     'reviews',
     'visits',
+    'forum'
 ]
 
 MIDDLEWARE = [

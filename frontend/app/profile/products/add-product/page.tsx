@@ -28,19 +28,12 @@ import {
 } from '@/helpers/common';
 import {
   createHandleDateChange,
-  toggleCategorySelection,
   useEventListener,
 } from '@/helpers/fromSubmission';
 import LoadingSpinner from '@/components/Common/Loading';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
-
-// Extended ProductData type
-interface Product extends ProductData {
-  original_price?: number;
-  stock_quantity: number;
-}
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -254,8 +247,8 @@ export default function AddProductPage() {
           setAdditionalInfo(fetchedProduct.additional_info || '');
           setShortDescription(fetchedProduct.short_description || '');
           setPrice(fetchedProduct.price || null);
-          setOriginalPrice((fetchedProduct as any).original_price || null);
-          setStockQuantity((fetchedProduct as any).stock_quantity || null);
+          setOriginalPrice(fetchedProduct.original_price || null);
+          setStockQuantity(fetchedProduct.stock_quantity || null);
           setSku(fetchedProduct.sku || '');
         }
       } catch (error) {

@@ -74,9 +74,9 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="text-lg text-gray-600">
-            Have a question, suggestion, or need support? We're here to help.
-            Get in touch with us using the form below or through our direct
-            contact information.
+            Have a question, suggestion, or need support? We&apos;re here to
+            help. Get in touch with us using the form below or through our
+            direct contact information.
           </p>
         </div>
 

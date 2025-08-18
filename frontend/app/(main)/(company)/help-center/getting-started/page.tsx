@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface Step {
   id: number;
@@ -307,9 +306,9 @@ export default function GettingStartedPage() {
             Welcome to Starbound! 🎉
           </h2>
           <p className="text-gray-700 text-lg mb-6">
-            We're excited to have you join our community. This guide will help
-            you get up and running quickly. Follow these steps at your own pace,
-            and don't hesitate to reach out if you need help!
+            We&apos;re excited to have you join our community. This guide will
+            help you get up and running quickly. Follow these steps at your own
+            pace, and don&apos;t hesitate to reach out if you need help!
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -348,7 +347,7 @@ export default function GettingStartedPage() {
         {/* Next Steps */}
         <div className="mt-12 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            What's Next?
+            What&apos;s Next?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-lg p-6 shadow-sm">

@@ -137,13 +137,14 @@ function SearchBarContent({
   }, []);
 
   // Debounced search suggestions
-  const debouncedShowSuggestions = useCallback(
-    debounce((value: string) => {
-      if (value.trim().length > 0) {
-        setShowSuggestions(true);
-      }
-    }, 300),
-    []
+  const debouncedShowSuggestions = useMemo(
+    () =>
+      debounce((value: string) => {
+        if (value.trim().length > 0) {
+          setShowSuggestions(true);
+        }
+      }, 300),
+    [] // No dependencies needed for this debounced function
   );
 
   const handleInputChange = useCallback(
@@ -383,7 +384,7 @@ function SearchBarContent({
               <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                 {query.trim() && (
                   <div className="px-4 py-2 text-xs text-gray-500 border-b">
-                    Search for "{query}"
+                    Search for `&quot;{query}&quot;`
                   </div>
                 )}
 

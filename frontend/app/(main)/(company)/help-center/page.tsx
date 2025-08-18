@@ -25,26 +25,33 @@ export default function HelpCenterPage() {
 
   // Ensure client-side rendering
   useEffect(() => {
-    setState((prev: any) => ({ ...prev, isClient: true }));
+    setState((prev: FAQPageState) => ({ ...prev, isClient: true }));
   }, []);
 
   // Load FAQs
   const loadFAQs = useCallback(async () => {
     if (!state.isClient) return;
 
-    setState((prev: any) => ({ ...prev, loading: true, error: null }));
+    setState((prev: FAQPageState) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const faqs = faqGroups;
+      // Flatten faqGroups to an array of FAQ objects with required properties
+      const faqs = faqGroups.flatMap((group, groupIdx) =>
+        group.items.map((item, itemIdx) => ({
+          id: `${groupIdx}-${itemIdx}`,
+          question: item.question,
+          answer: item.answer,
+        }))
+      );
 
-      setState((prev: any) => ({
+      setState((prev: FAQPageState) => ({
         ...prev,
         faqs,
         loading: false,
       }));
     } catch (error) {
       console.error('Error loading FAQs:', error);
-      setState((prev: any) => ({
+      setState((prev: FAQPageState) => ({
         ...prev,
         error: 'Failed to load FAQs. Please try again later.',
         showErrorModal: true,
@@ -59,64 +66,6 @@ export default function HelpCenterPage() {
       loadFAQs();
     }
   }, [loadFAQs, state.isClient]);
-
-  // Handle search and filtering
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setState((prev) => ({ ...prev, searchQuery: e.target.value }));
-    },
-    []
-  );
-
-  const handleCategoryChange = useCallback((category: string) => {
-    setState((prev) => ({
-      ...prev,
-      selectedCategory: category,
-      expandedFAQ: null, // Reset expanded FAQ when changing categories
-    }));
-  }, []);
-
-  const handleFAQToggle = useCallback((faqId: string | number) => {
-    setState((prev) => ({
-      ...prev,
-      expandedFAQ: prev.expandedFAQ === faqId ? null : faqId,
-    }));
-  }, []);
-
-  // Filter FAQs based on search and category
-  const filteredFAQs = React.useMemo(() => {
-    let filtered = state.faqs;
-
-    // Filter by category
-    if (state.selectedCategory !== 'all') {
-      filtered = filtered.filter(
-        (faq) => faq.category === state.selectedCategory
-      );
-    }
-
-    // Filter by search query
-    if (state.searchQuery) {
-      filtered = filtered.filter(
-        (faq) =>
-          faq.question
-            .toLowerCase()
-            .includes(state.searchQuery.toLowerCase()) ||
-          faq.answer.toLowerCase().includes(state.searchQuery.toLowerCase())
-      );
-    }
-
-    // Sort by order and featured status
-    return filtered.sort((a, b) => {
-      if (a.is_featured && !b.is_featured) return -1;
-      if (!a.is_featured && b.is_featured) return 1;
-      return (a.order || 999) - (b.order || 999);
-    });
-  }, [state.faqs, state.selectedCategory, state.searchQuery]);
-
-  // Get current category info
-  const currentCategory = state.categories.find(
-    (cat) => cat.id === state.selectedCategory
-  );
 
   const filteredCategories = categoriesData.filter((category) =>
     `${category.title} ${category.description}`
@@ -271,8 +220,8 @@ export default function HelpCenterPage() {
             Still have questions?
           </h2>
           <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Our friendly support team is here to help! Get in touch and we'll
-            get back to you as soon as possible.
+            Our friendly support team is here to help! Get in touch and
+            we&apos;ll get back to you as soon as possible.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
