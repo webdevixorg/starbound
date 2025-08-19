@@ -44,6 +44,7 @@ function SearchBarContent({
   const [query, setQuery] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -181,6 +182,7 @@ function SearchBarContent({
 
       const trimmedQuery = query.trim();
       const trimmedCategory = selectedCategory.trim();
+      const trimmedSubCategory = selectedSubCategory.trim();
 
       if (!trimmedQuery) {
         inputRef.current?.focus();
@@ -206,9 +208,20 @@ function SearchBarContent({
         params.set('category', trimmedCategory);
       }
 
+      if (trimmedSubCategory) {
+        params.set('subcategory', selectedSubCategory);
+      }
+
       router.push(`/shop?${params.toString()}`);
     },
-    [query, selectedCategory, onSearch, router, saveToHistory]
+    [
+      query,
+      selectedCategory,
+      selectedSubCategory,
+      onSearch,
+      router,
+      saveToHistory,
+    ]
   );
 
   const handleCategorySelect = useCallback((categorySlug: string) => {
@@ -216,6 +229,16 @@ function SearchBarContent({
     setMenuOpen(false);
     inputRef.current?.focus();
   }, []);
+
+  const handleSubCategorySelect = useCallback(
+    (categorySlug: string, subcategorySlug: string) => {
+      setSelectedCategory(categorySlug);
+      setSelectedSubCategory(subcategorySlug);
+      setMenuOpen(false);
+      inputRef.current?.focus();
+    },
+    []
+  );
 
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
@@ -326,28 +349,85 @@ function SearchBarContent({
                       <>
                         <button
                           type="button"
-                          onClick={() => handleCategorySelect('')}
+                          onClick={() => {
+                            handleCategorySelect('');
+                            setSelectedSubCategory(''); // Clear subcategory as well
+                          }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                           role="option"
-                          aria-selected={!selectedCategory}
+                          aria-selected={
+                            !selectedCategory && !selectedSubCategory
+                          }
                         >
                           All Categories
                         </button>
                         {categories.map((category) => (
-                          <button
+                          <div
                             key={category.id}
-                            type="button"
-                            onClick={() =>
-                              handleCategorySelect(category.slug.trim())
-                            }
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                            role="option"
-                            aria-selected={
-                              selectedCategory === category.slug.trim()
-                            }
+                            className="border-b border-gray-100 last:border-b-0"
                           >
-                            {category.name}
-                          </button>
+                            {/* Main Category */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCategorySelect(category.slug.trim())
+                              }
+                              className="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between group"
+                              role="option"
+                              aria-selected={
+                                selectedCategory === category.slug.trim()
+                              }
+                            >
+                              <span className="flex items-center">
+                                {category.name}
+                              </span>
+                              {category.children &&
+                                category.children.length > 0 && (
+                                  <div className="flex items-center">
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                      {category.children.length}
+                                    </span>
+                                  </div>
+                                )}
+                            </button>
+
+                            {/* Subcategories */}
+                            {category.children &&
+                              category.children.length > 0 && (
+                                <div className="bg-gradient-to-r from-gray-50 to-gray-25 border-l-2 border-blue-200 ml-4">
+                                  {category.children.map(
+                                    (subcategory, index) => (
+                                      <button
+                                        key={`${category.id}-${subcategory.id}`}
+                                        type="button"
+                                        onClick={() =>
+                                          handleSubCategorySelect(
+                                            `${category.slug}`,
+                                            `${subcategory.slug}`
+                                          )
+                                        }
+                                        className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
+                                        role="option"
+                                        aria-selected={
+                                          selectedCategory ===
+                                          `${category.slug}/${subcategory.id}`
+                                        }
+                                      >
+                                        <div className="flex items-center">
+                                          <span className="group-hover:text-blue-700">
+                                            {subcategory.name}
+                                          </span>
+                                        </div>
+                                        {/* Connection line */}
+                                        <div className="absolute left-2 top-0 w-4 h-full flex items-center">
+                                          <div className="w-2 h-px bg-gray-300"></div>
+                                        </div>
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                          </div>
                         ))}
                       </>
                     )}
