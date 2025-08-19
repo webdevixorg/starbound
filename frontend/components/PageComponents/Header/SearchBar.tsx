@@ -479,7 +479,7 @@ function SearchBarContent({
             <input
               ref={inputRef}
               type="text"
-              className="w-full h-full border-none outline-none bg-transparent text-sm lg:text-base placeholder-gray-500"
+              className="w-full h-full border-none outline-none bg-transparent text-sm lg:text-base placeholder-gray-500 pr-8"
               placeholder={placeholder}
               value={query}
               onChange={handleInputChange}
@@ -492,6 +492,55 @@ function SearchBarContent({
               spellCheck="false"
               aria-label="Search input"
             />
+
+            {/* Clear Button */}
+            {query.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setShowSuggestions(false);
+
+                  // Trigger search with empty query
+                  const params = new URLSearchParams();
+                  if (selectedCategory.trim()) {
+                    params.set('category', selectedCategory.trim());
+                  }
+                  if (selectedSubCategory.trim()) {
+                    params.set('subcategory', selectedSubCategory.trim());
+                  }
+
+                  if (onSearch) {
+                    onSearch('', selectedCategory.trim() || undefined);
+                  } else {
+                    router.push(
+                      `/shop${params.toString() ? '?' + params.toString() : ''}`
+                    );
+                  }
+
+                  // Focus back to input
+                  if (inputRef.current) {
+                    inputRef.current.focus();
+                  }
+                }}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Clear search"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
 
             {/* Search Suggestions */}
             {showSuggestions && (query.trim() || searchHistory.length > 0) && (
