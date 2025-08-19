@@ -234,7 +234,7 @@ function SearchBarContent({
 
   const handleSubCategorySelect = useCallback(
     (categorySlug: string, subcategorySlug: string) => {
-      setSelectedCategory(categorySlug); // Clear main category when subcategory is selected
+      setSelectedCategory(categorySlug); // Keep the main category for URL
       setSelectedSubCategory(subcategorySlug);
       setMenuOpen(false);
       inputRef.current?.focus();
@@ -249,6 +249,8 @@ function SearchBarContent({
 
       // Trigger search immediately
       const trimmedCategory = selectedCategory.trim();
+      const trimmedSubCategory = selectedSubCategory.trim();
+
       saveToHistory(suggestion);
 
       if (onSearch) {
@@ -261,9 +263,13 @@ function SearchBarContent({
         params.set('category', trimmedCategory);
       }
 
+      if (trimmedSubCategory) {
+        params.set('subcategory', trimmedSubCategory);
+      }
+
       router.push(`/shop?${params.toString()}`);
     },
-    [selectedCategory, onSearch, router, saveToHistory]
+    [selectedCategory, selectedSubCategory, onSearch, router, saveToHistory]
   );
 
   const selectedCategoryName = useMemo(() => {
@@ -435,8 +441,10 @@ function SearchBarContent({
                                         className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
                                         role="option"
                                         aria-selected={
+                                          selectedCategory ===
+                                            category.slug.trim() &&
                                           selectedSubCategory ===
-                                          subcategory.slug.trim()
+                                            subcategory.slug.trim()
                                         }
                                       >
                                         <div className="flex items-center">
