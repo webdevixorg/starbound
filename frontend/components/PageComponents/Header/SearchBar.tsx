@@ -63,9 +63,11 @@ function SearchBarContent({
 
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category') || '';
+    const urlSubCategory = searchParams.get('subcategory') || '';
 
     setQuery(urlQuery.trim());
     setSelectedCategory(urlCategory.trim());
+    setSelectedSubCategory(urlSubCategory.trim());
   }, [searchParams]);
 
   // Focus input if autoFocus is enabled
@@ -207,9 +209,8 @@ function SearchBarContent({
       if (trimmedCategory) {
         params.set('category', trimmedCategory);
       }
-
       if (trimmedSubCategory) {
-        params.set('subcategory', selectedSubCategory);
+        params.set('subcategory', trimmedSubCategory);
       }
 
       router.push(`/shop?${params.toString()}`);
@@ -226,13 +227,14 @@ function SearchBarContent({
 
   const handleCategorySelect = useCallback((categorySlug: string) => {
     setSelectedCategory(categorySlug);
+    setSelectedSubCategory(''); // Clear subcategory when main category is selected
     setMenuOpen(false);
     inputRef.current?.focus();
   }, []);
 
   const handleSubCategorySelect = useCallback(
     (categorySlug: string, subcategorySlug: string) => {
-      setSelectedCategory(categorySlug);
+      setSelectedCategory(categorySlug); // Clear main category when subcategory is selected
       setSelectedSubCategory(subcategorySlug);
       setMenuOpen(false);
       inputRef.current?.focus();
@@ -265,10 +267,33 @@ function SearchBarContent({
   );
 
   const selectedCategoryName = useMemo(() => {
-    if (!selectedCategory) return 'All Categories';
-    const category = categories.find((c) => c.slug.trim() === selectedCategory);
-    return category?.name || 'Unknown Category';
-  }, [selectedCategory, categories]);
+    // If a subcategory is selected, show the subcategory name
+    if (selectedSubCategory) {
+      // Find the category that contains this subcategory
+      for (const category of categories) {
+        if (category.children) {
+          const subcategory = category.children.find(
+            (sub) => sub.slug.trim() === selectedSubCategory
+          );
+          if (subcategory) {
+            return subcategory.name;
+          }
+        }
+      }
+      return 'Unknown Subcategory';
+    }
+
+    // If a main category is selected, show the category name
+    if (selectedCategory) {
+      const category = categories.find(
+        (c) => c.slug.trim() === selectedCategory
+      );
+      return category?.name || 'Unknown Category';
+    }
+
+    // Default to "All Categories"
+    return 'All Categories';
+  }, [selectedCategory, selectedSubCategory, categories]);
 
   const filteredSuggestions = useMemo(() => {
     if (!query.trim()) return searchHistory;
@@ -375,7 +400,8 @@ function SearchBarContent({
                               className="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between group"
                               role="option"
                               aria-selected={
-                                selectedCategory === category.slug.trim()
+                                selectedCategory === category.slug.trim() &&
+                                !selectedSubCategory
                               }
                             >
                               <span className="flex items-center">
@@ -402,15 +428,15 @@ function SearchBarContent({
                                         type="button"
                                         onClick={() =>
                                           handleSubCategorySelect(
-                                            `${category.slug}`,
-                                            `${subcategory.slug}`
+                                            `${category.slug.trim()}`,
+                                            `${subcategory.slug.trim()}`
                                           )
                                         }
                                         className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
                                         role="option"
                                         aria-selected={
-                                          selectedCategory ===
-                                          `${category.slug}/${subcategory.id}`
+                                          selectedSubCategory ===
+                                          subcategory.slug.trim()
                                         }
                                       >
                                         <div className="flex items-center">
