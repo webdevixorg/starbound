@@ -49,7 +49,8 @@ function SearchBarContent({
   const [isLoading, setIsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [justCleared, setJustCleared] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,7 +93,7 @@ function SearchBarContent({
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        setError(null);
+        setError('');
         const data = await fetchCategories(1, 20); // Fetch more categories
         setCategories(data || []);
       } catch (error) {
@@ -484,7 +485,7 @@ function SearchBarContent({
               value={query}
               onChange={handleInputChange}
               onFocus={() => {
-                if (query.trim() || searchHistory.length > 0) {
+                if (!justCleared && (query.trim() || searchHistory.length > 0)) {
                   setShowSuggestions(true);
                 }
               }}
@@ -500,6 +501,7 @@ function SearchBarContent({
                 onClick={() => {
                   setQuery('');
                   setShowSuggestions(false);
+                  setJustCleared(true);
 
                   // Trigger search with empty query
                   const params = new URLSearchParams();
@@ -518,10 +520,14 @@ function SearchBarContent({
                     );
                   }
 
-                  // Focus back to input
-                  if (inputRef.current) {
-                    inputRef.current.focus();
-                  }
+                  // Focus back to input after a brief delay to prevent onFocus from showing suggestions
+                  setTimeout(() => {
+                    if (inputRef.current) {
+                      inputRef.current.focus();
+                    }
+                    // Reset the flag after focus
+                    setTimeout(() => setJustCleared(false), 50);
+                  }, 100);
                 }}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Clear search"
