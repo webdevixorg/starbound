@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 
-// SEO Metadata
+// SEO Metadata For Starbound
 export const metadata: Metadata = {
   title: 'About Us | Logivis Automotive',
   description:
