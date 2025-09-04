@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable static export
+  output: 'export',
+  distDir: 'dist',
+  trailingSlash: true,
+  
   // Prevent CSS caching issues
   experimental: {
     optimizeCss: true,
