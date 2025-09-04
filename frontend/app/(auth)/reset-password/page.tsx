@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image'; // Add this import
 
@@ -10,7 +10,7 @@ import EyeIcon from '@/components/UI/Icons/Eye';
 import EyeClosedIcon from '@/components/UI/Icons/EyeClosed';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
-const ResetPassword: React.FC = () => {
+const ResetPasswordForm: React.FC = () => {
   const searchParams = useSearchParams();
   const navigate = useRouter();
 
@@ -380,6 +380,14 @@ const ResetPassword: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ResetPassword: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 };
 
