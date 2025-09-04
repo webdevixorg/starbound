@@ -485,7 +485,10 @@ function SearchBarContent({
               value={query}
               onChange={handleInputChange}
               onFocus={() => {
-                if (!justCleared && (query.trim() || searchHistory.length > 0)) {
+                if (
+                  !justCleared &&
+                  (query.trim() || searchHistory.length > 0)
+                ) {
                   setShowSuggestions(true);
                 }
               }}
