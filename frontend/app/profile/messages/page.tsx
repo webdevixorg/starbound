@@ -70,39 +70,6 @@ export default function ChatPage() {
     }
   }, [user, router, state.isClient]);
 
-  // Fetch initial conversations
-  useEffect(() => {
-    if (!state.isClient || !user) return;
-
-    const fetchInitialData = async () => {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-      try {
-        const initialConversations = await fetchConversations();
-        setState((prev) => ({
-          ...prev,
-          conversations: initialConversations,
-          isLoading: false,
-        }));
-
-        // Auto-select first conversation if available
-        if (initialConversations.length > 0) {
-          await handleConversationSelect(initialConversations[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        setState((prev) => ({
-          ...prev,
-          error: 'Failed to load conversations. Please try again.',
-          showErrorModal: true,
-          isLoading: false,
-        }));
-      }
-    };
-
-    fetchInitialData();
-  }, [state.isClient, user]);
-
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -155,6 +122,39 @@ export default function ChatPage() {
     },
     [state.cachedMessages]
   );
+
+  // Fetch initial conversations
+  useEffect(() => {
+    if (!state.isClient || !user) return;
+
+    const fetchInitialData = async () => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const initialConversations = await fetchConversations();
+        setState((prev) => ({
+          ...prev,
+          conversations: initialConversations,
+          isLoading: false,
+        }));
+
+        // Auto-select first conversation if available
+        if (initialConversations.length > 0) {
+          await handleConversationSelect(initialConversations[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to load conversations. Please try again.',
+          showErrorModal: true,
+          isLoading: false,
+        }));
+      }
+    };
+
+    fetchInitialData();
+  }, [state.isClient, user, handleConversationSelect]);
 
   // Handle sending messages
   const handleSendMessage = useCallback(async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import {
@@ -27,19 +27,7 @@ const ModelPage: React.FC = () => {
   const brandSlug = (params?.brand as string) || urlSegments[1];
   const modelSlug = (params?.slug as string) || urlSegments[2];
 
-  useEffect(() => {
-    console.log('Effect triggered with:', { brandSlug, modelSlug });
-    if (brandSlug && modelSlug) {
-      console.log('Both slugs available, calling loadModelData...');
-      loadModelData();
-    } else {
-      console.log('Missing slugs:', { brandSlug, modelSlug });
-      setError('Invalid URL structure');
-      setLoading(false);
-    }
-  }, [brandSlug, modelSlug]);
-
-  const loadModelData = async () => {
+  const loadModelData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -84,10 +72,22 @@ const ModelPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [brandSlug, modelSlug]);
 
   // Get other models from the same brand (excluding current model)
   const otherModels = allModels.filter((m) => m.slug !== modelSlug).slice(0, 6);
+
+  useEffect(() => {
+    console.log('Effect triggered with:', { brandSlug, modelSlug });
+    if (brandSlug && modelSlug) {
+      console.log('Both slugs available, calling loadModelData...');
+      loadModelData();
+    } else {
+      console.log('Missing slugs:', { brandSlug, modelSlug });
+      setError('Invalid URL structure');
+      setLoading(false);
+    }
+  }, [brandSlug, modelSlug, loadModelData]);
 
   if (loading) {
     return (

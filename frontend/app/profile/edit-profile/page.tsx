@@ -350,7 +350,14 @@ export default function EditProfilePage() {
         updateUIState({ saving: false });
       }
     },
-    [formData, originalImageUrl, user?.id, updateUIState, setOriginalImageUrl]
+    [
+      formData,
+      formImageData,
+      originalImageUrl,
+      user?.id,
+      updateUIState,
+      setOriginalImageUrl,
+    ]
   );
 
   // Loading states

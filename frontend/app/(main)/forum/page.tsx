@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/UI/SafeImage';
 import { fetchCategories } from '@/services/api';
@@ -81,37 +81,7 @@ const ForumPage: React.FC = () => {
     loadThreads(1, true);
   }, [selectedCategory, searchQuery]);
 
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
-
-      // Load categories and stats in parallel
-      const [categoriesData, statsData] = await Promise.all([
-        fetchCategories(1, 50),
-        fetchForumStats().catch(() => null), // Don't fail if stats endpoint doesn't exist
-      ]);
-
-      // Handle categories response
-      let categoryList = [];
-      if (categoriesData.results && Array.isArray(categoriesData.results)) {
-        categoryList = categoriesData.results;
-      } else if (Array.isArray(categoriesData)) {
-        categoryList = categoriesData;
-      }
-
-      setCategories(categoryList);
-      if (statsData) setStats(statsData);
-
-      // Load initial threads
-      await loadThreads(1, true);
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadThreads = async (page: number = 1, reset: boolean = false) => {
+  const loadThreads = useCallback(async (page: number = 1, reset: boolean = false) => {
     try {
       setThreadsLoading(true);
 
@@ -149,7 +119,37 @@ const ForumPage: React.FC = () => {
     } finally {
       setThreadsLoading(false);
     }
-  };
+  }, [selectedCategory, searchQuery]);
+
+  const loadInitialData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Load categories and stats in parallel
+      const [categoriesData, statsData] = await Promise.all([
+        fetchCategories(1, 50),
+        fetchForumStats().catch(() => null), // Don't fail if stats endpoint doesn't exist
+      ]);
+
+      // Handle categories response
+      let categoryList = [];
+      if (categoriesData.results && Array.isArray(categoriesData.results)) {
+        categoryList = categoriesData.results;
+      } else if (Array.isArray(categoriesData)) {
+        categoryList = categoriesData;
+      }
+
+      setCategories(categoryList);
+      if (statsData) setStats(statsData);
+
+      // Load initial threads
+      await loadThreads(1, true);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadThreads]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import {
@@ -54,6 +54,139 @@ const BrandPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const loadBrands = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoading(true);
+
+        const response: EntitiesResponse = await fetchBrands({
+          page,
+          pageSize: brandsPageSize,
+          search: debouncedSearchQuery || undefined,
+        });
+
+        console.log('Brands response:', response);
+
+        let brandList: Entity[] = [];
+        if (response.results && Array.isArray(response.results)) {
+          brandList = response.results;
+          setBrandsTotalCount(response.count || 0);
+          setBrandsTotalPages(
+            Math.ceil((response.count || 0) / brandsPageSize)
+          );
+        } else if (Array.isArray(response)) {
+          brandList = response;
+          setBrandsTotalCount(brandList.length);
+          setBrandsTotalPages(1);
+        }
+
+        setBrands(brandList);
+        setBrandsCurrentPage(page);
+      } catch (error) {
+        console.error('Error loading brands:', error);
+        setBrands([]);
+        setBrandsTotalCount(0);
+        setBrandsTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [brandsPageSize, debouncedSearchQuery]
+  );
+
+  const loadModels = useCallback(
+    async (brand: Entity, page: number = 1) => {
+      try {
+        console.log('Loading models for brand:', brand, 'page:', page);
+
+        if (page === 1) {
+          setModelsLoading(true);
+          setSelectedBrand(brand);
+          setModels([]);
+          setModelsError(null);
+        }
+
+        const response: EntitiesResponse = await fetchModelsByBrandId(
+          brand.id,
+          {
+            page,
+            pageSize: modelsPageSize,
+          }
+        );
+
+        console.log('Models response:', response);
+
+        let modelList: Entity[] = [];
+        if (response && response.results && Array.isArray(response.results)) {
+          modelList = response.results;
+          setModelsTotalCount(response.count || 0);
+          setModelsTotalPages(
+            Math.ceil((response.count || 0) / modelsPageSize)
+          );
+        } else if (response && Array.isArray(response)) {
+          modelList = response;
+          setModelsTotalCount(modelList.length);
+          setModelsTotalPages(1);
+        } else if (response && response.data && Array.isArray(response.data)) {
+          modelList = response.data;
+          setModelsTotalCount(modelList.length);
+          setModelsTotalPages(1);
+        }
+
+        console.log('Processed models:', modelList);
+
+        setModels(modelList);
+        setModelsCurrentPage(page);
+
+        // Update URL with selected brand
+        if (brand.slug && !brandSlugFromUrl) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set('brand', brand.slug);
+          router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+        }
+      } catch (error: unknown) {
+        const err = error as { message?: string };
+        console.error('Error loading models:', error);
+        setModels([]);
+        setModelsError(err.message || 'Failed to load models');
+        setModelsTotalCount(0);
+        setModelsTotalPages(1);
+      } finally {
+        setModelsLoading(false);
+      }
+    },
+    [modelsPageSize, brandSlugFromUrl, router]
+  );
+
+  const loadBrandFromSlug = useCallback(
+    async (brandSlug: string) => {
+      try {
+        setLoading(true);
+        console.log('Loading brand from URL slug:', brandSlug);
+
+        // Fetch the specific brand by slug
+        const response = await fetchEntityBySlug(brandSlug, 'brand');
+        const brand = response.results[0];
+        console.log('Found brand:', brand);
+
+        if (brand) {
+          setSelectedBrand(brand);
+          // Load models for this brand
+          loadModels(brand, 1);
+        } else {
+          console.warn('Brand not found for slug:', brandSlug);
+          // Fallback to loading all brands
+          loadBrands(1);
+        }
+      } catch (error) {
+        console.error('Error loading brand from slug:', error);
+        // Fallback to loading all brands
+        loadBrands(1);
+      }
+    },
+    [loadModels, loadBrands]
+  );
+
   // Load brand from URL on initial load
   useEffect(() => {
     if (brandSlugFromUrl && !selectedBrand) {
@@ -61,124 +194,7 @@ const BrandPage: React.FC = () => {
     } else if (!brandSlugFromUrl) {
       loadBrands(1);
     }
-  }, [brandSlugFromUrl]);
-
-  const loadBrandFromSlug = async (brandSlug: string) => {
-    try {
-      setLoading(true);
-      console.log('Loading brand from URL slug:', brandSlug);
-
-      // Fetch the specific brand by slug
-      const response = await fetchEntityBySlug(brandSlug, 'brand');
-      const brand = response.results[0];
-      console.log('Found brand:', brand);
-
-      if (brand) {
-        setSelectedBrand(brand);
-        // Load models for this brand
-        loadModels(brand, 1);
-      } else {
-        console.warn('Brand not found for slug:', brandSlug);
-        // Fallback to loading all brands
-        loadBrands(1);
-      }
-    } catch (error) {
-      console.error('Error loading brand from slug:', error);
-      // Fallback to loading all brands
-      loadBrands(1);
-    }
-  };
-
-  const loadBrands = async (page: number = 1) => {
-    try {
-      setLoading(true);
-
-      const response: EntitiesResponse = await fetchBrands({
-        page,
-        pageSize: brandsPageSize,
-        search: debouncedSearchQuery || undefined,
-      });
-
-      console.log('Brands response:', response);
-
-      let brandList: Entity[] = [];
-      if (response.results && Array.isArray(response.results)) {
-        brandList = response.results;
-        setBrandsTotalCount(response.count || 0);
-        setBrandsTotalPages(Math.ceil((response.count || 0) / brandsPageSize));
-      } else if (Array.isArray(response)) {
-        brandList = response;
-        setBrandsTotalCount(brandList.length);
-        setBrandsTotalPages(1);
-      }
-
-      setBrands(brandList);
-      setBrandsCurrentPage(page);
-    } catch (error) {
-      console.error('Error loading brands:', error);
-      setBrands([]);
-      setBrandsTotalCount(0);
-      setBrandsTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadModels = async (brand: Entity, page: number = 1) => {
-    try {
-      console.log('Loading models for brand:', brand, 'page:', page);
-
-      if (page === 1) {
-        setModelsLoading(true);
-        setSelectedBrand(brand);
-        setModels([]);
-        setModelsError(null);
-      }
-
-      const response: EntitiesResponse = await fetchModelsByBrandId(brand.id, {
-        page,
-        pageSize: modelsPageSize,
-      });
-
-      console.log('Models response:', response);
-
-      let modelList: Entity[] = [];
-      if (response && response.results && Array.isArray(response.results)) {
-        modelList = response.results;
-        setModelsTotalCount(response.count || 0);
-        setModelsTotalPages(Math.ceil((response.count || 0) / modelsPageSize));
-      } else if (response && Array.isArray(response)) {
-        modelList = response;
-        setModelsTotalCount(modelList.length);
-        setModelsTotalPages(1);
-      } else if (response && response.data && Array.isArray(response.data)) {
-        modelList = response.data;
-        setModelsTotalCount(modelList.length);
-        setModelsTotalPages(1);
-      }
-
-      console.log('Processed models:', modelList);
-
-      setModels(modelList);
-      setModelsCurrentPage(page);
-
-      // Update URL with selected brand
-      if (brand.slug && !brandSlugFromUrl) {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('brand', brand.slug);
-        router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-      }
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      console.error('Error loading models:', error);
-      setModels([]);
-      setModelsError(err.message || 'Failed to load models');
-      setModelsTotalCount(0);
-      setModelsTotalPages(1);
-    } finally {
-      setModelsLoading(false);
-    }
-  };
+  }, [brandSlugFromUrl, loadBrandFromSlug, loadBrands, selectedBrand]);
 
   useEffect(() => {
     setBrandsCurrentPage(1);

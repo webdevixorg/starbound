@@ -96,7 +96,7 @@ const CategoriesPage: React.FC = () => {
     };
 
     loadCategories();
-  }, [currentPage, contentTypeId]);
+  }, [currentPage, pageSize, contentTypeId]);
 
   // Reset page when content type changes
   useEffect(() => {

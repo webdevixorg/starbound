@@ -100,10 +100,10 @@ const MOCK_TICKETS: Ticket[] = [
 export default function HelpCenterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<string>(
-    searchParams.get('tab') || 'all'
+    searchParams?.get('tab') || 'all'
   );
 
   const [state, setState] = useState<HelpCenterState>({
@@ -198,7 +198,7 @@ export default function HelpCenterPage() {
   const handleTabChange = useCallback(
     (tab: string) => {
       setActiveTab(tab);
-      const params = new URLSearchParams(searchParams);
+      const params = new URLSearchParams(searchParams?.toString() || '');
       params.set('tab', tab);
       router.replace(`/profile/help-center?${params.toString()}`);
     },
@@ -279,7 +279,7 @@ export default function HelpCenterPage() {
         setState((prev) => ({ ...prev, submittingTicket: false }));
       }
     },
-    [newTicket, user]
+    [newTicket]
   );
 
   // Handle new ticket form changes
