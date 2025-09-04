@@ -338,6 +338,7 @@ export default function UpdatesPage() {
       )),
     [handleUpdateClick, getTimeAgoString, state.markingAsRead]
   );
+  (UpdateItem as React.MemoExoticComponent<any>).displayName = 'UpdateItem';
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
