@@ -246,12 +246,19 @@ const LazySidebar = ({
   filteredMenuItems,
   onError,
 }: {
-  filteredMenuItems: any[];
+  filteredMenuItems: MenuItem[];
   onError: (error: string) => void;
 }) => {
-  const [Sidebar, setSidebar] = useState<React.ComponentType<any> | null>(null);
-  const [SidebarItem, setSidebarItem] =
-    useState<React.ComponentType<any> | null>(null);
+  const [Sidebar, setSidebar] = useState<React.ComponentType<{
+    children: React.ReactNode;
+  }> | null>(null);
+  const [SidebarItem, setSidebarItem] = useState<React.ComponentType<{
+    icon: React.ReactNode;
+    text: string;
+    href: string;
+    alert?: boolean;
+    subLinks?: { href: string; label: string }[];
+  }> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -341,7 +348,7 @@ const LazyFooter = ({ onError }: { onError: (error: string) => void }) => {
 };
 
 // Mobile menu component (unchanged)
-const MobileMenu: React.FC<{ filteredMenuItems: any[] }> = ({
+const MobileMenu: React.FC<{ filteredMenuItems: MenuItem[] }> = ({
   filteredMenuItems,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
