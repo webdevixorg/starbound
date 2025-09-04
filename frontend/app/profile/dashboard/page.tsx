@@ -162,7 +162,7 @@ const RecentList: React.FC<{
 
 export default function AutomotiveDashboard() {
   const { user } = useAuth();
-  const { userRole, isAdmin, isClient: isClientRole, isStaff } = useUserRole();
+  const { isClient: isClientRole } = useUserRole();
   const { wishlist } = useWishlist();
   const [loading, setLoading] = useState(true);
   const [orderCount, setOrderCount] = useState<number>(0);

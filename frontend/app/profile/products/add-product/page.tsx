@@ -470,7 +470,7 @@ export default function AddProductPage() {
                 );
                 return { ...file, uploadedImageData };
               } catch (err) {
-                return null; // allow others to continue
+                return err;
               }
             })
           );

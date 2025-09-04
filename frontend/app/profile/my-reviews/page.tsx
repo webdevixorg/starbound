@@ -100,19 +100,24 @@ export default function ReviewsPage() {
         reviews: transformedReviews,
         loading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading reviews:', error);
 
       let errorMessage = 'Failed to load your reviews. Please try again.';
 
-      if (error.response?.status === 401) {
-        errorMessage = 'Your session has expired. Please log in again.';
-        // Optionally redirect to login
-        // router.push('/auth/login');
-      } else if (error.response?.status === 404) {
-        errorMessage = 'No reviews found.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { message?: string } };
+        };
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+          // Optionally redirect to login
+          // router.push('/auth/login');
+        } else if (axiosError.response?.status === 404) {
+          errorMessage = 'No reviews found.';
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
       }
 
       setState((prev) => ({
@@ -123,7 +128,7 @@ export default function ReviewsPage() {
         reviews: [], // Set empty array on error
       }));
     }
-  }, [state.isClient, user, router]);
+  }, [state.isClient, user]);
 
   // Initial load
   useEffect(() => {
@@ -208,17 +213,22 @@ export default function ReviewsPage() {
           'Review moved to trash successfully. You can restore it later if needed.',
         showSuccessModal: true,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting review:', error);
 
       let errorMessage = 'Failed to move review to trash. Please try again.';
 
-      if (error.response?.status === 401) {
-        errorMessage = 'Your session has expired. Please log in again.';
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Review not found.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { message?: string } };
+        };
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+        } else if (axiosError.response?.status === 404) {
+          errorMessage = 'Review not found.';
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
       }
 
       setState((prev) => ({
@@ -309,17 +319,22 @@ export default function ReviewsPage() {
           success: 'Review updated successfully.',
           showSuccessModal: true,
         }));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error updating review:', error);
 
         let errorMessage = 'Failed to update review. Please try again.';
 
-        if (error.response?.status === 401) {
-          errorMessage = 'Your session has expired. Please log in again.';
-        } else if (error.response?.status === 404) {
-          errorMessage = 'Review not found.';
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as {
+            response?: { status?: number; data?: { message?: string } };
+          };
+          if (axiosError.response?.status === 401) {
+            errorMessage = 'Your session has expired. Please log in again.';
+          } else if (axiosError.response?.status === 404) {
+            errorMessage = 'Review not found.';
+          } else if (axiosError.response?.data?.message) {
+            errorMessage = axiosError.response.data.message;
+          }
         }
 
         setState((prev) => ({
@@ -352,14 +367,25 @@ export default function ReviewsPage() {
 
   const handleSortChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, sortBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        sortBy: e.target.value as
+          | 'newest'
+          | 'oldest'
+          | 'rating-high'
+          | 'rating-low'
+          | 'helpful',
+      }));
     },
     []
   );
 
   const handleFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, filterBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        filterBy: e.target.value as 'all' | '5' | '4' | '3' | '2' | '1',
+      }));
     },
     []
   );

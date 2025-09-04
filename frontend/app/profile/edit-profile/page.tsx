@@ -304,7 +304,9 @@ export default function EditProfilePage() {
               throw new Error('Failed to get image URL from upload response');
             }
           } catch (error) {
-            throw new Error('Failed to upload image. Please try again.');
+            throw new Error(
+              `Failed to upload image. Please try again. ${error}`
+            );
           } finally {
             updateUIState({ uploadingImage: false });
           }
