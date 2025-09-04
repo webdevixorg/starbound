@@ -39,4 +39,15 @@ jobs:
 
       - name: Deploy frontend build to VPS
         run: |
-          rsync -avz --delete frontend/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+          rsync -avz --delete frontend/.next/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/.next/
+          rsync -avz --delete frontend/public/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/public/
+          rsync -avz frontend/package.json ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+          rsync -avz frontend/next.config.ts ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+
+      - name: Install production dependencies and restart service
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /var/www/starbound/frontend &&
+            npm ci --only=production &&
+            pm2 reload starbound-frontend || pm2 start npm --name starbound-frontend -- start
+          "

@@ -28,11 +28,11 @@ const FeaturedImageUpload: React.FC<FeaturedImageUploadProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files ? e.target.files[0] : null;
       if (file) {
-        const imageFile: ImageFile = { 
-          file, 
+        const imageFile: ImageFile = {
+          file,
           order: 1,
           type: file.type,
-          name: file.name
+          name: file.name,
         };
         setSelectedFiles([imageFile]);
         const imageUrl = URL.createObjectURL(file);
