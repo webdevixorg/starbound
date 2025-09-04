@@ -81,45 +81,48 @@ const ForumPage: React.FC = () => {
     loadThreads(1, true);
   }, [selectedCategory, searchQuery]);
 
-  const loadThreads = useCallback(async (page: number = 1, reset: boolean = false) => {
-    try {
-      setThreadsLoading(true);
+  const loadThreads = useCallback(
+    async (page: number = 1, reset: boolean = false) => {
+      try {
+        setThreadsLoading(true);
 
-      const response = await fetchForumThreads({
-        page,
-        pageSize: 10,
-        category: selectedCategory !== 'all' ? selectedCategory : undefined,
-        search: searchQuery || undefined,
-      });
+        const response = await fetchForumThreads({
+          page,
+          pageSize: 10,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          search: searchQuery || undefined,
+        });
 
-      let threadList = [];
-      if (response.results && Array.isArray(response.results)) {
-        threadList = response.results;
-      } else if (Array.isArray(response)) {
-        threadList = response;
+        let threadList = [];
+        if (response.results && Array.isArray(response.results)) {
+          threadList = response.results;
+        } else if (Array.isArray(response)) {
+          threadList = response;
+        }
+
+        if (reset) {
+          setThreads(threadList);
+          setCurrentPage(1);
+        } else {
+          setThreads((prev) => [...prev, ...threadList]);
+        }
+
+        // Check if there are more pages
+        setHasMore(threadList.length === 10);
+        setCurrentPage(page);
+      } catch (error) {
+        console.error('Error loading threads:', error);
+
+        // Show fallback data on error
+        if (reset) {
+          setThreads([]);
+        }
+      } finally {
+        setThreadsLoading(false);
       }
-
-      if (reset) {
-        setThreads(threadList);
-        setCurrentPage(1);
-      } else {
-        setThreads((prev) => [...prev, ...threadList]);
-      }
-
-      // Check if there are more pages
-      setHasMore(threadList.length === 10);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error('Error loading threads:', error);
-
-      // Show fallback data on error
-      if (reset) {
-        setThreads([]);
-      }
-    } finally {
-      setThreadsLoading(false);
-    }
-  }, [selectedCategory, searchQuery]);
+    },
+    [selectedCategory, searchQuery]
+  );
 
   const loadInitialData = useCallback(async () => {
     try {

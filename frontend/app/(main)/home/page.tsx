@@ -1,5 +1,7 @@
 // app/page.tsx
 import React from 'react';
+import SafeImage from '@/components/UI/SafeImage';
+
 import BigHero from '@/components/PageComponents/BigHero';
 import PostSlider from '@/components/PageComponents/PostSlider';
 import PostGrid_1 from '@/components/PageComponents/PostGrid_1';
@@ -17,6 +19,18 @@ const HomePage: React.FC = () => {
           <div className="flex flex-row flex-wrap">
             <a href="#">
               <img src="/images/ads/ad-1.png" alt="ad" />
+
+              <SafeImage
+                alt={'Ads'}
+                className="relative rounded-full h-10 w-10 object-cover"
+                images={[
+                  {
+                    image_path: `/images/ads/ad-1.png`,
+                  },
+                ]}
+                width={200}
+                height={200}
+              />
             </a>
           </div>
         </div>

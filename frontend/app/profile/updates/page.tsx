@@ -278,67 +278,67 @@ export default function UpdatesPage() {
   }, [state.updates]);
 
   // Memoized update item component
-  const UpdateItem = useMemo(
-    () =>
-      React.memo<{ update: Update }>(({ update }) => (
-        <div
-          className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-            update.is_read
-              ? 'bg-white opacity-75'
-              : 'bg-green-50 border-green-200 shadow-sm'
-          }`}
-          onClick={() => handleUpdateClick(update)}
-        >
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                <SafeImage
-                  alt={update.profile_image}
-                  className="relative rounded-full h-10 w-10 object-cover"
-                  images={[
-                    {
-                      image_path: getPublicImageUrl(
-                        'update',
-                        update.id,
-                        update.profile_image
-                      ),
-                    },
-                  ]}
-                  width={40}
-                  height={40}
-                />
-              </div>
+  const UpdateItem = useMemo(() => {
+    const Component = React.memo<{ update: Update }>(({ update }) => (
+      <div
+        className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+          update.is_read
+            ? 'bg-white opacity-75'
+            : 'bg-green-50 border-green-200 shadow-sm'
+        }`}
+        onClick={() => handleUpdateClick(update)}
+      >
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden">
+              <SafeImage
+                alt={update.profile_image}
+                className="relative rounded-full h-10 w-10 object-cover"
+                images={[
+                  {
+                    image_path: getPublicImageUrl(
+                      'update',
+                      update.id,
+                      update.profile_image
+                    ),
+                  },
+                ]}
+                width={40}
+                height={40}
+              />
             </div>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <p
-                className={`text-sm ${
-                  update.is_read ? 'text-gray-600' : 'text-gray-900 font-medium'
-                }`}
-              >
-                {update.message}
-              </p>
+          <div className="flex-1 min-w-0">
+            <p
+              className={`text-sm ${
+                update.is_read ? 'text-gray-600' : 'text-gray-900 font-medium'
+              }`}
+            >
+              {update.message}
+            </p>
 
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-gray-500">
-                  {getTimeAgoString(update.timestamp)}
-                </span>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-gray-500">
+                {getTimeAgoString(update.timestamp)}
+              </span>
 
-                {!update.is_read && (
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                )}
+              {!update.is_read && (
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              )}
 
-                {state.markingAsRead[update.id] && (
-                  <InlineLoaderIcon className="w-4 h-4" />
-                )}
-              </div>
+              {state.markingAsRead[update.id] && (
+                <InlineLoaderIcon className="w-4 h-4" />
+              )}
             </div>
           </div>
         </div>
-      )),
-    [handleUpdateClick, getTimeAgoString, state.markingAsRead]
-  );
-  (UpdateItem as React.MemoExoticComponent<any>).displayName = 'UpdateItem';
+      </div>
+    ));
+
+    Component.displayName = 'UpdateItem';
+    return Component;
+  }, [handleUpdateClick, getTimeAgoString, state.markingAsRead]);
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {

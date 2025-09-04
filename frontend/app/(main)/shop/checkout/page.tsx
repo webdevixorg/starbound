@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import NextImage from 'next/image'; // Add this import at the top
 
 import { formatCurrency } from '@/helpers/common';
 import { useCart } from '@/context/CartContext';
