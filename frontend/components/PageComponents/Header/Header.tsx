@@ -20,6 +20,7 @@ import SidebarWishlist from '@/components/PageComponents/WishlistSidebar';
 import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import CategoryButton from './CategoryButton';
+import { MenuItem } from '@/lists/sidebarMenuItems';
 
 // Fix User type to include name property
 interface User {
@@ -50,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
   // Memoized values
   const cartItemCount = useMemo(
