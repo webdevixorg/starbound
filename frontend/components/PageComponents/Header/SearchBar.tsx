@@ -428,38 +428,36 @@ function SearchBarContent({
                             {category.children &&
                               category.children.length > 0 && (
                                 <div className="bg-gradient-to-r from-gray-50 to-gray-25 border-l-2 border-blue-200 ml-4">
-                                  {category.children.map(
-                                    (subcategory, index) => (
-                                      <button
-                                        key={`${category.id}-${subcategory.id}`}
-                                        type="button"
-                                        onClick={() =>
-                                          handleSubCategorySelect(
-                                            `${category.slug.trim()}`,
-                                            `${subcategory.slug.trim()}`
-                                          )
-                                        }
-                                        className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
-                                        role="option"
-                                        aria-selected={
-                                          selectedCategory ===
-                                            category.slug.trim() &&
-                                          selectedSubCategory ===
-                                            subcategory.slug.trim()
-                                        }
-                                      >
-                                        <div className="flex items-center">
-                                          <span className="group-hover:text-blue-700">
-                                            {subcategory.name}
-                                          </span>
-                                        </div>
-                                        {/* Connection line */}
-                                        <div className="absolute left-2 top-0 w-4 h-full flex items-center">
-                                          <div className="w-2 h-px bg-gray-300"></div>
-                                        </div>
-                                      </button>
-                                    )
-                                  )}
+                                  {category.children.map((subcategory) => (
+                                    <button
+                                      key={`${category.id}-${subcategory.id}`}
+                                      type="button"
+                                      onClick={() =>
+                                        handleSubCategorySelect(
+                                          `${category.slug.trim()}`,
+                                          `${subcategory.slug.trim()}`
+                                        )
+                                      }
+                                      className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
+                                      role="option"
+                                      aria-selected={
+                                        selectedCategory ===
+                                          category.slug.trim() &&
+                                        selectedSubCategory ===
+                                          subcategory.slug.trim()
+                                      }
+                                    >
+                                      <div className="flex items-center">
+                                        <span className="group-hover:text-blue-700">
+                                          {subcategory.name}
+                                        </span>
+                                      </div>
+                                      {/* Connection line */}
+                                      <div className="absolute left-2 top-0 w-4 h-full flex items-center">
+                                        <div className="w-2 h-px bg-gray-300"></div>
+                                      </div>
+                                    </button>
+                                  ))}
                                 </div>
                               )}
                           </div>

@@ -54,13 +54,6 @@ const BrandPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    setBrandsCurrentPage(1);
-    setSelectedBrand(null); // Clear selected brand when searching
-    setModels([]); // Clear models when searching
-    loadBrands(1);
-  }, [debouncedSearchQuery]);
-
   // Load brand from URL on initial load
   useEffect(() => {
     if (brandSlugFromUrl && !selectedBrand) {
@@ -186,6 +179,13 @@ const BrandPage: React.FC = () => {
       setModelsLoading(false);
     }
   };
+
+  useEffect(() => {
+    setBrandsCurrentPage(1);
+    setSelectedBrand(null); // Clear selected brand when searching
+    setModels([]); // Clear models when searching
+    loadBrands(1);
+  }, [debouncedSearchQuery, loadBrands]);
 
   const handleBrandClick = (brand: Entity) => {
     setModelsCurrentPage(1);

@@ -41,13 +41,6 @@ const EntitiesPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    setBrandsCurrentPage(1);
-    setSelectedBrand(null); // Clear selected brand when searching
-    setModels([]); // Clear models when searching
-    loadBrands(1);
-  }, [debouncedSearchQuery]);
-
   const loadBrands = useCallback(
     async (page: number = 1) => {
       try {
@@ -136,6 +129,13 @@ const EntitiesPage: React.FC = () => {
       setModelsLoading(false);
     }
   };
+
+  useEffect(() => {
+    setBrandsCurrentPage(1);
+    setSelectedBrand(null); // Clear selected brand when searching
+    setModels([]); // Clear models when searching
+    loadBrands(1);
+  }, [debouncedSearchQuery, loadBrands]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

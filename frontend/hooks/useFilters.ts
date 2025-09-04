@@ -38,50 +38,61 @@ const useFilters = ({
   const subLocationsRef = useRef(subLocations);
 
   // Helper function to update URL with current filters
-  const updateURL = useCallback((updatedFilters: Filter[]) => {
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    
-    // Clear existing category and location params
-    params.delete('category');
-    params.delete('subcategory');
-    params.delete('location');
-    params.delete('sublocation');
+  const updateURL = useCallback(
+    (updatedFilters: Filter[]) => {
+      const params = new URLSearchParams(searchParams?.toString() || '');
 
-    // Add current filters to URL
-    updatedFilters.forEach((filter) => {
-      if (filter.type === 'categories') {
-        const category = categoriesRef.current.find((cat) => cat.id === filter.id);
-        if (category?.slug) {
-          params.set('category', category.slug);
-        }
-      } else if (filter.type === 'subcategories') {
-        const subcategory = subCategoriesRef.current.find((sub) => sub.id === filter.id);
-        if (subcategory?.name) {
-          // Convert name to slug format since SubCategory doesn't have slug
-          const slug = subcategory.name.toLowerCase().replace(/\s+/g, '-');
-          params.set('subcategory', slug);
-        }
-      } else if (filter.type === 'locations') {
-        const location = locationsRef.current.find((loc) => loc.id === filter.id);
-        if (location?.name) {
-          // Convert name to slug format since Location doesn't have slug
-          const slug = location.name.toLowerCase().replace(/\s+/g, '-');
-          params.set('location', slug);
-        }
-      } else if (filter.type === 'sublocations') {
-        const sublocation = subLocationsRef.current.find((sub) => sub.id === filter.id);
-        if (sublocation?.name) {
-          // Convert name to slug format since SubLocation doesn't have slug
-          const slug = sublocation.name.toLowerCase().replace(/\s+/g, '-');
-          params.set('sublocation', slug);
-        }
-      }
-    });
+      // Clear existing category and location params
+      params.delete('category');
+      params.delete('subcategory');
+      params.delete('location');
+      params.delete('sublocation');
 
-    // Update URL
-    const newUrl = `/shop${params.toString() ? '?' + params.toString() : ''}`;
-    router.push(newUrl);
-  }, [router, searchParams]);
+      // Add current filters to URL
+      updatedFilters.forEach((filter) => {
+        if (filter.type === 'categories') {
+          const category = categoriesRef.current.find(
+            (cat) => cat.id === filter.id
+          );
+          if (category?.slug) {
+            params.set('category', category.slug);
+          }
+        } else if (filter.type === 'subcategories') {
+          const subcategory = subCategoriesRef.current.find(
+            (sub) => sub.id === filter.id
+          );
+          if (subcategory?.name) {
+            // Convert name to slug format since SubCategory doesn't have slug
+            const slug = subcategory.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('subcategory', slug);
+          }
+        } else if (filter.type === 'locations') {
+          const location = locationsRef.current.find(
+            (loc) => loc.id === filter.id
+          );
+          if (location?.name) {
+            // Convert name to slug format since Location doesn't have slug
+            const slug = location.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('location', slug);
+          }
+        } else if (filter.type === 'sublocations') {
+          const sublocation = subLocationsRef.current.find(
+            (sub) => sub.id === filter.id
+          );
+          if (sublocation?.name) {
+            // Convert name to slug format since SubLocation doesn't have slug
+            const slug = sublocation.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('sublocation', slug);
+          }
+        }
+      });
+
+      // Update URL
+      const newUrl = `/shop${params.toString() ? '?' + params.toString() : ''}`;
+      router.push(newUrl);
+    },
+    [router, searchParams]
+  );
 
   useEffect(() => {
     categoriesRef.current = categories;

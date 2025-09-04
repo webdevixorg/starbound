@@ -14,7 +14,6 @@ import SummaryCard from '@/components/PageComponents/Dashboard/SummeryCard';
 import SafeImage from '@/components/UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
 import { ForumPost } from '@/types/types';
-import UserDebug from '@/components/Debug/UserDebug';
 
 type RecentItem = {
   price?: number;
@@ -457,9 +456,6 @@ export default function AutomotiveDashboard() {
           </Link>
         </div>
       </div>
-
-      {/* Temporary Debug Component */}
-      <UserDebug />
     </div>
   );
 }

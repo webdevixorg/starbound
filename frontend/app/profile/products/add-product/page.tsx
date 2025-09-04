@@ -265,7 +265,7 @@ export default function AddProductPage() {
     };
 
     loadData();
-  }, [currentPage, contentTypeId, isEditing, slug, isClient]);
+  }, [currentPage, pageSize, contentTypeId, isEditing, slug, isClient]);
 
   // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(
