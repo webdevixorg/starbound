@@ -81,13 +81,13 @@ export default function FeedbackPage() {
 
   // Pre-fill form with user data
   useEffect(() => {
-    if (state.isClient && user && profile) {
+    if (state.isClient && user && profile && profile.user) {
       setFormData((prev) => ({
         ...prev,
         name:
-          `${profile.user.first_name} ${profile.user.last_name}`.trim() ||
+          `${profile.user?.first_name || ''} ${profile.user?.last_name || ''}`.trim() ||
           prev.name,
-        email: profile.user.email || prev.email,
+        email: profile.user?.email || prev.email,
       }));
 
       setState((prev) => ({ ...prev, loading: false }));

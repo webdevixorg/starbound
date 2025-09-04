@@ -35,6 +35,14 @@ import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
 
+// Define the upload result type
+interface UploadedImageData {
+  url: string;
+  title: string;
+  contentId: number;
+  originalName: string;
+}
+
 export default function AddProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -475,22 +483,27 @@ export default function AddProductPage() {
             })
           );
 
-          const successfulUploads = uploadedResults.filter(Boolean);
+          const successfulUploads = uploadedResults.filter(
+            (
+              item
+            ): item is ImageFile & { uploadedImageData: UploadedImageData } =>
+              item !== null &&
+              item !== undefined &&
+              typeof item === 'object' &&
+              'uploadedImageData' in item
+          );
 
           if (successfulUploads.length > 0) {
             // Save each image URL to Django
             await Promise.all(
               successfulUploads.map((item, idx) => {
-                if (item && item.uploadedImageData) {
-                  return saveImageUrlToDB(
-                    item.uploadedImageData.url,
-                    item.uploadedImageData.title,
-                    item.uploadedImageData.contentId,
-                    contentTypeId ?? 0,
-                    idx + 1 // or uploadedImageData.order if available
-                  );
-                }
-                return Promise.resolve();
+                return saveImageUrlToDB(
+                  item.uploadedImageData.url,
+                  item.uploadedImageData.title,
+                  item.uploadedImageData.contentId,
+                  contentTypeId ?? 0,
+                  idx + 1 // or uploadedImageData.order if available
+                );
               })
             );
           }

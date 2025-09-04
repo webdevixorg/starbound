@@ -147,10 +147,16 @@ const CartPage: React.FC = () => {
                       {/* Product image and name */}
                       <div className="flex-1 flex items-center ml-4">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <img
-                            className="h-10 w-10 rounded-full"
-                            src={item.image}
+                          <SafeImage
                             alt={item.name}
+                            className="h-10 w-10 rounded-full"
+                            images={[
+                              {
+                                image_path: item.image,
+                              },
+                            ]}
+                            width={400}
+                            height={300}
                           />
                         </div>
                         <div className="ml-4 text-sm font-medium text-gray-900">

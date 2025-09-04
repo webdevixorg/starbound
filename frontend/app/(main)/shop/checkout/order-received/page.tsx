@@ -43,30 +43,34 @@ interface Order {
 }
 
 // ----- SEO -----
-export const generateMetadata = ({
+export const generateMetadata = async ({
   params,
 }: {
-  params: { orderId: string };
-}): Metadata => ({
-  title: `Order Confirmation #${params.orderId} | Starbound`,
-  description: `Order confirmation for order #${params.orderId}. View your order details, shipping information, and payment confirmation.`,
-  robots: { index: false, follow: false },
-});
+  params: Promise<{ orderId: string }>;
+}): Promise<Metadata> => {
+  const { orderId } = await params;
+  return {
+    title: `Order Confirmation #${orderId} | Starbound`,
+    description: `Order confirmation for order #${orderId}. View your order details, shipping information, and payment confirmation.`,
+    robots: { index: false, follow: false },
+  };
+};
 
 // ----- Server Component -----
 export default async function OrderReceived({
   params,
 }: {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }) {
-  const orderId = Number(params.orderId);
+  const { orderId } = await params;
+  const orderIdNumber = Number(orderId);
 
-  if (!orderId) return notFound();
+  if (!orderIdNumber) return notFound();
 
   let order: Order | null = null;
 
   try {
-    order = await fetchOrder(orderId);
+    order = await fetchOrder(orderIdNumber);
   } catch {
     return (
       <OrderError message="Failed to load order details. Please try again later." />

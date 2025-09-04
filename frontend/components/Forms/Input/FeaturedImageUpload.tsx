@@ -28,7 +28,12 @@ const FeaturedImageUpload: React.FC<FeaturedImageUploadProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files ? e.target.files[0] : null;
       if (file) {
-        const imageFile: ImageFile = { file, order: 1 };
+        const imageFile: ImageFile = { 
+          file, 
+          order: 1,
+          type: file.type,
+          name: file.name
+        };
         setSelectedFiles([imageFile]);
         const imageUrl = URL.createObjectURL(file);
         const newImage: Image = {
@@ -36,6 +41,7 @@ const FeaturedImageUpload: React.FC<FeaturedImageUploadProps> = ({
           image_path: imageUrl,
           alt: file.name,
           order: 1,
+          object_id: 0, // Temporary object_id for new image
         };
         setFeaturedImage([newImage]);
         setGalleryImages((prevImages) => [...prevImages, newImage]);

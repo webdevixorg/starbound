@@ -20,7 +20,31 @@ import SidebarWishlist from '@/components/PageComponents/WishlistSidebar';
 import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import CategoryButton from './CategoryButton';
-import { MenuItem } from '@/lists/sidebarMenuItems';
+
+// Define HeaderMenuItem type for header menu items
+interface HeaderMenuItemBase {
+  label: string;
+  href: string;
+  direct?: boolean;
+}
+
+interface HeaderMenuItemWithSubItems extends HeaderMenuItemBase {
+  subItems?: Array<{ label: string; href: string }>;
+  megaMenu?: undefined;
+  items?: undefined;
+}
+
+interface HeaderMenuItemWithMegaMenu extends HeaderMenuItemBase {
+  megaMenu: boolean;
+  items: Array<{
+    title: string;
+    href: string;
+    items: Array<{ label: string; href: string }>;
+  }>;
+  subItems?: undefined;
+}
+
+type HeaderMenuItem = HeaderMenuItemWithSubItems | HeaderMenuItemWithMegaMenu;
 
 // Fix User type to include name property
 interface User {
@@ -51,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<HeaderMenuItem[]>([]);
 
   // Memoized values
   const cartItemCount = useMemo(
