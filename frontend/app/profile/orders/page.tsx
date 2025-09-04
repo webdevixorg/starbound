@@ -214,7 +214,7 @@ export default function OrdersPage() {
         orders: [], // Fallback to empty array
       }));
     }
-  }, [state.isClient, user]);
+  }, [state.isClient, user, userRole, isClientRole]);
 
   // ✅ Utility functions to handle optional fields
   const calculateOrderTotal = (order: Order): number => {
@@ -347,14 +347,32 @@ export default function OrdersPage() {
 
   const handleSortChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, sortBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        sortBy: e.target.value as
+          | 'newest'
+          | 'oldest'
+          | 'total-high'
+          | 'total-low'
+          | 'status',
+      }));
     },
     []
   );
 
   const handleFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, filterBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        filterBy: e.target.value as
+          | 'all'
+          | 'pending'
+          | 'paid'
+          | 'processing'
+          | 'shipped'
+          | 'delivered'
+          | 'cancelled',
+      }));
     },
     []
   );
@@ -418,7 +436,16 @@ export default function OrdersPage() {
           ...prev,
           orders: prev.orders.map((order) =>
             order.id === orderId
-              ? { ...order, fulfillment: newStatus as any }
+              ? {
+                  ...order,
+                  fulfillment: newStatus as
+                    | 'pending'
+                    | 'confirmed'
+                    | 'processing'
+                    | 'shipped'
+                    | 'delivered'
+                    | 'cancelled',
+                }
               : order
           ),
         }));
@@ -495,6 +522,7 @@ export default function OrdersPage() {
         }));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.orders]
   );
 
