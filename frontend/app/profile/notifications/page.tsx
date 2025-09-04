@@ -283,9 +283,9 @@ export default function NotificationsPage() {
   }, [state.notifications]);
 
   // Memoized notification item component
-  const NotificationItem = useMemo(
-    () =>
-      React.memo<{ notification: Notification }>(({ notification }) => (
+  const NotificationItem = useMemo(() => {
+    const Component = React.memo<{ notification: Notification }>(
+      ({ notification }) => (
         <div
           className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
             notification.is_read
@@ -342,9 +342,12 @@ export default function NotificationsPage() {
             </div>
           </div>
         </div>
-      )),
-    [handleNotificationClick, getTimeAgoString, state.markingAsRead]
-  );
+      )
+    );
+
+    Component.displayName = 'NotificationItem';
+    return Component;
+  }, [handleNotificationClick, getTimeAgoString, state.markingAsRead]);
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {

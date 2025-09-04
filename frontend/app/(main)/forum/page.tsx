@@ -71,16 +71,6 @@ const ForumPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  // Load threads when filters change
-  useEffect(() => {
-    loadThreads(1, true);
-  }, [selectedCategory, searchQuery]);
-
   const loadThreads = useCallback(
     async (page: number = 1, reset: boolean = false) => {
       try {
@@ -124,6 +114,11 @@ const ForumPage: React.FC = () => {
     [selectedCategory, searchQuery]
   );
 
+  // Load threads when filters change
+  useEffect(() => {
+    loadThreads(1, true);
+  }, [selectedCategory, searchQuery, loadThreads]);
+
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
@@ -153,6 +148,11 @@ const ForumPage: React.FC = () => {
       setLoading(false);
     }
   }, [loadThreads]);
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,5 +1,5 @@
 // app/orders/[orderId]/page.tsx
-import React, { useMemo } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchOrder } from '@/services/apiProducts';
@@ -75,13 +75,9 @@ export default async function OrderReceived({
 
   if (!order) return <OrderError message="Order not found" />;
 
-  const orderTotal = useMemo(
-    () =>
-      order.order_data.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      ),
-    [order]
+  const orderTotal = order.order_data.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
   );
 
   const formattedDate = new Date(order.created_at).toLocaleDateString('en-US', {

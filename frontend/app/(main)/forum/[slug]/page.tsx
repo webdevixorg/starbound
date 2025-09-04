@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import SafeImage from '@/components/UI/SafeImage';
@@ -60,13 +60,7 @@ const ThreadPage: React.FC = () => {
   const params = useParams();
   const slug = params?.slug as string;
 
-  useEffect(() => {
-    if (slug) {
-      loadThreadData();
-    }
-  }, [slug]);
-
-  const loadThreadData = async () => {
+  const loadThreadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -93,7 +87,13 @@ const ThreadPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    if (slug) {
+      loadThreadData();
+    }
+  }, [slug, loadThreadData]);
 
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();

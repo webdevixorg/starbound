@@ -18,8 +18,6 @@ const HomePage: React.FC = () => {
         <div className="bg-white-50 py-6">
           <div className="flex flex-row flex-wrap">
             <a href="#">
-              <img src="/images/ads/ad-1.png" alt="ad" />
-
               <SafeImage
                 alt={'Ads'}
                 className="relative rounded-full h-10 w-10 object-cover"
