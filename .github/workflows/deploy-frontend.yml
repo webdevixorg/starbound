@@ -44,4 +44,7 @@ jobs:
 
       - name: Restart Node server on VPS
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "npx pm2 restart starbound || npx pm2 start frontend/server.js --name starbound"
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /var/www/starbound/frontend &&
+            npx pm2 start 'npm -- start' --name starbound || npx pm2 restart starbound
+          "
