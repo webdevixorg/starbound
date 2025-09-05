@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**' # Only trigger when frontend files change
+      - 'frontend/**'
 
 jobs:
   deploy-frontend:
@@ -33,13 +33,15 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Create parent directory on VPS
+      - name: Create directories on VPS
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "mkdir -p /var/www/starbound/frontend"
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
 
-      - name: Deploy frontend build to VPS
+      - name: Deploy .next and public folders to VPS
         run: |
-          rsync -avz --delete frontend/out/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+          rsync -avz --delete frontend/.next/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/.next/
+          rsync -avz --delete frontend/public/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/public/
+
+      - name: Restart Node server on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "pm2 restart starbound || pm2 start frontend/server.js --name starbound"
