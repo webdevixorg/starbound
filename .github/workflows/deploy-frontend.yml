@@ -24,7 +24,7 @@ jobs:
         run: |
           cd frontend
           npm ci
-          npm run build:export   # ✅ will generate frontend/out
+          npm run build
 
       - name: Setup SSH
         run: |
