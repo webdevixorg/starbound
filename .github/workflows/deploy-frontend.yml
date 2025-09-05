@@ -39,4 +39,4 @@ jobs:
 
       - name: Deploy frontend build to VPS
         run: |
-          rsync -avz --delete frontend/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+          rsync -avz --delete frontend/out/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
