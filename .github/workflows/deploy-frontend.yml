@@ -25,6 +25,7 @@ jobs:
           cd frontend
           npm ci
           npm run build
+          npm run export   # ✅ Export static site to /out
 
       - name: Setup SSH
         run: |
@@ -35,8 +36,11 @@ jobs:
 
       - name: Create parent directory on VPS
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /var/www/starbound/frontend"
 
       - name: Deploy frontend build to VPS
         run: |
-          rsync -avz --delete frontend/out/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+          rsync -avz --delete frontend/out/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
