@@ -37,10 +37,20 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
 
-      - name: Deploy .next and public folders to VPS
+      - name: Deploy frontend to VPS
         run: |
-          rsync -avz --delete frontend/.next/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/.next/
-          rsync -avz --delete frontend/public/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/public/
+          rsync -avz --delete \
+            --exclude node_modules \
+            frontend/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+      - name: Restart Node server on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /var/www/starbound/frontend &&
+            npm install --production &&
+            npm run build &&
+            pm2 start npm --name starbound -- start || pm2 restart starbound
+          "
 
       - name: Restart Node server on VPS
         run: |
