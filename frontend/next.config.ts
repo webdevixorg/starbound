@@ -15,7 +15,6 @@ const nextConfig = {
     return config;
   },
   reactStrictMode: true,
-  output: 'export',
   images: {
     domains: [
       'logivis.com',
