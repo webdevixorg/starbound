@@ -24,10 +24,7 @@ jobs:
         run: |
           cd frontend
           npm ci
-          # For React / Vite use: npm run build (output in build/)
-          # For Next.js static export use:
           npm run build
-          npm run export
 
       - name: Setup SSH
         run: |
@@ -36,9 +33,21 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy static files to VPS
+      - name: Create directories on VPS
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
-          # For React/Vite use: rsync build/
-          # For Next.js static export use: rsync out/
-          rsync -avz --delete frontend/out/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+
+      - name: Deploy frontend to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude node_modules \
+            frontend/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+      - name: Restart Node server on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /var/www/starbound/frontend &&
+            npm install --production &&
+            npm run build &&
+            npx pm2 start 'npm -- start' --name starbound || npx pm2 restart starbound
+          "
