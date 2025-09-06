@@ -49,12 +49,5 @@ jobs:
             cd /var/www/starbound/frontend &&
             npm install --production &&
             npm run build &&
-            pm2 start npm --name starbound -- start || pm2 restart starbound
-          "
-
-      - name: Restart Node server on VPS
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /var/www/starbound/frontend &&
             npx pm2 start 'npm -- start' --name starbound || npx pm2 restart starbound
           "
