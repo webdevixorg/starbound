@@ -193,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({
                       }
                       width={76}
                       height={32}
-                      className="h-12 lg:h-16 w-auto"
+                      className="w-auto"
                       style={{ width: 'auto', height: 'auto' }}
                       priority
                     />
