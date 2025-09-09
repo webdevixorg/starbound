@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/(main)/page.tsx
 import React from 'react';
 import SafeImage from '@/components/UI/SafeImage';
 
