@@ -21,7 +21,7 @@ import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import CategoryButton from './CategoryButton';
 
-// Define HeaderMenuItem type for header menu items
+// Define HeaderMenuItem type for header menu items of the site
 interface HeaderMenuItemBase {
   label: string;
   href: string;
