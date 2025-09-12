@@ -39,7 +39,7 @@ class FrontendProductView(viewsets.ReadOnlyModelViewSet):
         Return only active/published products for public frontend
         """
         queryset = Product.objects.filter(
-            status__in=['Active', 'Published']
+            status__in=['Active', 'published']
         ).order_by('-created_at')
         
         # Search functionality
