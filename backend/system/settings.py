@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables with fallback
 env_files = [
     os.path.join(BASE_DIR, '.env'),  # Local development
-    "/etc/env/starbound.env",        # Production
+    "/var/variables/starbound/backend/.env",        # Production
 ]
 
 for env_file in env_files:
