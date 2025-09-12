@@ -35,7 +35,7 @@ class FrontendPostView(viewsets.ReadOnlyModelViewSet):
         """
         Return only published posts for public frontend
         """
-        queryset = Post.objects.filter(status='Published').order_by('-created_at')
+        queryset = Post.objects.filter(status='published').order_by('-created_at')
         
         # Search functionality
         search = self.request.GET.get('query', '')
