@@ -166,7 +166,7 @@ const SliderNews: React.FC<SliderNewsProps> = ({
   }
 
   return (
-    <div className="relative">
+    <div className="relative mb-10">
       {/* Title */}
       <div className="my-8">
         <h2 className="text-2xl lg:text-3xl font-bold">

@@ -1,12 +1,12 @@
 // app/(main)/page.tsx
 import React from 'react';
-import SafeImage from '@/components/UI/SafeImage';
 
 import BigHero from '@/components/PageComponents/BigHero';
 import PostSlider from '@/components/PageComponents/PostSlider';
 import PostGrid_1 from '@/components/PageComponents/PostGrid_1';
 import PostGrid_2 from '@/components/PageComponents/PostGrid_2';
 import ProductGridSection from '@/components/PageComponents/ProductGridSection';
+import NextImage from 'next/image';
 
 const HomePage: React.FC = () => {
   return (
@@ -14,22 +14,21 @@ const HomePage: React.FC = () => {
       <BigHero filter="latest" count={5} />
       <ProductGridSection filter="latest" count={4} />
       <PostGrid_1 categoryId={91} count={4} title="Automotive Tech" />
-      <div className="post-add mb-10">
+      <div className="post-add mt-30">
         <div className="bg-white-50 py-6">
-          <div className="flex flex-row flex-wrap">
-            <a href="#">
-              <SafeImage
-                alt={'Ads'}
-                className="relative rounded-full h-10 w-10 object-cover"
-                images={[
-                  {
-                    image_path: `/images/ads/ad-1.png`,
-                  },
-                ]}
-                width={200}
-                height={200}
-              />
-            </a>
+          <div className="container mx-auto">
+            <div className="flex flex-row flex-wrap">
+              <a href="#">
+                <div className="relative w-full h-[100%] mb-10">
+                  <NextImage
+                    src="/images/ads/ad-1.png"
+                    alt="ad"
+                    width={1200}
+                    height={600}
+                  />
+                </div>
+              </a>
+            </div>
           </div>
         </div>
       </div>
