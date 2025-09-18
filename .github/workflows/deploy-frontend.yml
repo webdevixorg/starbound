@@ -43,11 +43,12 @@ jobs:
             --exclude node_modules \
             frontend/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/frontend/
+
       - name: Restart Node server on VPS
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             cd /var/www/starbound/frontend &&
-            npm install --production &&
-            npm run build &&
-            npx pm2 start 'npm -- start' --name starbound || npx pm2 restart starbound
+            npm ci --omit=dev &&
+            npx pm2 delete starbound || true &&
+            npx pm2 start 'npm run start' --name starbound --time
           "
