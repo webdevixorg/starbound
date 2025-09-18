@@ -803,11 +803,11 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
             # Authenticated users can see their own products in any status + published products
             user_field = 'author' if hasattr(Product, 'author') else 'user'
             return Product.objects.filter(
-                Q(**{user_field: self.request.user}) | Q(status__in=['Published', 'Active'])
+                Q(**{user_field: self.request.user}) | Q(status__in=['published', 'draft'])
             )
         else:
-            # Anonymous users only see published/active products
-            return Product.objects.filter(status__in=['Published', 'Active'])
+            # Anonymous users only see published products
+            return Product.objects.filter(status__in=['published'])
 
     def get_object(self):
         """
