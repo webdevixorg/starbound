@@ -21,7 +21,7 @@ import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import CategoryButton from './CategoryButton';
 
-// Define HeaderMenuItem type
+// Define HeaderMenuItem type for Starbound
 interface HeaderMenuItemBase {
   label: string;
   href: string;
