@@ -791,7 +791,7 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    lookup_field = 'slug'
+    lookup_field = 'id'
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
