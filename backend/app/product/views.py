@@ -365,6 +365,40 @@ class ProfileProductView(viewsets.ModelViewSet):
         else:
             return 'user'  # fallback - this should work with your schema
 
+    def get_queryset(self):
+        """
+        Return user's products with optional status filtering
+        """
+        user = self.request.user
+        status_filter = self.request.GET.get("status")
+        
+        if not user.is_authenticated:
+            return Product.objects.none()
+        
+        user_field = self._get_user_field()
+        
+        if user.is_staff:
+            # Staff users can see all products
+            queryset = Product.objects.all()
+        else:
+            # Regular users see only their own products
+            queryset = Product.objects.filter(**{user_field: user})
+        
+        # Apply status filter if provided
+        if status_filter:
+            # Normalize status case
+            status_mapping = {
+                'published': 'Published',
+                'active': 'Active',
+                'draft': 'Draft', 
+                'deleted': 'Deleted',
+                'archived': 'Archived'
+            }
+            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
+            queryset = queryset.filter(status=normalized_status)
+        
+        return queryset.order_by('-created_at')
+
     def get_object(self):
         """
         Override to handle both slug and id lookups
