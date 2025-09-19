@@ -127,7 +127,7 @@ export default function WishlistPage() {
     return (
       <div className="min-h-screen bg-white">
         {' '}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <LoadingSpinner />
@@ -146,7 +146,7 @@ export default function WishlistPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="mb-8">
           <BreadcrumbsComponent />
@@ -386,7 +386,7 @@ export default function WishlistPage() {
 
               {/* Mobile View */}
               <div className="lg:hidden">
-                <div className="space-y-4 p-4">
+                <div className="space-y-4">
                   {wishlist.map((item: WishlistItem) => (
                     <div
                       key={item.id}

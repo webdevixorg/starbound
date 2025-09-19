@@ -25,9 +25,9 @@ const DashboardHeader: React.FC = () => {
             src="/logo.png"
             alt="Logivis Automotive"
             width={120}
-            height={40}
+            height={80}
             priority
-            className="h-10 w-auto"
+            className="h-14 w-auto"
           />
         </Link>
 

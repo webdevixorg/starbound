@@ -311,7 +311,7 @@ export default function AutomotiveDashboard() {
   }
 
   return (
-    <div className="p-6 container mx-auto">
+    <div className="p-6 mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
           Welcome back, {user?.first_name || 'User'}!
