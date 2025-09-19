@@ -1,7 +1,7 @@
 // axiosInstanceNoAuth.ts
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://logivis.com/api/'; // Replace with your backend URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://logivis.com/api/';
 
 const axiosInstanceNoAuth = axios.create({
   baseURL: API_URL,

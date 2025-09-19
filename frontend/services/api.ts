@@ -343,7 +343,7 @@ export const changePostStatus = async (
 ) => {
   try {
     const response: AxiosResponse = await axiosInstance.patch(
-      `/${contentType}s/p/${slug}/change-status/`,
+      `/${contentType}s/${slug}/change-status/`,
       {
         status: status,
       },
