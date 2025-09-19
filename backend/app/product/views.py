@@ -685,17 +685,42 @@ class ProfileProductView(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
     @action(detail=False, methods=['get'])
-    def published(self, request):
+    def by_status(self, request):
         """
-        Get user's published/active products - AUTHENTICATED ONLY
+        Get user's products by status - AUTHENTICATED ONLY
+        Usage: /api/products/p/by_status/?status=published OR ?status=deleted
         """
         try:
+            status_param = request.GET.get('status', '').lower()
+            
+            # Define status mappings
+            status_mappings = {
+                'published': ['Published', 'Active'],
+                'deleted': ['Deleted'],
+                'draft': ['Draft'],
+                'archived': ['Archived']
+            }
+            
+            if status_param not in status_mappings:
+                return Response({
+                    'error': f'Invalid status parameter. Valid options: {list(status_mappings.keys())}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             user_field = self._get_user_field()
-            queryset = Product.objects.filter(
-                **{user_field: request.user}, 
-                status__in=['Published', 'Active']
-            ).order_by('-created_at')
+            status_values = status_mappings[status_param]
+            
+            if len(status_values) == 1:
+                queryset = Product.objects.filter(
+                    **{user_field: request.user}, 
+                    status=status_values[0]
+                ).order_by('-created_at')
+            else:
+                queryset = Product.objects.filter(
+                    **{user_field: request.user}, 
+                    status__in=status_values
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -706,9 +731,9 @@ class ProfileProductView(viewsets.ModelViewSet):
             return Response(serializer.data)
             
         except Exception as e:
-            logger.error(f"Error fetching published products: {e}")
+            logger.error(f"Error fetching products by status: {e}")
             return Response(
-                {'error': 'Failed to fetch published products'}, 
+                {'error': 'Failed to fetch products by status'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

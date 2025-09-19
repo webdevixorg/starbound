@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
 import { changePostStatus, deletePost } from '@/services/api';
-import { fetchProductsList } from '@/services/apiProducts';
+import { fetchProductsAuth } from '@/services/apiProducts';
 import { Product } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -18,17 +18,36 @@ const ProductsListPage: React.FC = () => {
 
   const [contentTypeId, setContentTypeId] = useState<number>(0);
   const [contentType, setContentType] = useState<string>('');
-  const [nonTrashedPosts, setNonTrashedPosts] = useState<Product[]>([]);
-  const [trashedPosts, setTrashedPosts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<{ [key: string]: Product[] }>({
+    draft: [],
+    published: [],
+    archived: [],
+    deleted: [],
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [nonDeletedCurrentPage, setNonDeletedCurrentPage] = useState<number>(1);
-  const [deletedCurrentPage, setDeletedCurrentPage] = useState<number>(1);
-  const [nontrashedTotalPages, setNontrashedTotalPages] = useState<number>(1);
-  const [trashedTotalPages, setTrashedTotalPages] = useState<number>(1);
+  const [currentPages, setCurrentPages] = useState<{ [key: string]: number }>({
+    draft: 1,
+    published: 1,
+    archived: 1,
+    deleted: 1,
+  });
+  const [totalPages, setTotalPages] = useState<{ [key: string]: number }>({
+    draft: 1,
+    published: 1,
+    archived: 1,
+    deleted: 1,
+  });
   const [pageSize] = useState<number>(10);
-  const [activeTab, setActiveTab] = useState<string>('active');
-  const [status] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('published');
+  const [productCounts, setProductCounts] = useState<{ [key: string]: number }>(
+    {
+      draft: 0,
+      published: 0,
+      archived: 0,
+      deleted: 0,
+    }
+  );
 
   const matchedContentType = useMemo(() => {
     if (Array.isArray(contentTypes)) {
@@ -69,91 +88,137 @@ const ProductsListPage: React.FC = () => {
   useEffect(() => {
     if (contentLoading || !matchedContentType) return;
 
-    const loadPosts = async (page: number, isDeleted: boolean) => {
+    const loadProductsByStatus = async (status: string, page: number) => {
       try {
         setLoading(true);
+        const response = await fetchProductsAuth(
+          page,
+          pageSize,
+          status,
+          matchedContentType.model
+        );
 
-        if (isDeleted) {
-          const status = 'Deleted';
-          const deletedResponse = await fetchProductsList(
-            page,
-            pageSize,
-            status,
-            matchedContentType.model
-          );
-          setTrashedPosts(deletedResponse.results);
-          setTrashedTotalPages(Math.ceil(deletedResponse.count / pageSize));
-        } else {
-          const nonDeletedResponse = await fetchProductsList(
-            page,
-            pageSize,
-            status,
-            matchedContentType.model
-          );
-          setNonTrashedPosts(nonDeletedResponse.results);
-          setNontrashedTotalPages(
-            Math.ceil(nonDeletedResponse.count / pageSize)
-          );
-        }
+        setProducts((prev) => ({
+          ...prev,
+          [status]: response.results,
+        }));
+
+        setTotalPages((prev) => ({
+          ...prev,
+          [status]: Math.ceil(response.count / pageSize),
+        }));
+
+        setProductCounts((prev) => ({
+          ...prev,
+          [status]: response.count,
+        }));
       } catch (error) {
-        console.error('Error fetching posts:', error);
-        setError('Error fetching posts');
+        console.error(`Error fetching ${status} products:`, error);
+        setError(`Error fetching ${status} products`);
       } finally {
         setLoading(false);
       }
     };
 
-    if (contentTypeId) {
-      if (activeTab === 'trashed') {
-        loadPosts(deletedCurrentPage, true);
-      } else {
-        loadPosts(nonDeletedCurrentPage, false);
+    const loadAllCounts = async () => {
+      try {
+        const statuses = ['draft', 'published', 'archived', 'deleted'];
+        const countPromises = statuses.map(async (status) => {
+          const response = await fetchProductsAuth(
+            1,
+            1, // Only fetch 1 item to get the count
+            status,
+            matchedContentType.model
+          );
+          return { status, count: response.count };
+        });
+
+        const results = await Promise.all(countPromises);
+
+        const newCounts: { [key: string]: number } = {};
+        results.forEach(({ status, count }) => {
+          newCounts[status] = count;
+        });
+
+        setProductCounts(newCounts);
+      } catch (error) {
+        console.error('Error fetching product counts:', error);
       }
+    };
+
+    if (contentTypeId) {
+      // Load counts for all tabs
+      loadAllCounts();
+      // Load products for active tab
+      loadProductsByStatus(activeTab, currentPages[activeTab]);
     }
   }, [
     contentTypeId,
     activeTab,
-    nonDeletedCurrentPage,
-    deletedCurrentPage,
+    currentPages,
     matchedContentType,
     pageSize,
-    status,
     contentLoading,
   ]);
 
-  const handleTrash = async (slug: string) => {
+  const handleStatusChange = async (slug: string, newStatus: string) => {
     try {
-      await changePostStatus(slug, contentType, 'Deleted');
-      setNonTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
+      await changePostStatus(slug, contentType, newStatus);
+
+      // Remove from current tab
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter((post) => post.slug !== slug),
+      }));
+
+      // Update counts
+      setProductCounts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+      }));
+
+      // Reload current tab to update pagination
+      const response = await fetchProductsAuth(
+        currentPages[activeTab],
+        pageSize,
+        activeTab,
+        contentType
       );
-      setNontrashedTotalPages(
-        Math.ceil((nonTrashedPosts.length - 1) / pageSize)
-      );
+
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: response.results,
+      }));
+
+      setTotalPages((prev) => ({
+        ...prev,
+        [activeTab]: Math.ceil(response.count / pageSize),
+      }));
     } catch (error) {
-      console.error('Error trashing post:', error);
-      setError('Error trashing post');
+      console.error('Error changing product status:', error);
+      setError('Error changing product status');
     }
   };
 
+  const handleTrash = async (slug: string) => {
+    await handleStatusChange(slug, 'Deleted');
+  };
+
   const handleRestore = async (slug: string) => {
-    try {
-      await changePostStatus(slug, contentType, 'Published');
-      setTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
-      );
-    } catch (error) {
-      console.error('Error restoring post:', error);
-      setError('Error restoring post');
-    }
+    await handleStatusChange(slug, 'Published');
   };
 
   const handleDelete = async (slug: string) => {
     try {
       await deletePost(slug, contentType);
-      setTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
-      );
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter((post) => post.slug !== slug),
+      }));
+      setProductCounts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+      }));
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Error deleting post');
@@ -161,34 +226,27 @@ const ProductsListPage: React.FC = () => {
   };
 
   const handlePreviousPage = () => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage > 1) {
-        setDeletedCurrentPage(deletedCurrentPage - 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage > 1) {
-        setNonDeletedCurrentPage(nonDeletedCurrentPage - 1);
-      }
+    if (currentPages[activeTab] > 1) {
+      setCurrentPages((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+      }));
     }
   };
 
   const handleNextPage = () => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage < trashedTotalPages) {
-        setDeletedCurrentPage(deletedCurrentPage + 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage < nontrashedTotalPages) {
-        setNonDeletedCurrentPage(nonDeletedCurrentPage + 1);
-      }
+    if (currentPages[activeTab] < totalPages[activeTab]) {
+      setCurrentPages((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] + 1,
+      }));
     }
   };
 
-  const posts = activeTab === 'active' ? nonTrashedPosts : trashedPosts;
-  const currentPage =
-    activeTab === 'active' ? nonDeletedCurrentPage : deletedCurrentPage;
-  const totalPages =
-    activeTab === 'active' ? nontrashedTotalPages : trashedTotalPages;
+  const posts = products[activeTab] || [];
+  const currentPage = currentPages[activeTab];
+  const currentTotalPages = totalPages[activeTab];
+  const viewType = contentType === 'product' ? 'shop' : contentType + 's';
 
   if (loading) {
     return (
@@ -256,26 +314,46 @@ const ProductsListPage: React.FC = () => {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow">
           <div className="border-b border-gray-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto scrollbar-hide scroll-smooth">
               <button
-                onClick={() => setActiveTab('active')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'active'
+                onClick={() => setActiveTab('published')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'published'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Active Products ({nonTrashedPosts.length})
+                Published ({productCounts.published})
               </button>
               <button
-                onClick={() => setActiveTab('trashed')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'trashed'
+                onClick={() => setActiveTab('draft')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'draft'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Trash ({trashedPosts.length})
+                Draft ({productCounts.draft})
+              </button>
+              <button
+                onClick={() => setActiveTab('archived')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'archived'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Archived ({productCounts.archived})
+              </button>
+              <button
+                onClick={() => setActiveTab('deleted')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'deleted'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Trash ({productCounts.deleted})
               </button>
             </nav>
           </div>
@@ -298,14 +376,22 @@ const ProductsListPage: React.FC = () => {
                   />
                 </svg>
                 <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No {activeTab === 'active' ? 'active' : 'trashed'} products
+                  No{' '}
+                  {activeTab === 'published'
+                    ? 'published'
+                    : activeTab === 'deleted'
+                      ? 'trashed'
+                      : activeTab}{' '}
+                  products
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {activeTab === 'active'
+                  {activeTab === 'published'
                     ? 'Get started by creating a new product.'
-                    : 'No products in trash.'}
+                    : activeTab === 'deleted'
+                      ? 'No products in trash.'
+                      : `No ${activeTab} products.`}
                 </p>
-                {activeTab === 'active' && (
+                {activeTab === 'published' && (
                   <div className="mt-6">
                     <Link
                       href="/profile/products/add-product"
@@ -319,7 +405,7 @@ const ProductsListPage: React.FC = () => {
             ) : (
               <>
                 {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block overflow-x-auto scrollbar-thin scroll-smooth">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -425,7 +511,7 @@ const ProductsListPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                             <Link
-                              href={`/${contentType}s/${post.slug}`}
+                              href={`/${viewType}/${post.slug}`}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View
@@ -436,7 +522,7 @@ const ProductsListPage: React.FC = () => {
                             >
                               Edit
                             </Link>
-                            {activeTab === 'active' && (
+                            {activeTab === 'published' && (
                               <button
                                 onClick={() => handleTrash(post.slug)}
                                 className="text-red-600 hover:text-red-900"
@@ -444,7 +530,7 @@ const ProductsListPage: React.FC = () => {
                                 Trash
                               </button>
                             )}
-                            {activeTab === 'trashed' && (
+                            {activeTab === 'deleted' && (
                               <>
                                 <button
                                   onClick={() => handleRestore(post.slug)}
@@ -541,7 +627,7 @@ const ProductsListPage: React.FC = () => {
                               >
                                 Edit
                               </Link>
-                              {activeTab === 'active' && (
+                              {activeTab === 'published' && (
                                 <button
                                   onClick={() => handleTrash(post.slug)}
                                   className="text-red-600 hover:text-red-900 text-xs"
@@ -549,7 +635,7 @@ const ProductsListPage: React.FC = () => {
                                   Trash
                                 </button>
                               )}
-                              {activeTab === 'trashed' && (
+                              {activeTab === 'deleted' && (
                                 <>
                                   <button
                                     onClick={() => handleRestore(post.slug)}
@@ -574,7 +660,7 @@ const ProductsListPage: React.FC = () => {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {currentTotalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">
                     <div className="flex flex-1 justify-between sm:hidden">
                       <button
@@ -586,7 +672,7 @@ const ProductsListPage: React.FC = () => {
                       </button>
                       <button
                         onClick={handleNextPage}
-                        disabled={currentPage === totalPages}
+                        disabled={currentPage === currentTotalPages}
                         className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next
@@ -597,7 +683,9 @@ const ProductsListPage: React.FC = () => {
                         <p className="text-sm text-gray-700">
                           Showing page{' '}
                           <span className="font-medium">{currentPage}</span> of{' '}
-                          <span className="font-medium">{totalPages}</span>
+                          <span className="font-medium">
+                            {currentTotalPages}
+                          </span>
                         </p>
                       </div>
                       <div>
@@ -630,7 +718,7 @@ const ProductsListPage: React.FC = () => {
 
                           <button
                             onClick={handleNextPage}
-                            disabled={currentPage === totalPages}
+                            disabled={currentPage === currentTotalPages}
                             className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <span className="sr-only">Next</span>

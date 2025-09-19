@@ -109,8 +109,8 @@ export const fetchProductsList = async (
 export const fetchProductsAuth = async (
   page: number = 1,
   pageSize: number = 10,
-  contentType: number,
-  filter: string = ''
+  status: string = '',
+  modelName: string
 ): Promise<{
   page_size: number;
   results: Product[];
@@ -119,60 +119,16 @@ export const fetchProductsAuth = async (
   previous: string | null;
 }> => {
   try {
-    const response = await axiosInstance.get(`/${contentType}/p/${filter}`, {
-      params: { page, pageSize },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching ${contentType}:`, error);
-    throw error;
-  }
-};
-
-export const fetchTrashedProducts = async (
-  page: number = 1,
-  pageSize: number = 10,
-  isDeleted: boolean,
-  filter: string = ''
-): Promise<{
-  page_size: number;
-  results: Product[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}> => {
-  try {
-    const response = await axiosInstance.get(`/products/p/${filter}`, {
-      params: { is_deleted: isDeleted, page, page_size: pageSize },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    throw error;
-  }
-};
-
-export const trashProduct = async (slug: string) => {
-  try {
-    const response = await axiosInstance.patch(
-      `/posts/p/${slug}/soft-delete/`,
+    const response = await axiosInstance.get(
+      `/${modelName}s/p/by_status/?status=${status}`,
       {
-        is_deleted: true,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        params: { page, pageSize },
       }
     );
 
-    if (response.status !== 200) {
-      throw new Error('Post deletion failed');
-    }
-
     return response.data;
   } catch (error) {
-    console.error('Error deleting post:', error);
+    console.error(`Error fetching ${modelName}:`, error);
     throw error;
   }
 };
