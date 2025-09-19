@@ -3,9 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* width */
+/* Vertical scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 2px;
+  height: 6px; /* Height for horizontal scrollbar */
 }
 
 /* Track */
@@ -15,11 +16,41 @@
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #dc2626;
-  border-radius: 5px;
+  background: #2563eb;
+  border-radius: 2px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #dc2626;
+  background: #1d4ed8;
+}
+
+/* Hide scrollbar utility */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
+  
+  /* Custom thin scrollbar for horizontal scroll */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
