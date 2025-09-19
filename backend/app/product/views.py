@@ -365,39 +365,32 @@ class ProfileProductView(viewsets.ModelViewSet):
         else:
             return 'user'  # fallback - this should work with your schema
 
-    def get_queryset(self):
+    def get_object(self):
         """
-        Return user's products with optional status filtering
+        Override to handle both slug and id lookups
         """
-        user = self.request.user
-        status_filter = self.request.GET.get("status")
+        queryset = self.filter_queryset(self.get_queryset())
         
-        if not user.is_authenticated:
-            return Product.objects.none()
-        
-        user_field = self._get_user_field()
-        
-        if user.is_staff:
-            # Staff users can see all products
-            queryset = Product.objects.all()
+        # Check if we're using ID lookup (from URL parameter)
+        if 'id' in self.kwargs:
+            # ID-based lookup
+            filter_kwargs = {'id': self.kwargs['id']}
+        elif self.lookup_field in self.kwargs:
+            # Slug-based lookup  
+            filter_kwargs = {self.lookup_field: self.kwargs[self.lookup_field]}
         else:
-            # Regular users see only their own products
-            queryset = Product.objects.filter(**{user_field: user})
+            raise AttributeError("No valid lookup parameter found")
+
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except Product.DoesNotExist:
+            from django.http import Http404
+            raise Http404("Product not found")
         
-        # Apply status filter if provided
-        if status_filter:
-            # Normalize status case
-            status_mapping = {
-                'published': 'Published',
-                'active': 'Active',
-                'draft': 'Draft', 
-                'deleted': 'Deleted',
-                'archived': 'Archived'
-            }
-            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
-            queryset = queryset.filter(status=normalized_status)
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
         
-        return queryset.order_by('-created_at')
+        return obj
 
     def create(self, request, *args, **kwargs):
         """

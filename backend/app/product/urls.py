@@ -21,11 +21,12 @@ urlpatterns = [
     path('<slug:slug>/', ProfileProductView.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='product-detail'),
     # Retrieve or delete product by id
     path('id/<int:id>/', ProductDetailView.as_view(), name='product-detail-by-id'),
+    
     # Related products by slug
     path('related-products/<slug:slug>/', RelatedProducts.as_view(), name='related-products'),
     # Latest products
     path('latest/', FrontendProductView.as_view({'get': 'latest'}), name='product-latest'),
     # Change status or delete by slug
-    path('<slug:slug>/change-status/', ProductDetailView.as_view(), name='post-status'),
-    path('<slug:slug>/delete/', ProductDetailView.as_view(), name='post-status'),
+    path('<slug:slug>/change-status/', ProfileProductView.as_view({'patch': 'change_status'}), name='post-status'),
+    path('<slug:slug>/delete/', ProfileProductView.as_view({'delete': 'destroy'}), name='post-delete'),
 ]
