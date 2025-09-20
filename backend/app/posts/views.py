@@ -209,25 +209,58 @@ class ProfilePostView(viewsets.ModelViewSet):
     def _check_ownership(self, post, user):
         """
         Check if the user owns the post or has staff/admin privileges
+        Returns True if user can modify the post, False otherwise
         """
         if isinstance(user, AnonymousUser):
+            logger.debug("Anonymous user attempted to access post ownership check")
             return False
         
         # Staff and superusers can modify any post
         if user.is_staff or user.is_superuser:
+            logger.debug(f"Staff/Superuser {user.id} ({user.username}) granted access to post {post.id}")
             return True
         
         # Check regular user ownership based on your database schema
-        if hasattr(post, 'user'):
-            return post.user == user
-        elif hasattr(post, 'user_id'):
-            return post.user_id == user.id
-        elif hasattr(post, 'author'):
-            return post.author == user
-        elif hasattr(post, 'created_by'):
-            return post.created_by == user
-        else:
+        try:
+            if hasattr(post, 'user') and post.user:
+                is_owner = post.user == user
+                logger.debug(f"Ownership check via 'user' field: {is_owner} for user {user.id} on post {post.id}")
+                return is_owner
+            elif hasattr(post, 'user_id') and post.user_id:
+                is_owner = post.user_id == user.id
+                logger.debug(f"Ownership check via 'user_id' field: {is_owner} for user {user.id} on post {post.id}")
+                return is_owner
+            elif hasattr(post, 'author') and post.author:
+                is_owner = post.author == user
+                logger.debug(f"Ownership check via 'author' field: {is_owner} for user {user.id} on post {post.id}")
+                return is_owner
+            elif hasattr(post, 'created_by') and post.created_by:
+                is_owner = post.created_by == user
+                logger.debug(f"Ownership check via 'created_by' field: {is_owner} for user {user.id} on post {post.id}")
+                return is_owner
+            else:
+                logger.warning(f"No ownership field found on post {post.id} for user {user.id}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error checking ownership for post {post.id} and user {user.id}: {e}")
             return False
+    
+    def _get_user_field(self):
+        """
+        Determine the user field name for the Post model based on your schema
+        """
+        # Based on your database schema, check which field exists
+        if hasattr(Post, 'user'):
+            return 'user'
+        elif hasattr(Post, 'user_id'):
+            return 'user'  # Django ORM uses 'user' for user_id foreign key
+        elif hasattr(Post, 'author'):
+            return 'author'
+        elif hasattr(Post, 'created_by'):
+            return 'created_by'
+        else:
+            return 'user'  # fallback
 
     def get_queryset(self):
         """
@@ -240,39 +273,35 @@ class ProfilePostView(viewsets.ModelViewSet):
             return Post.objects.none()
         
         if user.is_staff or user.is_superuser:
-            # Staff users can see all posts
+            # Staff and admin users can see all posts with any status
             queryset = Post.objects.all()
         else:
             # Regular users see only their own posts
-            queryset = Post.objects.filter(user=user)
+            user_field = self._get_user_field()
+            queryset = Post.objects.filter(**{user_field: user})
         
-        # Apply status filter if provided
-        if status_filter:
+        # Apply status filter if provided (only for regular users, staff/admin see all statuses)
+        if status_filter and not (user.is_staff or user.is_superuser):
             status_mapping = {
                 'published': 'Published',
                 'draft': 'Draft', 
                 'deleted': 'Deleted',
                 'archived': 'Archived',
-                'active': 'Active'
+            }
+            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
+            queryset = queryset.filter(status=normalized_status)
+        elif status_filter and (user.is_staff or user.is_superuser):
+            # Staff/admin can still filter by status if they want to
+            status_mapping = {
+                'published': 'Published',
+                'draft': 'Draft', 
+                'deleted': 'Deleted',
+                'archived': 'Archived',
             }
             normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
             queryset = queryset.filter(status=normalized_status)
         
         return queryset.order_by('-created_at')
-
-    def _get_user_field(self):
-        """
-        Determine the user field name for the Post model
-        """
-        if hasattr(Post, 'user'):
-            return 'user'
-        elif hasattr(Post, 'author'):
-            return 'author'
-        elif hasattr(Post, 'created_by'):
-            return 'created_by'
-        else:
-            return 'user'  # fallback
-
 
     def create(self, request, *args, **kwargs):
         """
@@ -431,7 +460,7 @@ class ProfilePostView(viewsets.ModelViewSet):
                 )
             
             # Only allow permanent deletion of trashed posts
-            if post.status != 'Deleted':
+            if post.status != 'deleted':
                 return Response(
                     {'error': 'Can only permanently delete posts that are in trash. Move to trash first.'}, 
                     status=status.HTTP_400_BAD_REQUEST
@@ -503,6 +532,58 @@ class ProfilePostView(viewsets.ModelViewSet):
             logger.error(f"Error restoring post: {e}")
             return Response(
                 {'error': 'Failed to restore post', 'details': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def by_status(self, request):
+        """
+        Get user's posts by status - AUTHENTICATED ONLY
+        Usage: /api/posts/p/by_status/?status=published OR ?status=deleted
+        """
+        try:
+            status_param = request.GET.get('status', '').lower()
+            
+            # Define status mappings
+            status_mappings = {
+                'published': ['Published', 'Active'],
+                'deleted': ['Deleted'],
+                'draft': ['Draft'],
+                'archived': ['Archived']
+            }
+            
+            if status_param not in status_mappings:
+                return Response({
+                    'error': f'Invalid status parameter. Valid options: {list(status_mappings.keys())}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            user_field = self._get_user_field()
+            status_values = status_mappings[status_param]
+            
+            if len(status_values) == 1:
+                queryset = Post.objects.filter(
+                    **{user_field: request.user},
+                    status=status_values[0]
+                ).order_by('-created_at')
+            else:
+                queryset = Post.objects.filter(
+                    **{user_field: request.user},
+                    status__in=status_values
+                ).order_by('-created_at')
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(f"Error fetching posts by status '{status_param}': {e}")
+            return Response(
+                {'error': f'Failed to fetch {status_param} posts'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

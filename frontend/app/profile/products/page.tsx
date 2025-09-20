@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
 import { changePostStatus, deletePost } from '@/services/api';
-import { fetchProductsAuth } from '@/services/apiProducts';
+import { fetchPostsAuth } from '@/services/api';
 import { Product } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -91,7 +91,7 @@ const ProductsListPage: React.FC = () => {
     const loadProductsByStatus = async (status: string, page: number) => {
       try {
         setLoading(true);
-        const response = await fetchProductsAuth(
+        const response = await fetchPostsAuth<Product>(
           page,
           pageSize,
           status,
@@ -124,7 +124,7 @@ const ProductsListPage: React.FC = () => {
       try {
         const statuses = ['draft', 'published', 'archived', 'deleted'];
         const countPromises = statuses.map(async (status) => {
-          const response = await fetchProductsAuth(
+          const response = await fetchPostsAuth<Product>(
             1,
             1, // Only fetch 1 item to get the count
             status,
@@ -171,14 +171,18 @@ const ProductsListPage: React.FC = () => {
         [activeTab]: prev[activeTab].filter((post) => post.slug !== slug),
       }));
 
-      // Update counts
+      // Determine destination tab based on status
+      const destinationTab = newStatus.toLowerCase();
+
+      // Update counts - decrease current tab, increase destination tab
       setProductCounts((prev) => ({
         ...prev,
         [activeTab]: prev[activeTab] - 1,
+        [destinationTab]: prev[destinationTab] + 1,
       }));
 
       // Reload current tab to update pagination
-      const response = await fetchProductsAuth(
+      const response = await fetchPostsAuth<Product>(
         currentPages[activeTab],
         pageSize,
         activeTab,
@@ -243,6 +247,20 @@ const ProductsListPage: React.FC = () => {
     }
   };
 
+  const handleFirstPage = () => {
+    setCurrentPages((prev) => ({
+      ...prev,
+      [activeTab]: 1,
+    }));
+  };
+
+  const handleLastPage = () => {
+    setCurrentPages((prev) => ({
+      ...prev,
+      [activeTab]: totalPages[activeTab],
+    }));
+  };
+
   const posts = products[activeTab] || [];
   const currentPage = currentPages[activeTab];
   const currentTotalPages = totalPages[activeTab];
@@ -261,7 +279,7 @@ const ProductsListPage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -292,7 +310,7 @@ const ProductsListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -405,7 +423,7 @@ const ProductsListPage: React.FC = () => {
             ) : (
               <>
                 {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto scrollbar-thin scroll-smooth">
+                <div className="hidden lg:block overflow-x-auto scrollbar-thin scroll-smooth">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -553,51 +571,71 @@ const ProductsListPage: React.FC = () => {
                   </table>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-4">
-                  {posts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                    >
-                      <div className="flex items-start space-x-3">
-                        <SafeImage
-                          alt={post.title}
-                          className="h-full w-full object-cover transition-transform duration-500 ease-in-out transform hover:scale-110"
-                          sizes="(max-width: 768px) 30vw, 33vw"
-                          images={[
-                            {
-                              image_path: getPublicImageUrl(
-                                'products',
-                                post.id,
-                                post.images?.[0]?.image_path
-                              ),
-                            },
-                          ]}
-                          fill
-                          width={400} // or your preferred width
-                          height={300} // or your preferred height
-                        />
-                        <div className="flex-1 min-w-0">
-                          <Link
-                            href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
-                            className="text-sm font-medium text-gray-900 hover:text-blue-600"
-                          >
-                            {post.title}
-                          </Link>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {/* Fix 4: Safe property access for mobile view */}
-                            {post.short_description?.substring(0, 80) ||
-                              'No description'}
-                            ...
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-sm font-medium text-gray-900">
-                              {/* Fix 5: Safe property access for mobile price */}
-                              {post.price
-                                ? `$${post.price}`
-                                : 'Contact for Price'}
-                            </span>
+                {/* Tablet Table - Responsive */}
+                <div className="hidden md:block lg:hidden overflow-x-auto scrollbar-thin scroll-smooth">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Price
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {posts.map((post) => (
+                        <tr key={post.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-8 w-8">
+                                <SafeImage
+                                  alt={post.title}
+                                  className="h-8 w-8 rounded object-cover"
+                                  images={[
+                                    {
+                                      image_path: getPublicImageUrl(
+                                        'products',
+                                        post.id,
+                                        post.images[0]?.image_path
+                                      ),
+                                    },
+                                  ]}
+                                  fallback="/images/placeholders/612x612.png"
+                                  width={32}
+                                  height={32}
+                                />
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                                  <Link
+                                    href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                    className="hover:text-blue-600"
+                                  >
+                                    {post.title}
+                                  </Link>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(
+                                    post.created_at
+                                  ).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {post.price
+                              ? `$${post.price}`
+                              : 'Contact for Price'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 post.status === 'Published'
@@ -609,14 +647,11 @@ const ProductsListPage: React.FC = () => {
                             >
                               {post.status}
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="text-xs text-gray-500">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </span>
-                            <div className="flex space-x-2">
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex flex-col space-y-1">
                               <Link
-                                href={`/${contentType}s/${post.slug}`}
+                                href={`/${viewType}/${post.slug}`}
                                 className="text-blue-600 hover:text-blue-900 text-xs"
                               >
                                 View
@@ -630,7 +665,7 @@ const ProductsListPage: React.FC = () => {
                               {activeTab === 'published' && (
                                 <button
                                   onClick={() => handleTrash(post.slug)}
-                                  className="text-red-600 hover:text-red-900 text-xs"
+                                  className="text-red-600 hover:text-red-900 text-xs text-left"
                                 >
                                   Trash
                                 </button>
@@ -639,13 +674,128 @@ const ProductsListPage: React.FC = () => {
                                 <>
                                   <button
                                     onClick={() => handleRestore(post.slug)}
-                                    className="text-green-600 hover:text-green-900 text-xs"
+                                    className="text-green-600 hover:text-green-900 text-xs text-left"
                                   >
                                     Restore
                                   </button>
                                   <button
                                     onClick={() => handleDelete(post.slug)}
-                                    className="text-red-600 hover:text-red-900 text-xs"
+                                    className="text-red-600 hover:text-red-900 text-xs text-left"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {posts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          <SafeImage
+                            alt={post.title}
+                            className="h-16 w-16 rounded object-cover"
+                            images={[
+                              {
+                                image_path: getPublicImageUrl(
+                                  'products',
+                                  post.id,
+                                  post.images?.[0]?.image_path
+                                ),
+                              },
+                            ]}
+                            fallback="/images/placeholders/612x612.png"
+                            width={64}
+                            height={64}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <Link
+                                href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                className="text-sm font-medium text-gray-900 hover:text-blue-600 block truncate"
+                              >
+                                {post.title}
+                              </Link>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                {post.short_description?.substring(0, 60) ||
+                                  'No description'}
+                                {post.short_description &&
+                                  post.short_description.length > 60 &&
+                                  '...'}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 flex-shrink-0 ${
+                                post.status === 'Published'
+                                  ? 'bg-green-100 text-green-800'
+                                  : post.status === 'Draft'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {post.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {post.price
+                                ? `$${post.price}`
+                                : 'Contact for Price'}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                            <div className="flex space-x-3">
+                              <Link
+                                href={`/${viewType}/${post.slug}`}
+                                className="text-blue-600 hover:text-blue-900 text-xs font-medium"
+                              >
+                                View
+                              </Link>
+                              <Link
+                                href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                className="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+                              >
+                                Edit
+                              </Link>
+                            </div>
+                            <div className="flex space-x-2">
+                              {activeTab === 'published' && (
+                                <button
+                                  onClick={() => handleTrash(post.slug)}
+                                  className="text-red-600 hover:text-red-900 text-xs font-medium"
+                                >
+                                  Trash
+                                </button>
+                              )}
+                              {activeTab === 'deleted' && (
+                                <>
+                                  <button
+                                    onClick={() => handleRestore(post.slug)}
+                                    className="text-green-600 hover:text-green-900 text-xs font-medium"
+                                  >
+                                    Restore
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(post.slug)}
+                                    className="text-red-600 hover:text-red-900 text-xs font-medium"
                                   >
                                     Delete
                                   </button>
@@ -663,20 +813,38 @@ const ProductsListPage: React.FC = () => {
                 {currentTotalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">
                     <div className="flex flex-1 justify-between sm:hidden">
-                      <button
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 1}
-                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={handleNextPage}
-                        disabled={currentPage === currentTotalPages}
-                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleFirstPage}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          First
+                        </button>
+                        <button
+                          onClick={handlePreviousPage}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleNextPage}
+                          disabled={currentPage === currentTotalPages}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                        <button
+                          onClick={handleLastPage}
+                          disabled={currentPage === currentTotalPages}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Last
+                        </button>
+                      </div>
                     </div>
                     <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                       <div>
@@ -694,9 +862,30 @@ const ProductsListPage: React.FC = () => {
                           aria-label="Pagination"
                         >
                           <button
-                            onClick={handlePreviousPage}
+                            onClick={handleFirstPage}
                             disabled={currentPage === 1}
                             className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="First page"
+                          >
+                            <span className="sr-only">First</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1}
+                            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Previous page"
                           >
                             <span className="sr-only">Previous</span>
                             <svg
@@ -713,13 +902,14 @@ const ProductsListPage: React.FC = () => {
                           </button>
 
                           <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
-                            {currentPage}
+                            {currentPage} of {currentTotalPages}
                           </span>
 
                           <button
                             onClick={handleNextPage}
                             disabled={currentPage === currentTotalPages}
-                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Next page"
                           >
                             <span className="sr-only">Next</span>
                             <svg
@@ -730,6 +920,26 @@ const ProductsListPage: React.FC = () => {
                               <path
                                 fillRule="evenodd"
                                 d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={handleLastPage}
+                            disabled={currentPage === currentTotalPages}
+                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Last page"
+                          >
+                            <span className="sr-only">Last</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M4.21 5.23a.75.75 0 011.06-.02l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08L8.168 10 4.23 6.29a.75.75 0 01-.02-1.06zm6 0a.75.75 0 011.06-.02l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08L14.168 10 10.23 6.29a.75.75 0 01-.02-1.06z"
                                 clipRule="evenodd"
                               />
                             </svg>

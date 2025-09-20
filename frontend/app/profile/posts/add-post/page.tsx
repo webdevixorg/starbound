@@ -38,7 +38,7 @@ const AddPostPage: React.FC = () => {
   const searchParams = useSearchParams();
   const slug = searchParams?.get('slug') || undefined;
 
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { contentTypes, loading: contentLoading } = useContent();
 
   // State declarations
@@ -173,7 +173,11 @@ const AddPostPage: React.FC = () => {
     const loadPostData = async () => {
       try {
         setLoading(true);
-        const fetchedPost = await fetchPostBySlug(slug);
+        const fetchedPost = await fetchPostBySlug(
+          'post',
+          slug,
+          role === 'staff' || role === 'admin'
+        );
         setTitle(fetchedPost.title);
         setDescription(fetchedPost.description);
         setPostSlug(fetchedPost.slug);
@@ -201,7 +205,7 @@ const AddPostPage: React.FC = () => {
     };
 
     loadPostData();
-  }, [slug, isClient]);
+  }, [slug, role, isClient]);
 
   // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(

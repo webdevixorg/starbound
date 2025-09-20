@@ -583,7 +583,7 @@ class ProfileProductView(viewsets.ModelViewSet):
                 )
             
             # Only allow permanent deletion of trashed products
-            if product.status != 'Deleted':
+            if product.status != 'deleted':
                 return Response(
                     {'error': 'Can only permanently delete products that are in trash. Move to trash first.'}, 
                     status=status.HTTP_400_BAD_REQUEST
@@ -713,12 +713,10 @@ class ProfileProductView(viewsets.ModelViewSet):
             
             if len(status_values) == 1:
                 queryset = Product.objects.filter(
-                    **{user_field: request.user}, 
                     status=status_values[0]
                 ).order_by('-created_at')
             else:
-                queryset = Product.objects.filter(
-                    **{user_field: request.user}, 
+                queryset = Product.objects.filter( 
                     status__in=status_values
                 ).order_by('-created_at')
             

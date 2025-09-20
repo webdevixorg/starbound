@@ -47,8 +47,8 @@ export default function AddProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const slug = searchParams ? searchParams.get('slug') || undefined : undefined;
+  const { user, role } = useAuth();
 
-  const { user } = useAuth();
   const { contentTypes, loading: contentLoading } = useContent();
 
   // Determine if we're editing or creating
@@ -230,7 +230,8 @@ export default function AddProductPage() {
         // Fetch product data if editing
         if (isEditing && slug) {
           const fetchedProduct = (await fetchProductBySlug(
-            slug
+            slug,
+            role === 'staff' || role === 'admin'
           )) as unknown as ExtendedProduct;
 
           setTitle(fetchedProduct.title);
@@ -273,7 +274,7 @@ export default function AddProductPage() {
     };
 
     loadData();
-  }, [currentPage, pageSize, contentTypeId, isEditing, slug, isClient]);
+  }, [currentPage, pageSize, contentTypeId, isEditing, slug, role, isClient]);
 
   // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(

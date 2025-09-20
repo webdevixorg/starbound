@@ -185,29 +185,29 @@ export const fetchPosts = async (
   }
 };
 
-export const fetchPostsAuth = async (
+export const fetchPostsAuth = async <T = Post>(
   page: number = 1,
   pageSize: number = 10,
-  status: string,
-  filter: string = '',
+  status: string = '',
   modelName: string
 ): Promise<{
   page_size: number;
-  results: Post[];
+  results: T[];
   count: number;
   next: string | null;
   previous: string | null;
 }> => {
   try {
-    const response: AxiosResponse = await axiosInstance.get(
-      `/${modelName}s/p/${filter}`,
+    const response = await axiosInstance.get(
+      `/${modelName}s/p/by_status/?status=${status}`,
       {
-        params: { page, pageSize, status: status },
+        params: { page, pageSize },
       }
     );
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    console.error(`Error fetching ${modelName}:`, error);
     throw error;
   }
 };
@@ -230,10 +230,17 @@ export const fetchPostsByCategory = async (
   }
 };
 
-export const fetchPostBySlug = async (slug: string): Promise<Post> => {
+export const fetchPostBySlug = async (
+  contentType: string,
+  slug: string,
+  isStaff: boolean = false
+): Promise<Post> => {
   try {
-    const { data: postData }: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/posts/f/${slug}`
+    const axiosClient = isStaff ? axiosInstance : axiosInstanceNoAuth;
+    const roleSegment = isStaff ? 'p' : 'f';
+
+    const { data: postData }: AxiosResponse = await axiosClient.get(
+      `/${contentType}s/${roleSegment}/${slug}`
     );
 
     // Fetch category details in parallel

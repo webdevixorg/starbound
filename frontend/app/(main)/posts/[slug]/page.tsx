@@ -28,7 +28,7 @@ const SinglePost: React.FC = () => {
     const getPost = async () => {
       try {
         if (slug) {
-          const fetchedPost = await fetchPostBySlug(slug);
+          const fetchedPost = await fetchPostBySlug('post', slug);
           setPost(fetchedPost);
         }
       } catch (error) {

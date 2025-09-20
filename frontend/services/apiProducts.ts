@@ -76,63 +76,6 @@ export const fetchProducts = async (
   }
 };
 
-export const fetchProductsList = async (
-  page: number = 1,
-  pageSize: number = 10,
-  filter: string = '',
-  modelName: string
-): Promise<{
-  page_size: number;
-  results: Product[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}> => {
-  try {
-    const params: any = {
-      page,
-      pageSize,
-    };
-
-    const response: AxiosResponse = await axiosInstanceNoAuth.get(
-      `/${modelName}s/f/${filter}`,
-      { params }
-    );
-    console.log('filter posts:', params);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    throw error;
-  }
-};
-
-export const fetchProductsAuth = async (
-  page: number = 1,
-  pageSize: number = 10,
-  status: string = '',
-  modelName: string
-): Promise<{
-  page_size: number;
-  results: Product[];
-  count: number;
-  next: string | null;
-  previous: string | null;
-}> => {
-  try {
-    const response = await axiosInstance.get(
-      `/${modelName}s/p/by_status/?status=${status}`,
-      {
-        params: { page, pageSize },
-      }
-    );
-
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching ${modelName}:`, error);
-    throw error;
-  }
-};
-
 export const fetchProductsForSections = async (
   filter: string,
   count: number
@@ -150,45 +93,19 @@ export const fetchProductsForSections = async (
   }
 };
 
-export const fetchProductBySlug = async (slug: string): Promise<Product> => {
-  try {
-    const response = await axiosInstanceNoAuth.get(`/products/f/${slug}`);
-    const postData = response.data;
-
-    // Fetch category details for each category ID
-    const categoryPromises = postData.categories.map(
-      async (category: number) => {
-        const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
-          `/categories/${category}`
-        );
-        return categoryResponse.data;
-      }
-    );
-
-    const categories: Category[] = await Promise.all(categoryPromises);
-
-    // Replace response.data.categories with the fetched category details
-    const result = {
-      ...postData,
-      categories: categories,
-    };
-
-    return result;
-  } catch (error) {
-    console.error('Error fetching post:', error);
-    throw error;
-  }
-};
-
-export const fetchProductBySlugAuth = async (
-  slug: string
+export const fetchProductBySlug = async (
+  slug: string,
+  isStaff: boolean = false
 ): Promise<Product> => {
   try {
-    const response = await axiosInstance.get(`/products/p/${slug}`);
-    const postData = response.data;
+    const axiosClient = isStaff ? axiosInstance : axiosInstanceNoAuth;
+    const endpoint = isStaff ? `/products/p/${slug}` : `/products/f/${slug}`;
+
+    const response = await axiosClient.get(endpoint);
+    const productData = response.data;
 
     // Fetch category details for each category ID
-    const categoryPromises = postData.categories.map(
+    const categoryPromises = productData.categories.map(
       async (category: number) => {
         const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
           `/categories/${category}`
@@ -201,13 +118,13 @@ export const fetchProductBySlugAuth = async (
 
     // Replace response.data.categories with the fetched category details
     const result = {
-      ...postData,
+      ...productData,
       categories: categories,
     };
 
     return result;
   } catch (error) {
-    console.error('Error fetching post:', error);
+    console.error('Error fetching product:', error);
     throw error;
   }
 };
