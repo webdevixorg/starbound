@@ -367,7 +367,7 @@ export default function EditProfilePage() {
 
   if (uiState.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
@@ -382,7 +382,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageHeader onBack={() => router.push('/profile')} />
 
@@ -393,7 +393,7 @@ export default function EditProfilePage() {
           />
         )}
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg">
           <form onSubmit={handleSubmit} className="p-6 space-y-8">
             <ProfilePictureSection
               imagePreview={imagePreview}
@@ -454,7 +454,7 @@ export default function EditProfilePage() {
 // Optimized Sub-components with React.memo
 const LoadingSkeleton = React.memo(function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>

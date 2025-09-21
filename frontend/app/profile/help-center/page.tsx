@@ -387,7 +387,7 @@ export default function HelpCenterPage() {
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="flex">
           <div className="w-64 bg-white border-r border-gray-200">
             <div className="animate-pulse p-6">
@@ -415,7 +415,7 @@ export default function HelpCenterPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner />
         </div>
@@ -428,12 +428,12 @@ export default function HelpCenterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="flex">
         {Sidebar}
 
         {/* Main Content */}
-        <div className="flex-1 max-w-4xl">
+        <div className="flex-1">
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-8 py-6">
             <div className="flex items-center justify-between">

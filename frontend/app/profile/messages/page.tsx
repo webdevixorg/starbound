@@ -427,7 +427,7 @@ export default function ChatPage() {
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="container">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -440,7 +440,7 @@ export default function ChatPage() {
 
   if (state.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
@@ -455,7 +455,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="">
         {/* Header */}
         <div className="p-4">

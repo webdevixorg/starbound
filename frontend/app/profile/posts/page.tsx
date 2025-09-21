@@ -395,7 +395,7 @@ const PostsListPage: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg">
           <div className="border-b border-gray-200">
             <nav className="flex overflow-x-auto scrollbar-hide scroll-smooth">
               <button
