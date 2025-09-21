@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useCallback, useRef } from 'react';
-import { useAdminOrStaffAuth } from '@/hooks/useAuthRedirect';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { useReviews } from '@/hooks/useReviews';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -15,16 +16,27 @@ import { ReviewResponseModal } from '@/components/Reviews/ReviewResponseModal';
 import { Review, ReviewDashboardState } from '@/types/review';
 
 export default function ReviewDashboardPage() {
+  const router = useRouter();
   // ✅ Track if data has been loaded to prevent multiple calls
   const hasLoadedRef = useRef(false);
 
-  // ✅ Using the custom authentication hook for admin and staff access
-  const {
-    isClient,
-    isLoading: authLoading,
-    isAuthorized,
-    user,
-  } = useAdminOrStaffAuth();
+  // ✅ Using the authentication hook
+  const { user, loading: authLoading, isAuthenticated, role } = useAuth();
+
+  // ✅ Check if user has admin or staff access
+  const isAuthorized =
+    isAuthenticated && (role === 'admin' || role === 'staff');
+  const isClient = typeof window !== 'undefined';
+
+  // ✅ Redirect unauthorized users
+  useEffect(() => {
+    if (
+      !authLoading &&
+      (!isAuthenticated || (role && role !== 'admin' && role !== 'staff'))
+    ) {
+      router.push('/auth/signin');
+    }
+  }, [authLoading, isAuthenticated, role, router]);
 
   // ✅ Using custom review management hook
   const {
@@ -60,11 +72,15 @@ export default function ReviewDashboardPage() {
 
   // ✅ Initial load when authorized - Fixed to prevent infinite loops
   useEffect(() => {
-    if (isAuthorized && user?.role === 'admin' && !hasLoadedRef.current) {
+    if (
+      isAuthorized &&
+      (role === 'admin' || role === 'staff') &&
+      !hasLoadedRef.current
+    ) {
       hasLoadedRef.current = true;
       loadReviews();
     }
-  }, [isAuthorized, user?.role, loadReviews]);
+  }, [isAuthorized, role, loadReviews]);
 
   // ✅ Manual refresh function
   const handleRefresh = useCallback(async () => {
@@ -253,7 +269,7 @@ export default function ReviewDashboardPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Admin Badge */}
+        {/* Admin/Staff Badge */}
         <div className="mb-4">
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
             <svg
@@ -269,7 +285,7 @@ export default function ReviewDashboardPage() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            ADMIN ACCESS - {user?.first_name} {user?.last_name}
+            {role?.toUpperCase()} ACCESS - {user?.first_name} {user?.last_name}
           </span>
         </div>
 
@@ -303,7 +319,6 @@ export default function ReviewDashboardPage() {
             {state.totalCount} reviews
             {showClearFilters && (
               <span className="text-gray-500">
-                {' '}
                 (filtered from {state.reviews.length} total)
               </span>
             )}
