@@ -24,14 +24,14 @@ const SignIn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useRouter();
-  const { signin, isAuthenticated } = useAuth();
+  const { signin, isAuthenticated, loading } = useAuth();
 
-  // Redirect to dashboard if already signed in
+  // Redirect to dashboard if already signed in (but wait for loading to complete)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!loading && isAuthenticated) {
       navigate.push('/profile/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   // Load saved credentials
   useEffect(() => {
@@ -65,7 +65,8 @@ const SignIn: React.FC = () => {
           refresh: response.data.refresh,
         });
 
-        navigate.push('/profile/dashboard');
+        // Let the useEffect handle the redirect after authentication state updates
+        // navigate.push('/profile/dashboard');
       } else {
         setError('Login failed: Missing token.');
       }

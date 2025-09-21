@@ -71,10 +71,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Check if trying to update fulfillment status
         if 'fulfillment' in request.data:
-            # Only staff or superuser can update fulfillment status
-            if not (user.is_staff or user.is_superuser):
+            new_fulfillment = request.data['fulfillment']
+            
+            # Allow clients to cancel pending orders
+            if (not (user.is_staff or user.is_superuser) and 
+                instance.fulfillment == 'pending' and 
+                new_fulfillment == 'cancelled'):
+                # Client can cancel their own pending order
+                pass
+            elif not (user.is_staff or user.is_superuser):
+                # Only staff or superuser can update other fulfillment statuses
                 return Response(
-                    {'detail': 'Only staff and admin users can update fulfillment status.'},
+                    {'detail': 'Only staff and admin users can update fulfillment status. Clients can only cancel pending orders.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
         
@@ -88,10 +96,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Check if trying to update fulfillment status
         if 'fulfillment' in request.data:
-            # Only staff or superuser can update fulfillment status
-            if not (user.is_staff or user.is_superuser):
+            new_fulfillment = request.data['fulfillment']
+            
+            # Allow clients to cancel pending orders
+            if (not (user.is_staff or user.is_superuser) and 
+                instance.fulfillment == 'pending' and 
+                new_fulfillment == 'cancelled'):
+                # Client can cancel their own pending order
+                pass
+            elif not (user.is_staff or user.is_superuser):
+                # Only staff or superuser can update other fulfillment statuses
                 return Response(
-                    {'detail': 'Only staff and admin users can update fulfillment status.'},
+                    {'detail': 'Only staff and admin users can update fulfillment status. Clients can only cancel pending orders.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
         

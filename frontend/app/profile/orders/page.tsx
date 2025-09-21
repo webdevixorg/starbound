@@ -169,7 +169,7 @@ export default function OrdersPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (state.isClient && !user) {
-      router.push('/auth/login');
+      router.push('/signin');
     }
   }, [user, router, state.isClient]);
 

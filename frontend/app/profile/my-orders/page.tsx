@@ -141,7 +141,6 @@ const FILTER_OPTIONS = [
 export default function OrdersPage() {
   const router = useRouter();
   const { user, role } = useAuth();
-  const isClientRole = role === 'client';
   const contentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [state, setState] = useState<OrdersState>({
@@ -168,29 +167,14 @@ export default function OrdersPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (state.isClient && !user) {
-      router.push('/auth/login');
+    if (!user) {
+      router.push('/signin');
     }
   }, [user, router, state.isClient]);
 
-  // Redirect if not authorized (only admin and staff can access)
-  useEffect(() => {
-    if (
-      state.isClient &&
-      user &&
-      role &&
-      role !== 'admin' &&
-      role !== 'staff'
-    ) {
-      router.push(
-        '/signin?message=Access denied. Admin or staff access required.'
-      );
-    }
-  }, [user, role, router, state.isClient]);
-
   // Load orders
   const loadOrders = useCallback(async () => {
-    if (!state.isClient || !user) return;
+    if (!user) return;
 
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -201,17 +185,6 @@ export default function OrdersPage() {
 
       // Handle paginated response structure
       const orders = response.results || response || [];
-
-      console.log('✅ Orders fetched successfully:', {
-        total: response.count || orders.length,
-        ordersReceived: orders.length,
-        response: response,
-        userRole: role,
-        isClientRole: isClientRole,
-        userId: user?.id,
-        hasNextPage: !!response.next,
-        hasPrevPage: !!response.previous,
-      });
 
       setState((prev) => ({
         ...prev,
@@ -228,7 +201,7 @@ export default function OrdersPage() {
         orders: [], // Fallback to empty array
       }));
     }
-  }, [state.isClient, user, role, isClientRole]);
+  }, [state.isClient, user, role]);
 
   // ✅ Utility functions to handle optional fields
   const calculateOrderTotal = (order: Order): number => {
@@ -237,15 +210,6 @@ export default function OrdersPage() {
     return order.order_data.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
-    );
-  };
-
-  const getOrderCustomer = (order: Order): string => {
-    if (order.customer) return order.customer;
-    // Fallback to billing data if customer field is not provided
-    return (
-      `${order.billing_data?.firstName || ''} ${order.billing_data?.lastName || ''}`.trim() ||
-      'Unknown Customer'
     );
   };
 
@@ -276,9 +240,6 @@ export default function OrdersPage() {
             ?.toLowerCase()
             .includes(state.searchQuery.toLowerCase()) ||
           order.id.toString().includes(state.searchQuery) ||
-          getOrderCustomer(order)
-            .toLowerCase()
-            .includes(state.searchQuery.toLowerCase()) ||
           order.order_data.some((item) =>
             item.name.toLowerCase().includes(state.searchQuery.toLowerCase())
           )
@@ -429,14 +390,9 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // Handle fulfillment status update (for admin/staff)
+  // Handle fulfillment status update
   const handleUpdateFulfillment = useCallback(
     async (orderId: number, newStatus: string) => {
-      if (isClientRole) {
-        console.warn('Only admin and staff can update fulfillment status');
-        return;
-      }
-
       try {
         console.log(
           `🔄 Updating order ${orderId} fulfillment to: ${newStatus}`
@@ -474,34 +430,7 @@ export default function OrdersPage() {
         }));
       }
     },
-    [isClientRole]
-  );
-
-  // Handle order reordering (for clients)
-  const handleReorder = useCallback(
-    async (orderId: number) => {
-      try {
-        const order = state.orders.find((o) => o.id === orderId);
-        if (!order) {
-          console.error('Order not found');
-          return;
-        }
-
-        console.log(`🔄 Reordering items from order ${orderId}`);
-
-        // TODO: Implement reorder functionality
-        // This could add items back to cart or create a new order
-        alert('Reorder functionality will be implemented soon!');
-      } catch (error) {
-        console.error('❌ Error reordering:', error);
-        setState((prev) => ({
-          ...prev,
-          error: 'Failed to reorder items. Please try again.',
-          showErrorModal: true,
-        }));
-      }
-    },
-    [state.orders]
+    [role]
   );
 
   // Handle invoice printing/downloading
@@ -727,7 +656,7 @@ export default function OrdersPage() {
   );
 
   // Loading skeleton for SSR compatibility
-  if (!state.isClient) {
+  if (state.loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -754,27 +683,6 @@ export default function OrdersPage() {
     );
   }
 
-  if (state.loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <LoadingSpinner />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect in useEffect
-  }
-
-  // Check if user is authorized (admin or staff only)
-  if (user && role && role !== 'admin' && role !== 'staff') {
-    return null; // Will redirect in useEffect
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -782,13 +690,10 @@ export default function OrdersPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {isClientRole ? 'My Orders' : 'All Orders'}
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
               <p className="mt-1 text-sm text-gray-600">
-                {state.filteredOrders.length} order
-                {state.filteredOrders.length !== 1 ? 's' : ''} found
-                {isClientRole ? '' : ' across all customers'}
+                Track your order status, download invoices, and manage your
+                purchases
               </p>
             </div>
 
@@ -928,81 +833,22 @@ export default function OrdersPage() {
         ) : (
           /* Orders Table */
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            {/* Bulk Actions Toolbar */}
-            {!isClientRole && state.showBulkActions && (
+            {/* Bulk Actions Toolbar - Disabled for Customer View */}
+            {/* {state.showBulkActions && (
               <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-700">
-                      {state.selectedOrders.length} order
-                      {state.selectedOrders.length !== 1 ? 's' : ''} selected
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleBulkUpdate('confirmed')}
-                      disabled={state.bulkProcessing}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
-                    >
-                      Confirm Selected
-                    </button>
-                    <button
-                      onClick={() => handleBulkUpdate('processing')}
-                      disabled={state.bulkProcessing}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                    >
-                      Process Selected
-                    </button>
-                    <button
-                      onClick={() => handleBulkUpdate('shipped')}
-                      disabled={state.bulkProcessing}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
-                    >
-                      Ship Selected
-                    </button>
-                    <button
-                      onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          selectedOrders: [],
-                          showBulkActions: false,
-                        }))
-                      }
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+                Bulk actions disabled for customer view
               </div>
-            )}
+            )} */}
 
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {!isClientRole && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          checked={
-                            state.selectedOrders.length ===
-                              state.filteredOrders.length &&
-                            state.filteredOrders.length > 0
-                          }
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                        />
-                      </th>
-                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Order
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Payment
@@ -1025,21 +871,6 @@ export default function OrdersPage() {
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => toggleExpanded(order.id)}
                       >
-                        {!isClientRole && (
-                          <td
-                            className="px-6 py-4 whitespace-nowrap"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                              checked={state.selectedOrders.includes(order.id)}
-                              onChange={(e) =>
-                                handleSelectOrder(order.id, e.target.checked)
-                              }
-                            />
-                          </td>
-                        )}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div>
@@ -1075,14 +906,6 @@ export default function OrdersPage() {
                           {formatDate(order.created_at)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {getOrderCustomer(order)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {order.billing_data.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-xs text-gray-500 mt-1">
                             {order.selected_payment_method.toUpperCase()}
                           </div>
@@ -1115,114 +938,21 @@ export default function OrdersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
                             {/* Order Processing Options */}
-                            {!isClientRole ? (
-                              // Admin/Staff Processing Options
-                              <div className="flex items-center space-x-1">
-                                {/* Quick Action Buttons */}
-                                {order.fulfillment === 'pending' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateFulfillment(
-                                        order.id,
-                                        'confirmed'
-                                      );
-                                    }}
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    title="Confirm Order"
-                                  >
-                                    ✓ Confirm
-                                  </button>
-                                )}
+                            <div className="flex items-center space-x-1">
+                              {/* Customer Actions */}
 
-                                {order.fulfillment === 'confirmed' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateFulfillment(
-                                        order.id,
-                                        'processing'
-                                      );
-                                    }}
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 border border-purple-200 rounded-md hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    title="Start Processing"
-                                  >
-                                    ⚙️ Process
-                                  </button>
-                                )}
-
-                                {order.fulfillment === 'processing' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateFulfillment(
-                                        order.id,
-                                        'shipped'
-                                      );
-                                    }}
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    title="Mark as Shipped"
-                                  >
-                                    🚚 Ship
-                                  </button>
-                                )}
-
-                                {order.fulfillment === 'shipped' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateFulfillment(
-                                        order.id,
-                                        'delivered'
-                                      );
-                                    }}
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 border border-green-200 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    title="Mark as Delivered"
-                                  >
-                                    ✅ Deliver
-                                  </button>
-                                )}
-
-                                {/* Print/Export Options */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePrintInvoice(order.id);
-                                  }}
-                                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                  title="Print Invoice"
-                                >
-                                  🖨️ Print
-                                </button>
-                              </div>
-                            ) : (
-                              // Client Options
-                              <div className="flex items-center space-x-1">
-                                {order.fulfillment === 'delivered' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleReorder(order.id);
-                                    }}
-                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    title="Reorder Items"
-                                  >
-                                    🔄 Reorder
-                                  </button>
-                                )}
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePrintInvoice(order.id);
-                                  }}
-                                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                  title="Download Invoice"
-                                >
-                                  📄 Invoice
-                                </button>
-                              </div>
-                            )}
+                              {/* Download Invoice */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePrintInvoice(order.id);
+                                }}
+                                className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                title="Print Invoice"
+                              >
+                                �️ Print
+                              </button>
+                            </div>
 
                             {/* Cancel Button (for eligible orders) */}
                             {(order.fulfillment === 'pending' ||
@@ -1247,7 +977,7 @@ export default function OrdersPage() {
 
                       {/* Expanded Details */}
                       <tr>
-                        <td colSpan={7} className="px-0 py-0">
+                        <td colSpan={6} className="px-0 py-0">
                           <div
                             ref={(el) => {
                               contentRefs.current[`order-${order.id}`] = el;
