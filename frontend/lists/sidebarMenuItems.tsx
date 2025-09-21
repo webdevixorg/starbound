@@ -56,7 +56,7 @@ const menuItems: MenuItem[] = [
     icon: <Cart size={20} />,
     text: 'My Orders',
     alert: true,
-    type: ['client'],
+    type: ['all'],
   },
   {
     href: '/profile/history',
