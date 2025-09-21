@@ -6,9 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   fetchUserOrders,
   updateOrderFulfillment,
-  bulkUpdateOrderStatus,
 } from '@/services/apiProducts';
-import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import SafeImage from '@/components/UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
@@ -201,7 +199,7 @@ export default function OrdersPage() {
         orders: [], // Fallback to empty array
       }));
     }
-  }, [state.isClient, user, role]);
+  }, [user]);
 
   // ✅ Utility functions to handle optional fields
   const calculateOrderTotal = (order: Order): number => {
@@ -390,49 +388,6 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // Handle fulfillment status update
-  const handleUpdateFulfillment = useCallback(
-    async (orderId: number, newStatus: string) => {
-      try {
-        console.log(
-          `🔄 Updating order ${orderId} fulfillment to: ${newStatus}`
-        );
-
-        // Update via API
-        await updateOrderFulfillment(orderId, newStatus);
-
-        // Update local state
-        setState((prev) => ({
-          ...prev,
-          orders: prev.orders.map((order) =>
-            order.id === orderId
-              ? {
-                  ...order,
-                  fulfillment: newStatus as
-                    | 'pending'
-                    | 'confirmed'
-                    | 'processing'
-                    | 'shipped'
-                    | 'delivered'
-                    | 'cancelled',
-                }
-              : order
-          ),
-        }));
-
-        console.log(`✅ Order ${orderId} fulfillment updated successfully`);
-      } catch (error) {
-        console.error('❌ Error updating fulfillment:', error);
-        setState((prev) => ({
-          ...prev,
-          error: 'Failed to update order status. Please try again.',
-          showErrorModal: true,
-        }));
-      }
-    },
-    [role]
-  );
-
   // Handle invoice printing/downloading
   const handlePrintInvoice = useCallback(
     async (orderId: number) => {
@@ -465,7 +420,6 @@ export default function OrdersPage() {
         }));
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.orders]
   );
 
@@ -559,81 +513,6 @@ export default function OrdersPage() {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
-  }, []);
-
-  // Bulk processing handlers
-  const handleBulkUpdate = useCallback(
-    async (status: string) => {
-      if (state.selectedOrders.length === 0) {
-        alert('Please select at least one order to update.');
-        return;
-      }
-
-      setState((prev: OrdersState) => ({ ...prev, bulkProcessing: true }));
-
-      try {
-        await bulkUpdateOrderStatus(state.selectedOrders, status);
-
-        setState((prevState: OrdersState) => ({
-          ...prevState,
-          orders: prevState.orders.map((order: Order) =>
-            state.selectedOrders.includes(order.id)
-              ? { ...order, status }
-              : order
-          ),
-          filteredOrders: prevState.filteredOrders.map((order: Order) =>
-            state.selectedOrders.includes(order.id)
-              ? { ...order, status }
-              : order
-          ),
-          selectedOrders: [],
-          showBulkActions: false,
-          bulkProcessing: false,
-        }));
-
-        alert(
-          `Successfully updated ${state.selectedOrders.length} orders to ${status}`
-        );
-      } catch (error) {
-        console.error('Error updating orders:', error);
-        alert('Failed to update orders. Please try again.');
-        setState((prev: OrdersState) => ({ ...prev, bulkProcessing: false }));
-      }
-    },
-    [state.selectedOrders]
-  );
-
-  const handleSelectAll = useCallback(
-    (checked: boolean) => {
-      if (checked) {
-        setState((prev: OrdersState) => ({
-          ...prev,
-          selectedOrders: state.filteredOrders.map((order: Order) => order.id),
-          showBulkActions: true,
-        }));
-      } else {
-        setState((prev: OrdersState) => ({
-          ...prev,
-          selectedOrders: [],
-          showBulkActions: false,
-        }));
-      }
-    },
-    [state.filteredOrders]
-  );
-
-  const handleSelectOrder = useCallback((orderId: number, checked: boolean) => {
-    setState((prev: OrdersState) => {
-      const newSelected = checked
-        ? [...prev.selectedOrders, orderId]
-        : prev.selectedOrders.filter((id: number) => id !== orderId);
-
-      return {
-        ...prev,
-        selectedOrders: newSelected,
-        showBulkActions: newSelected.length > 0,
-      };
-    });
   }, []);
 
   const formatDate = useCallback((dateString: string) => {
