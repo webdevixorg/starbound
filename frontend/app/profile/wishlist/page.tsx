@@ -440,11 +440,11 @@ export default function WishlistPage() {
                             {item.product.title}
                           </Link>
                           {item.product.description && (
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            <div className="text-sm text-gray-600 mt-1 line-clamp-2">
                               <HtmlContent
                                 htmlContent={item.product.description}
                               />
-                            </p>
+                            </div>
                           )}
                           {item.product.location_name && (
                             <p className="text-xs text-gray-500 mt-1">
