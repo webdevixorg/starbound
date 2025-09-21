@@ -684,7 +684,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -832,7 +832,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           /* Orders Table */
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Bulk Actions Toolbar - Disabled for Customer View */}
             {/* {state.showBulkActions && (
               <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
