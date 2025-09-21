@@ -198,7 +198,7 @@ export default function ReviewDashboardPage() {
   if (!isClient || authLoading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-6 bg-gray-200 rounded w-1/4 mb-8"></div>
             <div className="h-12 bg-gray-200 rounded w-1/2 mb-8"></div>
@@ -227,7 +227,7 @@ export default function ReviewDashboardPage() {
   if (state.loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <LoadingSpinner />
@@ -252,7 +252,7 @@ export default function ReviewDashboardPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Admin Badge */}
         <div className="mb-4">
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">

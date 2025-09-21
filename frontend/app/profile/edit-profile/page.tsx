@@ -383,7 +383,7 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageHeader onBack={() => router.push('/profile')} />
 
         {uiState.error && !uiState.showErrorModal && (
@@ -455,7 +455,7 @@ export default function EditProfilePage() {
 const LoadingSkeleton = React.memo(function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="bg-white rounded-lg shadow p-6 space-y-6">
