@@ -256,6 +256,18 @@ export const fetchOrders = async (): Promise<any> => {
   }
 };
 
+export const fetchUserOrders = async (userId: number): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/product-orders/', {
+      params: { user_id: userId },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching User Orders:', error);
+    throw error;
+  }
+};
+
 export const fetchOrder = async (orderId: number) => {
   try {
     const response = await axiosInstance.get(`/product-orders/${orderId}/`);

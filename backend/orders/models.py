@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Order(models.Model):
     # Fulfillment status choices
@@ -42,6 +43,14 @@ class Order(models.Model):
     
     # Timestamp when the order was created; set automatically on record creation
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # User who placed the order - required field
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='product_orders',
+        help_text='User who placed this order'
+    )
 
     class Meta:
         # Explicit database table name for this model

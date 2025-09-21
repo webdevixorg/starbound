@@ -1,14 +1,16 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import get_user_model
+
 from .models import Order
 from .serializers import OrderSerializer
 
+
+User = get_user_model()
+
 # ViewSet class that provides CRUD operations for Order model
 class OrderViewSet(viewsets.ModelViewSet):
-    # Queryset of all Order instances to operate on
-    queryset = Order.objects.all()
-    
     # Serializer class that will handle serialization/deserialization of Order instances
     serializer_class = OrderSerializer
     
@@ -17,21 +19,35 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """
-        Filter orders based on user role:
-        - Admin/Staff: Can see all orders
-        - Clients: Can only see their own orders
+        Filter orders based on user role, ownership, and URL parameters:
+        - If user_id parameter is provided:
+            * Staff/Admin: return that user's orders
+            * Regular users: ignore it and return their own orders
+        - Without user_id:
+            * Staff/Admin: return all orders
+            * Regular users: return their own orders
         """
         user = self.request.user
-        
-        # Admin and staff can see all orders
+        user_id = self.request.GET.get('user_id')
+
+        if user_id:
+            try:
+                target_user = User.objects.get(id=user_id)
+
+                if user.is_staff or user.is_superuser:
+                    return Order.objects.filter(user=target_user).order_by('-created_at')
+                else:
+                    # Regular users can't fetch others' orders → return only their own
+                    return Order.objects.filter(user=user).order_by('-created_at')
+
+            except User.DoesNotExist:
+                return Order.objects.none()
+
+        # No user_id provided
         if user.is_staff or user.is_superuser:
             return Order.objects.all().order_by('-created_at')
-        
-        # Regular users can only see their own orders
-        # Note: You may need to add a user field to Order model to filter properly
-        # For now, returning all orders - update this when you add user relationship
-        return Order.objects.all().order_by('-created_at')
-        # TODO: Add user field to Order model and filter: Order.objects.filter(user=user)
+
+        return Order.objects.filter(user=user).order_by('-created_at')
 
     # Override the create method to customize order creation handling
     def create(self, request, *args, **kwargs):
@@ -39,8 +55,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid():
-            # If data is valid, save the new order instance to the database
-            self.perform_create(serializer)
+            # Set the authenticated user when creating the order
+            serializer.save(user=self.request.user)
             
             # Return the serialized data with HTTP 201 Created status on success
             return Response(serializer.data, status=status.HTTP_201_CREATED)

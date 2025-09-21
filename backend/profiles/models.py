@@ -28,7 +28,7 @@ class Wishlist(models.Model):
         return f"{self.product.title}" if self.product else "No Product"
 
 class Order(models.Model):
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='profile_orders')
     destination = models.CharField(max_length=100)
     start_date = models.DateField()
     end_date = models.DateField()

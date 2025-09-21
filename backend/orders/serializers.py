@@ -15,12 +15,15 @@ class OrderItemSerializer(serializers.Serializer):
 class OrderSerializer(serializers.ModelSerializer):
     # Nested serializer to handle list of order items (products and quantities)
     order_data = OrderItemSerializer(many=True)
+    # User field is read-only and will be set automatically
+    user = serializers.StringRelatedField(read_only=True)
     
     class Meta:
         model = Order
         # Fields included in serialization/deserialization
         fields = [
             'id',
+            'user',                      # User who placed the order (read-only)
             'billing_data',              # Billing information (likely a JSON/dict field)
             'shipping_data',             # Shipping information (likely a JSON/dict field)
             'order_data',                # List of ordered items (product IDs + quantities)
@@ -30,6 +33,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'fulfillment',               # Fulfillment status
             'created_at',                # Timestamp of order creation
         ]
+        read_only_fields = ['user', 'created_at']  # These fields cannot be set by clients
 
     def create(self, validated_data):
         # Pop out nested order items data before creating the order instance
@@ -56,6 +60,16 @@ class OrderSerializer(serializers.ModelSerializer):
         
         # Get the default representation first
         representation = super().to_representation(instance)
+        
+        # Add user information if user exists
+        if instance.user:
+            representation['user_info'] = {
+                'id': instance.user.id,
+                'username': instance.user.username,
+                'first_name': instance.user.first_name,
+                'last_name': instance.user.last_name,
+                'email': instance.user.email,
+            }
         
         # Prepare detailed info for each order item (product info + image)
         order_data_with_details = []
