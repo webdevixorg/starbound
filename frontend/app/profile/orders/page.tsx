@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useUserRole } from '@/hooks/useAuthRedirect';
 import {
   fetchOrders,
   updateOrderFulfillment,
@@ -141,8 +140,8 @@ const FILTER_OPTIONS = [
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { userRole, isClient: isClientRole } = useUserRole();
+  const { user, role } = useAuth();
+  const isClientRole = role === 'client';
   const contentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [state, setState] = useState<OrdersState>({
@@ -174,6 +173,21 @@ export default function OrdersPage() {
     }
   }, [user, router, state.isClient]);
 
+  // Redirect if not authorized (only admin and staff can access)
+  useEffect(() => {
+    if (
+      state.isClient &&
+      user &&
+      role &&
+      role !== 'admin' &&
+      role !== 'staff'
+    ) {
+      router.push(
+        '/signin?message=Access denied. Admin or staff access required.'
+      );
+    }
+  }, [user, role, router, state.isClient]);
+
   // Load orders
   const loadOrders = useCallback(async () => {
     if (!state.isClient || !user) return;
@@ -192,7 +206,7 @@ export default function OrdersPage() {
         total: response.count || orders.length,
         ordersReceived: orders.length,
         response: response,
-        userRole: userRole,
+        userRole: role,
         isClientRole: isClientRole,
         userId: user?.id,
         hasNextPage: !!response.next,
@@ -214,7 +228,7 @@ export default function OrdersPage() {
         orders: [], // Fallback to empty array
       }));
     }
-  }, [state.isClient, user, userRole, isClientRole]);
+  }, [state.isClient, user, role, isClientRole]);
 
   // ✅ Utility functions to handle optional fields
   const calculateOrderTotal = (order: Order): number => {
@@ -753,6 +767,11 @@ export default function OrdersPage() {
   }
 
   if (!user) {
+    return null; // Will redirect in useEffect
+  }
+
+  // Check if user is authorized (admin or staff only)
+  if (user && role && role !== 'admin' && role !== 'staff') {
     return null; // Will redirect in useEffect
   }
 
