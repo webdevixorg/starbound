@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { contactSupportAPI, CreateTicketData } from '@/services/apiSupport';
-import ModalAlert from '@/components/Modals/ModalAlert';
+import ModalAlertInfo from '@/components/Modals/ModalAlertInfo';
+import ModalAlertError from '@/components/Modals/ModalAlertError';
 
 const NewTicketPage: React.FC = () => {
   const router = useRouter();
@@ -154,7 +155,7 @@ const NewTicketPage: React.FC = () => {
 
         {/* Success Message */}
         {success && (
-          <ModalAlert
+          <ModalAlertInfo
             isOpen={!!success}
             onClose={() => setSuccess(null)}
             title="Success"
@@ -164,7 +165,7 @@ const NewTicketPage: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <ModalAlert
+          <ModalAlertError
             isOpen={!!error}
             onClose={() => setError(null)}
             title="Error"
