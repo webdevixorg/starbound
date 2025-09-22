@@ -30,7 +30,7 @@
     position: absolute;
     top: 40px;
     right: 0;
-    z-index: 10;
+    z-index: 15;
     opacity: 0;
     transition: all 0.3s ease-in-out;
     transform: translateX(100%) translateX(6px);
@@ -105,18 +105,46 @@
       }
 
       svg {
-        fill: none;
         stroke: #000;
-        strokewidth: 16px;
+      }
+    }
+  }
+
+  // Separate hover rule for wishlist icon
+  .add-to-wishlist-icon:hover {
+    &::before {
+      background: #ef4444 !important;
+      box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+      transform: scale(1);
+    }
+
+    svg {
+      stroke: #fff !important;
+      fill: #fff !important;
+    }
+  }
+
+  // Styling for when item is in wishlist
+  .add-to-wishlist-icon.inwishlist {
+    svg {
+      stroke: #ef4444;
+      fill: #fff;
+    }
+
+    &::before {
+      background: #fff;
+      transform: scale(1);
+      box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+    }
+
+    &:hover {
+      &::before {
+        background: #ef4444 !important;
       }
 
-      &:hover::before {
-        background: #ef4444;
-        box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
-      }
-
-      &:hover svg {
-        stroke: #fff;
+      svg {
+        stroke: #fff !important;
+        fill: #fff !important;
       }
     }
   }
