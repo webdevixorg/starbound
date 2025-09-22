@@ -171,13 +171,6 @@ const supportItems: MenuItem[] = [
     type: ['all'],
   },
   {
-    href: '/profile/help-center',
-    icon: <HelpIcon size={20} />,
-    text: 'Help Center',
-    alert: false,
-    type: ['all'],
-  },
-  {
     href: '/profile/feedback',
     icon: <FeedBackIcon size={20} />,
     text: 'Feedback',

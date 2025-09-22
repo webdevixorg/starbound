@@ -138,7 +138,7 @@ const FILTER_OPTIONS = [
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const contentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [state, setState] = useState<OrdersState>({
@@ -388,41 +388,6 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // Handle invoice printing/downloading
-  const handlePrintInvoice = useCallback(
-    async (orderId: number) => {
-      try {
-        console.log(`🖨️ Generating invoice for order ${orderId}`);
-
-        const order = state.orders.find((o) => o.id === orderId);
-        if (!order) {
-          console.error('Order not found');
-          return;
-        }
-
-        // Create printable invoice content
-        const invoiceContent = generateInvoiceHTML(order);
-
-        // Open print dialog
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
-        if (printWindow) {
-          printWindow.document.write(invoiceContent);
-          printWindow.document.close();
-          printWindow.focus();
-          printWindow.print();
-        }
-      } catch (error) {
-        console.error('❌ Error generating invoice:', error);
-        setState((prev) => ({
-          ...prev,
-          error: 'Failed to generate invoice. Please try again.',
-          showErrorModal: true,
-        }));
-      }
-    },
-    [state.orders]
-  );
-
   // Generate HTML content for invoice
   const generateInvoiceHTML = useCallback((order: Order) => {
     const total = calculateOrderTotal(order);
@@ -506,6 +471,41 @@ export default function OrdersPage() {
       </html>
     `;
   }, []);
+
+  // Handle invoice printing/downloading
+  const handlePrintInvoice = useCallback(
+    async (orderId: number) => {
+      try {
+        console.log(`🖨️ Generating invoice for order ${orderId}`);
+
+        const order = state.orders.find((o) => o.id === orderId);
+        if (!order) {
+          console.error('Order not found');
+          return;
+        }
+
+        // Create printable invoice content
+        const invoiceContent = generateInvoiceHTML(order);
+
+        // Open print dialog
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+          printWindow.document.write(invoiceContent);
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.print();
+        }
+      } catch (error) {
+        console.error('❌ Error generating invoice:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to generate invoice. Please try again.',
+          showErrorModal: true,
+        }));
+      }
+    },
+    [state.orders, generateInvoiceHTML]
+  );
 
   // Utility functions
   const formatCurrency = useCallback((amount: number) => {

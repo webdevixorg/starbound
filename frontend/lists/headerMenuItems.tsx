@@ -55,11 +55,13 @@ export async function headerMenuItems() {
       direct: true,
     },
     {
-      label: 'Contact',
-      href: '/contact-support',
+      label: 'Support',
+      href: '/support',
       subItems: [
-        { label: 'Contact Support', href: '/contact-support' },
-        { label: 'Help Center', href: '/help-center' },
+        { label: 'Support Center', href: '/support' },
+        { label: 'Contact Support', href: '/support/contact' },
+        { label: 'Help Center', href: '/support/help' },
+        { label: 'Send Feedback', href: '/support/feedback' },
         { label: 'Careers', href: '/careers' },
       ],
     },
