@@ -3,8 +3,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/UI/SafeImage';
+import { useAuth } from '@/context/AuthContext';
 import { fetchCategories } from '@/services/api';
-import { fetchForumThreads, fetchForumStats } from '@/services/forum';
+import {
+  fetchForumThreads,
+  fetchMyThreads,
+  fetchForumStats,
+} from '@/services/forum';
 import { getPublicImageUrl } from '@/helpers/media';
 
 interface Thread {
@@ -67,21 +72,35 @@ const ForumPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [threadsLoading, setThreadsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Input field value
+  const [searchQuery, setSearchQuery] = useState(''); // Actual search term used for API
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showMyThreadsOnly, setShowMyThreadsOnly] = useState(false);
+
+  const { isAuthenticated } = useAuth();
 
   const loadThreads = useCallback(
     async (page: number = 1, reset: boolean = false) => {
       try {
         setThreadsLoading(true);
 
-        const response = await fetchForumThreads({
-          page,
-          pageSize: 10,
-          category: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchQuery || undefined,
-        });
+        let response;
+        if (showMyThreadsOnly && isAuthenticated) {
+          response = await fetchMyThreads({
+            page,
+            pageSize: 10,
+            category: selectedCategory !== 'all' ? selectedCategory : undefined,
+            search: searchQuery || undefined,
+          });
+        } else {
+          response = await fetchForumThreads({
+            page,
+            pageSize: 10,
+            category: selectedCategory !== 'all' ? selectedCategory : undefined,
+            search: searchQuery || undefined,
+          });
+        }
 
         let threadList = [];
         if (response.results && Array.isArray(response.results)) {
@@ -111,13 +130,13 @@ const ForumPage: React.FC = () => {
         setThreadsLoading(false);
       }
     },
-    [selectedCategory, searchQuery]
+    [selectedCategory, searchQuery, showMyThreadsOnly, isAuthenticated]
   );
 
   // Load threads when filters change
   useEffect(() => {
     loadThreads(1, true);
-  }, [selectedCategory, searchQuery, loadThreads]);
+  }, [selectedCategory, searchQuery, showMyThreadsOnly, loadThreads]);
 
   const loadInitialData = useCallback(async () => {
     try {
@@ -156,7 +175,8 @@ const ForumPage: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search will trigger via useEffect
+    // Set the search query from the input value when button is pressed
+    setSearchQuery(searchInput.trim());
   };
 
   const handleLoadMore = () => {
@@ -234,8 +254,14 @@ const ForumPage: React.FC = () => {
                 <div className="flex-1">
                   <input
                     type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        setSearchQuery(searchInput.trim());
+                      }
+                    }}
                     placeholder="Search threads..."
                     className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200/60 rounded-xl text-sm 
                              placeholder:text-gray-400 text-gray-900
@@ -258,6 +284,26 @@ const ForumPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
+
+                  {/* My Threads Only Toggle */}
+                  {isAuthenticated && (
+                    <label
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/50 border border-gray-200/60 rounded-xl
+                                   hover:bg-gray-100/50 transition-all duration-200 ease-out cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={showMyThreadsOnly}
+                        onChange={(e) => setShowMyThreadsOnly(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded 
+                                 focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="text-sm text-gray-700 font-medium whitespace-nowrap">
+                        My Threads Only
+                      </span>
+                    </label>
+                  )}
+
                   <button
                     type="submit"
                     className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl 
@@ -272,28 +318,108 @@ const ForumPage: React.FC = () => {
 
           {/* Thread List */}
           <div className="space-y-4">
+            {/* Thread List Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {showMyThreadsOnly ? 'My Threads' : 'All Discussions'}
+                {showMyThreadsOnly && (
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({threads.length} thread{threads.length !== 1 ? 's' : ''})
+                  </span>
+                )}
+              </h2>
+              {searchQuery && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">
+                    Search results for &quot;{searchQuery}&quot;
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchInput('');
+                    }}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
             {threads.length === 0 && !threadsLoading ? (
               <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm p-8 text-center">
                 <div className="text-gray-500">
-                  <svg
-                    className="w-12 h-12 mx-auto mb-4 text-gray-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No threads found
-                  </h3>
-                  <p className="text-gray-500">
-                    Be the first to start a discussion!
-                  </p>
+                  {searchQuery ? (
+                    <>
+                      <svg
+                        className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No threads found
+                      </h3>
+                      <p className="text-gray-500">
+                        No threads match your search criteria &quot;
+                        {searchQuery}&quot;. Try adjusting your search terms or
+                        filters.
+                      </p>
+                    </>
+                  ) : showMyThreadsOnly ? (
+                    <>
+                      <svg
+                        className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No threads created yet
+                      </h3>
+                      <p className="text-gray-500">
+                        You haven&apos;t created any forum threads yet. Create
+                        your first thread to get started!
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No discussions yet
+                      </h3>
+                      <p className="text-gray-500">
+                        Be the first to start a discussion in this community!
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

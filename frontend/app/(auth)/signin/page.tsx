@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image'; // Add this import
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signin as signinApi } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import UserIcon from '@/components/UI/Icons/User';
@@ -15,7 +15,7 @@ import FaceBookIcon from '@/components/UI/Icons/FaceBook';
 import AppleIcon from '@/components/UI/Icons/Apple';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
-const SignIn: React.FC = () => {
+const SignInContent: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -24,14 +24,21 @@ const SignIn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useRouter();
+  const searchParams = useSearchParams();
   const { signin, isAuthenticated, loading } = useAuth();
 
-  // Redirect to dashboard if already signed in (but wait for loading to complete)
+  // Get return URL from query parameters
+  const returnUrl = searchParams.get('returnUrl');
+
+  // Redirect to return URL or dashboard if already signed in
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate.push('/profile/dashboard');
+      const destination = returnUrl
+        ? decodeURIComponent(returnUrl)
+        : '/profile/dashboard';
+      navigate.push(destination);
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, returnUrl]);
 
   // Load saved credentials
   useEffect(() => {
@@ -275,6 +282,22 @@ const SignIn: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Loading component for Suspense fallback
+const SignInLoading = () => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+  </div>
+);
+
+// Main SignIn component with Suspense wrapper
+const SignIn: React.FC = () => {
+  return (
+    <Suspense fallback={<SignInLoading />}>
+      <SignInContent />
+    </Suspense>
   );
 };
 

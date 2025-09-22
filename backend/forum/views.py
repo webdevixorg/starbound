@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.text import slugify
 from django.utils import timezone
+from django.db import models
 from .models import Thread, Reply, ThreadView
 from categories.models import Category
 
@@ -22,11 +23,26 @@ class ThreadViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Thread.objects.select_related('author', 'category').prefetch_related('replies')
         category_slug = self.request.GET.get('category', None)
+        author_id = self.request.GET.get('author', None)
+        my_threads = self.request.GET.get('my_threads', None)
+        search = self.request.GET.get('search', None)
         
         if category_slug:
             queryset = queryset.filter(category__slug=category_slug)
+        
+        if author_id:
+            queryset = queryset.filter(author__id=author_id)
+        
+        if my_threads and self.request.user.is_authenticated:
+            queryset = queryset.filter(author=self.request.user)
+        
+        if search:
+            queryset = queryset.filter(
+                models.Q(title__icontains=search) | 
+                models.Q(content__icontains=search)
+            )
             
-        return queryset
+        return queryset.order_by('-created_at')
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -52,6 +68,18 @@ class ThreadViewSet(viewsets.ModelViewSet):
             counter += 1
         
         serializer.save(author=self.request.user, slug=slug)
+    
+    def create(self, request, *args, **kwargs):
+        """Override create to return the thread with slug in response"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Return the created thread with all fields including slug
+        thread = serializer.instance
+        response_serializer = ThreadDetailSerializer(thread)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
     def retrieve(self, request, *args, **kwargs):
         thread = self.get_object()

@@ -115,7 +115,7 @@ const SupportPage: React.FC = () => {
         </svg>
       ),
       color: 'green',
-      href: '/support/help',
+      href: '/help-center',
       action: 'Browse Articles',
       stat: `${stats.totalArticles} articles available`,
       features: [
@@ -145,7 +145,7 @@ const SupportPage: React.FC = () => {
         </svg>
       ),
       color: 'purple',
-      href: '/support/feedback',
+      href: '/profile/feedback',
       action: 'Give Feedback',
       stat: 'Your voice matters',
       features: [
@@ -161,7 +161,7 @@ const SupportPage: React.FC = () => {
     {
       title: 'Create New Ticket',
       description: 'Get help with a specific issue',
-      href: '/profile/help-center/new',
+      href: '/profile/contact-support/new',
       icon: (
         <svg
           className="w-5 h-5"
@@ -182,7 +182,7 @@ const SupportPage: React.FC = () => {
     {
       title: 'Search Help Articles',
       description: 'Find answers quickly',
-      href: '/support/help',
+      href: '/help-center',
       icon: (
         <svg
           className="w-5 h-5"
@@ -203,7 +203,7 @@ const SupportPage: React.FC = () => {
     {
       title: 'Report a Bug',
       description: 'Help us fix issues',
-      href: '/support/feedback?type=bug_report',
+      href: '/profile/feedback?type=bug_report',
       icon: (
         <svg
           className="w-5 h-5"

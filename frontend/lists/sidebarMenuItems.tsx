@@ -80,6 +80,13 @@ const menuItems: MenuItem[] = [
     type: ['client'],
   },
   {
+    href: '/profile/forum',
+    icon: <HistoryIcon size={20} />,
+    text: 'Forum',
+    alert: false,
+    type: ['all'],
+  },
+  {
     href: '#',
     icon: <ArticleIcon size={20} />,
     text: 'Posts',

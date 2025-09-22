@@ -44,6 +44,8 @@ export const fetchForumThreads = async (params?: {
   pageSize?: number;
   category?: string;
   search?: string;
+  author?: number; // Add author filter
+  myThreads?: boolean; // Add option to fetch only current user's threads
 }) => {
   try {
     const queryParams: any = {
@@ -59,12 +61,55 @@ export const fetchForumThreads = async (params?: {
       queryParams.search = params.search;
     }
 
-    const response = await axiosInstanceNoAuth.get('/forum/', {
+    if (params?.author) {
+      queryParams.author = params.author;
+    }
+
+    if (params?.myThreads) {
+      queryParams.my_threads = 'true';
+    }
+
+    // Use authenticated instance if fetching user's own threads
+    const axiosClient = params?.myThreads ? axiosInstance : axiosInstanceNoAuth;
+
+    const response = await axiosClient.get('/forum/', {
       params: queryParams,
     });
     return response.data;
   } catch (error) {
     console.error('Error fetching forum threads:', error);
+    throw error;
+  }
+};
+
+// Dedicated function to fetch current user's threads
+export const fetchMyThreads = async (params?: {
+  page?: number;
+  pageSize?: number;
+  category?: string;
+  search?: string;
+}) => {
+  try {
+    const queryParams: any = {
+      page: params?.page || 1,
+      page_size: params?.pageSize || 20,
+      my_threads: 'true', // Always filter by current user
+    };
+
+    if (params?.category && params.category !== 'all') {
+      queryParams.category = params.category;
+    }
+
+    if (params?.search) {
+      queryParams.search = params.search;
+    }
+
+    const response = await axiosInstance.get('/forum/', {
+      params: queryParams,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my threads:', error);
     throw error;
   }
 };
