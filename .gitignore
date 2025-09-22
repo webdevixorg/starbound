@@ -144,8 +144,10 @@ frontend/build/
 frontend/node_modules/
 
 # Ignore all files and folders inside backend/media/images and backend/media/posts
+backend/media/*
 backend/media/images/
 backend/media/posts/
+backend/chat/*
 
 # Ignore all files in migrations directories
 **/migrations/*
