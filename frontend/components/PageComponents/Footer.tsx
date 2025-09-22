@@ -166,7 +166,7 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/contact-support">Contact Us</Link>
+                      <Link href="/contact-us">Contact Us</Link>
                     </li>
                     <li className="py-1 hover:text-white">
                       <Link href="/help-center">Help Center</Link>

@@ -8,9 +8,6 @@ const ModalAlertError: React.FC<ModalProps> = ({
   title = 'Alert',
   message,
   onClose,
-  onConfirm,
-  confirmText = 'I accept',
-  cancelText = 'Decline',
 }) => {
   if (!isOpen) return null;
 
