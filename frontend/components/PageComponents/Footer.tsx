@@ -172,9 +172,7 @@ const Footer: React.FC = () => {
                       <Link href="/help-center">Help Center</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/warranty-and-return">
-                        Warranty & Returns
-                      </Link>
+                      <Link href="/warranty">Warranty & Returns</Link>
                     </li>
                   </ul>
                 </div>
