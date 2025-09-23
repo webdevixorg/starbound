@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
     href: '/profile/my-orders',
     icon: <Cart size={20} />,
     text: 'My Orders',
-    alert: true,
+    alert: false,
     type: ['all'],
   },
   {
