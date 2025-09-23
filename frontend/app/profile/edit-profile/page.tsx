@@ -369,8 +369,31 @@ export default function EditProfilePage() {
     return (
       <div className="min-h-screen bg-white">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <LoadingSpinner />
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="text-center">
+              <div className="relative mb-6">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <svg
+                    className="w-8 h-8 text-white animate-pulse"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <LoadingSpinner />
+              </div>
+              <p className="text-lg font-medium text-gray-700">
+                Loading your profile...
+              </p>
+              <p className="text-gray-500 mt-2">This won&apos;t take long</p>
+            </div>
           </div>
         </div>
       </div>
@@ -383,8 +406,8 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PageHeader onBack={() => router.push('/profile')} />
+      <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <PageHeader />
 
         {uiState.error && !uiState.showErrorModal && (
           <ErrorAlert
@@ -393,8 +416,8 @@ export default function EditProfilePage() {
           />
         )}
 
-        <div className="bg-white rounded-lg">
-          <form onSubmit={handleSubmit} className="p-6 space-y-8">
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/60 overflow-hidden">
+          <form onSubmit={handleSubmit} className="p-8 space-y-10">
             <ProfilePictureSection
               imagePreview={imagePreview}
               uploadingImage={uiState.uploadingImage}
@@ -457,22 +480,38 @@ const LoadingSkeleton = React.memo(function LoadingSkeleton() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="bg-white rounded-lg shadow p-6 space-y-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
+          <div className="mb-10 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-xl"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-32"></div>
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-64"></div>
+                <div className="h-4 bg-gray-200 rounded w-80"></div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-12 w-36 bg-white/60 rounded-xl border border-gray-200/40"></div>
+          </div>
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 overflow-hidden p-8">
+            <div className="space-y-8">
+              <div className="flex items-center space-x-6">
+                <div className="w-32 h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full"></div>
+                <div className="space-y-3">
+                  <div className="h-5 bg-gray-300 rounded w-40"></div>
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  <div className="h-10 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-lg w-28"></div>
                 </div>
-              ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div key={i} className="space-y-3">
+                    <div className="h-4 bg-gray-300 rounded w-24"></div>
+                    <div className="h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div className="h-5 bg-gray-300 rounded w-32"></div>
+                <div className="h-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -481,37 +520,35 @@ const LoadingSkeleton = React.memo(function LoadingSkeleton() {
   );
 });
 
-const PageHeader = React.memo<{ onBack: () => void }>(function PageHeader({
-  onBack,
-}) {
+const PageHeader = React.memo(function PageHeader() {
   return (
-    <div className="mb-8">
+    <div className="mb-10">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
-          <p className="mt-1 text-sm text-gray-600">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+              Edit Profile
+            </h1>
+          </div>
+          <p className="text-lg text-gray-600 ml-11">
             Update your personal information and preferences
           </p>
         </div>
-        <button
-          onClick={onBack}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Profile
-        </button>
       </div>
     </div>
   );
@@ -520,31 +557,33 @@ const PageHeader = React.memo<{ onBack: () => void }>(function PageHeader({
 const ErrorAlert = React.memo<{ error: string; onDismiss: () => void }>(
   function ErrorAlert({ error, onDismiss }) {
     return (
-      <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="mb-8 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200/60 rounded-2xl p-6 shadow-lg shadow-red-500/10 backdrop-blur-sm">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg
-              className="h-5 w-5 text-red-400"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <div className="p-2 bg-red-100 rounded-xl">
+              <svg
+                className="h-5 w-5 text-red-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
           </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error</h3>
-            <div className="mt-2 text-sm text-red-700">
+          <div className="ml-4">
+            <h3 className="text-lg font-semibold text-red-900">Error</h3>
+            <div className="mt-2 text-red-800">
               <p>{error}</p>
             </div>
-            <div className="mt-3">
+            <div className="mt-4">
               <button
                 type="button"
                 onClick={onDismiss}
-                className="text-red-800 hover:text-red-600 text-sm underline"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-800 hover:text-red-900 bg-red-100 hover:bg-red-200 rounded-lg transition-colors duration-300"
               >
                 Dismiss
               </button>
