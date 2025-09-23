@@ -148,9 +148,7 @@ const Footer: React.FC = () => {
                     <li className="py-1 hover:text-white">
                       <Link href="/career">Career</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href="/posts">News & Blog</Link>
-                    </li>
+
                     <li className="py-1 hover:text-white">
                       <Link href="/privacy-policy">Privacy Policy</Link>
                     </li>
@@ -170,6 +168,9 @@ const Footer: React.FC = () => {
                     </li>
                     <li className="py-1 hover:text-white">
                       <Link href="/help-center">Help Center</Link>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <Link href="/feedback">Feedback</Link>
                     </li>
                     <li className="py-1 hover:text-white">
                       <Link href="/warranty">Warranty & Returns</Link>
@@ -211,21 +212,19 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/resources/user-manuals">User Manuals</Link>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href="/resources/product-reviews">
-                        Product Reviews
-                      </Link>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href="/resources/how-to-videos">How-To Videos</Link>
+                      <Link href="/posts">News & Blog</Link>
                     </li>
                     <li className="py-1 hover:text-white">
                       <Link href="/forum">Community Forum</Link>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/feedback">Feedback</Link>
+                      <Link href="/product-reviews">Product Reviews</Link>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <Link href="/how-to-videos">How-To Videos</Link>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <Link href="/user-manuals">User Manuals</Link>
                     </li>
                   </ul>
                 </div>
