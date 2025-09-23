@@ -65,7 +65,7 @@ class UserSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'user_settings'
+        db_table = 'profile_usersettings'
         verbose_name = 'User Settings'
         verbose_name_plural = 'User Settings'
 
