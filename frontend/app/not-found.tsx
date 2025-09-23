@@ -44,7 +44,7 @@ export default function NotFound() {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-2xl p-6 md:p-8 mx-auto max-w-2xl">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-6 md:p-8 mx-auto max-w-2xl">
           {/* Error Icon */}
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mb-4">
             <svg
