@@ -33,7 +33,7 @@ const ProductCardGrid: React.FC<{ product: Product; imageHeight: string }> = ({
         >
           <QuickViewIcon />
         </button>
-        <div className="product-card-actions-list">
+        <div className="product-card-actions-list top-8">
           <AddToWishlistButton product={product} />
         </div>
         <Link href={`/shop/${product.slug}`}>
