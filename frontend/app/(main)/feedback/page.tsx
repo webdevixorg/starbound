@@ -27,17 +27,18 @@ const FeedbackPage: React.FC = () => {
     customer_service: 5,
     contact_email: user?.email || '',
     allow_contact: true,
-    browser_info: supportUtils.getBrowserInfo(),
+    browser_info: '', // Will be set in useEffect
     page_url: '', // Will be set in useEffect
   });
 
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
 
-  // Set page URL on client side to avoid SSR issues
+  // Set client-side data to avoid SSR issues
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
+      browser_info: supportUtils.getBrowserInfo(),
       page_url: supportUtils.getCurrentPageUrl(),
     }));
   }, []);

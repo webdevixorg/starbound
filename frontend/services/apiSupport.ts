@@ -388,11 +388,17 @@ export const supportUtils = {
 
   // Get browser info
   getBrowserInfo: (): string => {
-    return navigator.userAgent;
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      return navigator.userAgent;
+    }
+    return 'Server-side rendering';
   },
 
   // Get current page URL
   getCurrentPageUrl: (): string => {
-    return window.location.href;
+    if (typeof window !== 'undefined') {
+      return window.location.href;
+    }
+    return '';
   },
 };
