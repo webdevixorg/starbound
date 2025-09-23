@@ -772,11 +772,6 @@ export const biDirectionalSyncVisits = async (useSessionStorage = true) => {
 
     // 6. Update frontend storage with merged visits
     storage.setItem('visited_products', JSON.stringify(mergedVisits));
-
-    console.log(
-      `Bi-directional sync complete. Backend visits: ${backendVisits.length}, ` +
-        `Frontend visits: ${frontendVisits.length}, New visits saved: ${newFrontendVisits.length}`
-    );
   } catch (error) {
     console.error('Error during bi-directional sync of visits:', error);
   }
