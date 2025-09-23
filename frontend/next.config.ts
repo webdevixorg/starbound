@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+
+const path = require('path');
+require('dotenv').config({
+  path: path.resolve(__dirname, '../config/frontend/.env'),
+});
+
 const nextConfig = {
   // Prevent CSS caching issues
   experimental: {
@@ -15,6 +21,37 @@ const nextConfig = {
     return config;
   },
   reactStrictMode: true,
+
+  env: {
+    // API
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+
+    // Supabase
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+
+    // Company Info
+    NEXT_PUBLIC_COMPANY_NAME: process.env.NEXT_PUBLIC_COMPANY_NAME,
+    NEXT_PUBLIC_COMPANY_GENERAL_EMAIL:
+      process.env.NEXT_PUBLIC_COMPANY_GENERAL_EMAIL,
+    NEXT_PUBLIC_WEBSITE_NAME: process.env.NEXT_PUBLIC_WEBSITE_NAME,
+    NEXT_PUBLIC_WEBSITE_URL: process.env.NEXT_PUBLIC_WEBSITE_URL,
+    NEXT_PUBLIC_COMPANY_ADDRESS: process.env.NEXT_PUBLIC_COMPANY_ADDRESS,
+    NEXT_PUBLIC_COMPANY_PHONE: process.env.NEXT_PUBLIC_COMPANY_PHONE,
+    NEXT_PUBLIC_COMPANY_CAREER_EMAIL:
+      process.env.NEXT_PUBLIC_COMPANY_CAREER_EMAIL,
+
+    // EmailJS
+    NEXT_PUBLIC_EMAILJS_SERVICE_ID: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID:
+      process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY,
+
+    // Supabase Storage
+    NEXT_PUBLIC_SUPABASE_STORAGE_BASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BASE_URL,
+  },
+
   images: {
     domains: [
       'logivis.com',
