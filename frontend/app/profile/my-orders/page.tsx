@@ -566,22 +566,11 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Track your order status, download invoices, and manage your
-                purchases
-              </p>
-            </div>
-
-            <button
-              onClick={() => router.push('/profile')}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-            >
+        <div className="mb-10">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
               <svg
-                className="w-4 h-4"
+                className="w-6 h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -590,11 +579,19 @@ export default function OrdersPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
-              Back to Profile
-            </button>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                My Orders
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Track your order status, download invoices, and manage your
+                purchases
+              </p>
+            </div>
           </div>
         </div>
 

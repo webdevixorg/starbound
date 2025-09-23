@@ -312,13 +312,32 @@ export default function AutomotiveDashboard() {
 
   return (
     <div className="p-6 mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, {user?.first_name || 'User'}!
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Here&apos;s what&apos;s happening with your automotive journey.
-        </p>
+      <div className="mb-10">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+              Welcome back, {user?.first_name || 'User'}!
+            </h1>
+          </div>
+          <p className="text-lg text-gray-600 ml-11">
+            Here&apos;s what&apos;s happening with your automotive journey.
+          </p>
+        </div>
       </div>
 
       {/* Summary Cards - Role-based content */}

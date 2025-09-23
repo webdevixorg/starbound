@@ -388,11 +388,26 @@ export default function UpdatesPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-10">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 01-7.5-7.5c0-1.104.896-2 2-2s2 .896 2 2c0 2.485 2.015 4.5 4.5 4.5s4.5-2.015 4.5-4.5c0-1.104.896-2 2-2s2 .896 2 2a7.5 7.5 0 01-7.5 7.5V17z"
+                />
+              </svg>
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Travel Updates
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Updates
               </h1>
               <p className="mt-1 text-sm text-gray-600">
                 {unreadCount > 0
@@ -402,45 +417,26 @@ export default function UpdatesPage() {
                   : 'All caught up! No new updates'}
               </p>
             </div>
+          </div>
 
-            <div className="flex items-center space-x-4">
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  disabled={state.markingAsRead.all}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {state.markingAsRead.all ? (
-                    <>
-                      <InlineLoaderIcon className="mr-2" />
-                      Marking all...
-                    </>
-                  ) : (
-                    'Mark all as read'
-                  )}
-                </button>
-              )}
-
+          {/* Action buttons */}
+          <div className="flex items-center space-x-4 mt-6">
+            {unreadCount > 0 && (
               <button
-                onClick={() => router.push('/profile')}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                onClick={handleMarkAllAsRead}
+                disabled={state.markingAsRead.all}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                Back to Profile
+                {state.markingAsRead.all ? (
+                  <>
+                    <InlineLoaderIcon className="mr-2" />
+                    Marking all...
+                  </>
+                ) : (
+                  'Mark all as read'
+                )}
               </button>
-            </div>
+            )}
           </div>
         </div>
 
@@ -544,10 +540,10 @@ export default function UpdatesPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No travel updates yet
+                No updates yet
               </h3>
               <p className="text-gray-600">
-                When you receive travel updates, they&apos;ll appear here.
+                When you receive updates, they&apos;ll appear here.
               </p>
             </div>
           )}

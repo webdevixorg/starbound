@@ -1,61 +1,157 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  PreferenceSettings,
+  fetchPreferenceSettings,
+  updatePreferenceSettings,
+} from '@/services/api';
 
-const PreferencesTab: React.FC = () => {
-  const [formData, setFormData] = useState({
-    preferred_language: 'English',
+interface Props {
+  onSettingsChange?: (hasChanges: boolean) => void;
+}
+
+const PreferencesTab: React.FC<Props> = ({ onSettingsChange }) => {
+  const [formData, setFormData] = useState<PreferenceSettings>({
+    language: 'en',
     theme: 'light',
-    notifications: true,
-    text_size: 'medium',
-    additional_notes: '',
+    timezone: 'UTC',
+    dateFormat: 'MM/DD/YYYY',
+    currency: 'USD',
   });
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-    let newValue: string | boolean = value;
+  const [initialData, setInitialData] = useState<PreferenceSettings | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    if (type === 'checkbox') {
-      newValue = (e.target as HTMLInputElement).checked;
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  useEffect(() => {
+    if (initialData && onSettingsChange) {
+      const hasChanges =
+        JSON.stringify(formData) !== JSON.stringify(initialData);
+      onSettingsChange(hasChanges);
     }
+  }, [formData, initialData, onSettingsChange]);
 
-    setFormData({
-      ...formData,
-      [name]: newValue,
-    });
+  const loadPreferences = async () => {
+    try {
+      setLoading(true);
+      const preferences = await fetchPreferenceSettings();
+      setFormData(preferences);
+      setInitialData(preferences);
+    } catch (err) {
+      setError('Failed to load preferences');
+      console.error('Error loading preferences:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Submit form data
-    console.log('Website Preferences Submitted:', formData);
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      await updatePreferenceSettings(formData);
+      setInitialData(formData);
+
+      // Show success message or handle success
+      console.log('Preferences updated successfully');
+    } catch (err) {
+      setError('Failed to update preferences');
+      console.error('Error updating preferences:', err);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i}>
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <h3 className="text-2xl font-bold mb-6 text-gray-900">Preferences</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
+      <p className="text-gray-600 mb-6">
+        Customize your experience with language, theme, and display preferences.
+      </p>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
           <label
             className="block text-gray-700 font-semibold mb-2"
-            htmlFor="preferred_language"
+            htmlFor="language"
           >
             Preferred Language
           </label>
           <select
-            id="preferred_language"
-            name="preferred_language"
-            value={formData.preferred_language}
+            id="language"
+            name="language"
+            value={formData.language}
             onChange={handleChange}
-            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-2 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-3 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Português</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
           </select>
         </div>
-        <div className="mb-4">
+
+        <div>
           <label
             className="block text-gray-700 font-semibold mb-2"
             htmlFor="theme"
@@ -67,70 +163,121 @@ const PreferencesTab: React.FC = () => {
             name="theme"
             value={formData.theme}
             onChange={handleChange}
-            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-2 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-3 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="light">Light</option>
             <option value="dark">Dark</option>
-            <option value="system">System Default</option>
           </select>
         </div>
-        <div className="mb-4 flex items-center">
-          <input
-            id="notifications"
-            name="notifications"
-            type="checkbox"
-            checked={formData.notifications}
-            onChange={handleChange}
-            className="form-checkbox h-5 w-5 text-blue-600"
-          />
-          <label
-            className="ml-2 block text-gray-700 font-semibold"
-            htmlFor="notifications"
-          >
-            Enable Notifications
-          </label>
-        </div>
-        <div className="mb-4">
+
+        <div>
           <label
             className="block text-gray-700 font-semibold mb-2"
-            htmlFor="text_size"
+            htmlFor="timezone"
           >
-            Text Size
+            Timezone
           </label>
           <select
-            id="text_size"
-            name="text_size"
-            value={formData.text_size}
+            id="timezone"
+            name="timezone"
+            value={formData.timezone}
             onChange={handleChange}
-            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-2 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-3 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">Eastern Time (ET)</option>
+            <option value="America/Chicago">Central Time (CT)</option>
+            <option value="America/Denver">Mountain Time (MT)</option>
+            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+            <option value="Europe/London">London (GMT)</option>
+            <option value="Europe/Paris">Paris (CET)</option>
+            <option value="Europe/Berlin">Berlin (CET)</option>
+            <option value="Asia/Tokyo">Tokyo (JST)</option>
+            <option value="Asia/Shanghai">Shanghai (CST)</option>
+            <option value="Asia/Kolkata">India (IST)</option>
+            <option value="Australia/Sydney">Sydney (AEST)</option>
           </select>
         </div>
-        <div className="mb-4">
+
+        <div>
           <label
             className="block text-gray-700 font-semibold mb-2"
-            htmlFor="additional_notes"
+            htmlFor="dateFormat"
           >
-            Additional Notes
+            Date Format
           </label>
-          <textarea
-            id="additional_notes"
-            name="additional_notes"
-            value={formData.additional_notes}
+          <select
+            id="dateFormat"
+            name="dateFormat"
+            value={formData.dateFormat}
             onChange={handleChange}
-            rows={4}
-            className="form-textarea mt-1 block w-full border border-gray-300 rounded-md p-2 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          ></textarea>
+            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-3 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2023)</option>
+            <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2023)</option>
+            <option value="YYYY-MM-DD">YYYY-MM-DD (2023-12-31)</option>
+            <option value="DD MMM YYYY">DD MMM YYYY (31 Dec 2023)</option>
+          </select>
         </div>
-        <div className="flex justify-end mt-4">
+
+        <div>
+          <label
+            className="block text-gray-700 font-semibold mb-2"
+            htmlFor="currency"
+          >
+            Currency
+          </label>
+          <select
+            id="currency"
+            name="currency"
+            value={formData.currency}
+            onChange={handleChange}
+            className="form-select mt-1 block w-full border border-gray-300 rounded-md p-3 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="JPY">JPY (¥)</option>
+            <option value="CAD">CAD (C$)</option>
+            <option value="AUD">AUD (A$)</option>
+            <option value="CNY">CNY (¥)</option>
+            <option value="INR">INR (₹)</option>
+          </select>
+        </div>
+
+        <div className="flex justify-end pt-4">
           <button
             type="submit"
-            className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={saving}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Save Preferences
+            {saving ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              'Save Preferences'
+            )}
           </button>
         </div>
       </form>

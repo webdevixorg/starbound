@@ -876,3 +876,251 @@ export const testDuplicateVisit = async (itemId = 1) => {
     throw error;
   }
 };
+
+// ============================================================================
+// USER SETTINGS API FUNCTIONS
+// ============================================================================
+
+/**
+ * User Settings interfaces
+ */
+export interface SecuritySettings {
+  twoFactorSMS: boolean;
+  twoFactorTOTP: boolean;
+  loginNotifications: boolean;
+}
+
+export interface PreferenceSettings {
+  language: string;
+  theme: 'light' | 'dark';
+  timezone: string;
+  dateFormat: string;
+  currency: string;
+}
+
+export interface NotificationSettings {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  marketing_emails: boolean;
+  order_updates: boolean;
+  forum_notifications: boolean;
+}
+
+export interface UserSettings {
+  id: string;
+  security: SecuritySettings;
+  preferences: PreferenceSettings;
+  notifications: NotificationSettings;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Fetch all user settings
+ */
+export const fetchUserSettings = async (): Promise<UserSettings> => {
+  try {
+    const response = await axiosInstance.get('/settings/');
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error fetching user settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Update all user settings
+ */
+export const updateUserSettings = async (
+  settings: Partial<UserSettings>
+): Promise<UserSettings> => {
+  try {
+    const response = await axiosInstance.put('/settings/', settings);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error updating user settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Fetch security settings
+ */
+export const fetchSecuritySettings = async (): Promise<SecuritySettings> => {
+  try {
+    const response = await axiosInstance.get('/settings/security/');
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error fetching security settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Update security settings
+ */
+export const updateSecuritySettings = async (
+  settings: Partial<SecuritySettings>
+): Promise<SecuritySettings> => {
+  try {
+    const response = await axiosInstance.put('/settings/security/', settings);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error updating security settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Fetch preference settings
+ */
+export const fetchPreferenceSettings =
+  async (): Promise<PreferenceSettings> => {
+    try {
+      const response = await axiosInstance.get('/settings/preferences/');
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Error fetching preference settings:',
+        error.response?.data || error.message
+      );
+      throw error;
+    }
+  };
+
+/**
+ * Update preference settings
+ */
+export const updatePreferenceSettings = async (
+  settings: Partial<PreferenceSettings>
+): Promise<PreferenceSettings> => {
+  try {
+    const response = await axiosInstance.put(
+      '/settings/preferences/',
+      settings
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error updating preference settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Fetch notification settings
+ */
+export const fetchNotificationSettings =
+  async (): Promise<NotificationSettings> => {
+    try {
+      const response = await axiosInstance.get('/settings/notifications/');
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Error fetching notification settings:',
+        error.response?.data || error.message
+      );
+      throw error;
+    }
+  };
+
+/**
+ * Update notification settings
+ */
+export const updateNotificationSettings = async (
+  settings: Partial<NotificationSettings>
+): Promise<NotificationSettings> => {
+  try {
+    const response = await axiosInstance.put(
+      '/settings/notifications/',
+      settings
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error updating notification settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Reset all settings to defaults
+ */
+export const resetUserSettings = async (): Promise<UserSettings> => {
+  try {
+    const response = await axiosInstance.post('/settings/reset/');
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error resetting user settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Export user settings
+ */
+export const exportUserSettings = async (): Promise<{
+  user: string;
+  exported_at: string;
+  settings: {
+    security: SecuritySettings;
+    preferences: PreferenceSettings;
+    notifications: NotificationSettings;
+  };
+}> => {
+  try {
+    const response = await axiosInstance.get('/settings/export/');
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error exporting user settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+/**
+ * Import user settings
+ */
+export const importUserSettings = async (settingsData: {
+  settings: {
+    security: Partial<SecuritySettings>;
+    preferences: Partial<PreferenceSettings>;
+    notifications: Partial<NotificationSettings>;
+  };
+}): Promise<UserSettings> => {
+  try {
+    const response = await axiosInstance.post(
+      '/settings/import/',
+      settingsData
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      'Error importing user settings:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'visits',
     'forum',
     'support',
+    'user_settings',
 ]
 
 MIDDLEWARE = [

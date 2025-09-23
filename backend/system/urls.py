@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/', include('forum.urls')),  # Forum system
     path('api/', include('entities.urls')),  # Entity management
     path('api/', include('support.urls')),  # Support system
+    path('api/settings/', include('user_settings.urls')),  # User settings
 
     # JWT Authentication endpoints
     # Default JWT token obtain view (commented out, using custom view instead)

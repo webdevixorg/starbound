@@ -1,4 +1,5 @@
 # Starbound
+
 🌟 Starbound – A Modern eCommerce Web Application
 Starbound is a robust and scalable full-stack eCommerce platform built with a React frontend and a Django REST Framework backend. Designed for high performance, seamless user experience, and long-term maintainability, Starbound is ideal for launching and managing modern online stores or product-based content websites.
 
@@ -148,6 +149,22 @@ sudo apt-get install -y python3-dev default-libmysqlclient-dev build-essential
   ```
 
 The React frontend will be available at `http://localhost:3000`, and the Django backend will be available at `http://localhost:8000`.
+
+## 📚 Documentation & Scripts
+
+### Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+- **[User Settings Implementation Guide](./docs/user-settings-implementation.md)** - Complete implementation details for the JSONB-based user settings system
+- **[Documentation Index](./docs/README.md)** - Full documentation overview and quick links
+
+### Utility Scripts
+
+Testing and utility scripts are organized in the [`scripts/`](./scripts/) directory:
+
+- **[Testing Scripts](./scripts/testing/)** - User settings tests and Django test runners
+- **[Scripts Overview](./scripts/README.md)** - Complete scripts documentation
 
 ## Contributing
 

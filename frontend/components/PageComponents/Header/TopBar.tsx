@@ -49,9 +49,9 @@ const TopBar = () => {
         <div className="flex items-center space-x-6">
           {/* Help & Order Tracking */}
           <div className="flex space-x-4">
-            <a href="/help-center" className="hover:underline">
+            <Link href="/help-center" className="hover:underline">
               Help Center
-            </a>
+            </Link>
             <a href="#" className="hover:underline">
               Order Tracking
             </a>

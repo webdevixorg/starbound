@@ -3,11 +3,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { updateAccountSettings, fetchAccountSettings } from '@/services/api';
-import BasicInfoTab from '@/components/PageComponents/AccountTabs/ChangePassword';
+import {
+  updateAccountSettings,
+  fetchAccountSettings,
+  SecuritySettings,
+  fetchSecuritySettings,
+} from '@/services/api';
+import ChangePasswordTab from '@/components/PageComponents/AccountTabs/ChangePassword';
 import AccountSecurityTab from '@/components/PageComponents/AccountTabs/AccountSecurityTab';
 import PreferencesTab from '@/components/PageComponents/AccountTabs/PreferencesTab';
-import PaymentMethodsTab from '@/components/PageComponents/AccountTabs/PaymentMethodsTab';
 import NotificationsTab from '@/components/PageComponents/AccountTabs/NotificationsTab';
 import TabsNavigation from '@/components/PageComponents/AccountTabs/TabsNavigation';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -28,7 +32,6 @@ const VALID_TABS = [
   'basic-info',
   'account-security',
   'preferences',
-  'payment-methods',
   'notifications',
 ] as const;
 
@@ -51,6 +54,12 @@ export default function SettingsPage() {
     username: '',
     twoFactorSMS: false,
     twoFactorTOTP: false,
+  });
+
+  const [securityData, setSecurityData] = useState<SecuritySettings>({
+    twoFactorSMS: false,
+    twoFactorTOTP: false,
+    loginNotifications: true,
   });
 
   const [loading, setLoading] = useState(true);
@@ -97,6 +106,7 @@ export default function SettingsPage() {
         setLoading(true);
         setError(null);
 
+        // Load basic account settings
         const data = await fetchAccountSettings();
 
         setFormData({
@@ -108,6 +118,15 @@ export default function SettingsPage() {
           twoFactorSMS: data.twoFactorSMS || false,
           twoFactorTOTP: data.twoFactorTOTP || false,
         });
+
+        // Load security settings
+        try {
+          const securitySettings = await fetchSecuritySettings();
+          setSecurityData(securitySettings);
+        } catch (securityError) {
+          console.warn('Could not load security settings:', securityError);
+          // Keep default security settings if fetch fails
+        }
       } catch (error) {
         console.error('Error fetching account settings:', error);
         setError('Failed to load account settings. Please try again.');
@@ -130,14 +149,17 @@ export default function SettingsPage() {
     setHasChanges(true);
   }, []);
 
-  // Handle switch changes
-  const handleSwitchChange = useCallback((name: string, value: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setHasChanges(true);
-  }, []);
+  // Handle security settings changes
+  const handleSecuritySwitchChange = useCallback(
+    (name: string, value: boolean) => {
+      setSecurityData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      setHasChanges(true);
+    },
+    []
+  );
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,28 +196,39 @@ export default function SettingsPage() {
   // Loading skeleton for SSR compatibility
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="bg-white rounded-lg">
-              <div className="border-b border-gray-200">
-                <div className="flex space-x-8 px-6">
-                  {[...Array(5)].map((_, i) => (
+            <div className="mb-10 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-xl"></div>
+                <div className="space-y-2">
+                  <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-64"></div>
+                  <div className="h-4 bg-gray-200 rounded w-80"></div>
+                </div>
+              </div>
+              <div className="h-12 w-36 bg-white/60 rounded-xl border border-gray-200/40"></div>
+            </div>
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 overflow-hidden">
+              <div className="border-b border-gray-200/60 bg-gradient-to-r from-white/50 to-gray-50/30 p-6">
+                <div className="flex space-x-2">
+                  {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="h-12 w-24 bg-gray-200 rounded-t"
+                      className="h-20 w-40 bg-gray-200 rounded-xl"
                     ></div>
                   ))}
                 </div>
               </div>
-              <div className="p-6 space-y-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-10 bg-gray-200 rounded"></div>
-                  </div>
-                ))}
+              <div className="p-8 space-y-6">
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="space-y-3 mb-6">
+                      <div className="h-4 bg-gray-300 rounded w-32"></div>
+                      <div className="h-12 bg-gray-300 rounded-lg"></div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -206,10 +239,39 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <LoadingSpinner />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="text-center">
+              <div className="relative mb-6">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <svg
+                    className="w-8 h-8 text-white animate-pulse"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </div>
+                <LoadingSpinner />
+              </div>
+              <p className="text-lg font-medium text-gray-700">
+                Loading your settings...
+              </p>
+              <p className="text-gray-500 mt-2">This won&apos;t take long</p>
+            </div>
           </div>
         </div>
       </div>
@@ -224,23 +286,23 @@ export default function SettingsPage() {
     switch (activeTab) {
       case 'basic-info':
         return (
-          <BasicInfoTab
+          <ChangePasswordTab
             formData={formData}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
+            isLoading={saving}
+            errors={{}}
           />
         );
       case 'account-security':
         return (
           <AccountSecurityTab
-            formData={formData}
-            handleSwitchChange={handleSwitchChange}
+            formData={securityData}
+            handleSwitchChange={handleSecuritySwitchChange}
           />
         );
       case 'preferences':
         return <PreferencesTab />;
-      case 'payment-methods':
-        return <PaymentMethodsTab />;
       case 'notifications':
         return <NotificationsTab />;
       default:
@@ -249,68 +311,74 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+      <div className="mx-auto bg-white px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Account Settings
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                  Account Settings
+                </h1>
+              </div>
+              <p className="text-lg text-gray-600 ml-11">
                 Manage your account preferences and security settings
               </p>
             </div>
-            <button
-              onClick={() => router.push('/profile')}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back to Profile
-            </button>
           </div>
         </div>
 
         {/* Error Alert */}
         {error && !showErrorModal && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-8 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200/60 rounded-2xl p-6 shadow-lg shadow-red-500/10 backdrop-blur-sm">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <div className="p-2 bg-red-100 rounded-xl">
+                  <svg
+                    className="h-5 w-5 text-red-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-red-900">Error</h3>
+                <div className="mt-2 text-red-800">
                   <p>{error}</p>
                 </div>
-                <div className="mt-3">
+                <div className="mt-4">
                   <button
                     type="button"
                     onClick={() => setError(null)}
-                    className="text-red-800 hover:text-red-600 text-sm underline"
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-800 hover:text-red-900 bg-red-100 hover:bg-red-200 rounded-lg transition-colors duration-300"
                   >
                     Dismiss
                   </button>
@@ -321,32 +389,30 @@ export default function SettingsPage() {
         )}
 
         {/* Settings Content */}
-        <div className="bg-white rounded-lg">
+        <div className="bg-white/70 backdrop-blur-sm border border-white/60 overflow-hidden">
           {/* Tabs Navigation */}
-          <div className="border-b border-gray-200">
-            <TabsNavigation
-              activeTab={activeTab}
-              setActiveTab={handleTabChange}
-            />
-          </div>
+          <TabsNavigation
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+          />
 
           {/* Tab Content */}
-          <div className="p-6">
-            <div className="max-w-2xl">{renderContent()}</div>
+          <div className="p-8">
+            <div className="max-w-3xl">{renderContent()}</div>
           </div>
 
           {/* Action Buttons - Show on all tabs if there are changes */}
           {hasChanges && (
-            <div className="border-t border-gray-200 px-6 py-4">
+            <div className="border-t border-gray-200/40 bg-gradient-to-r from-gray-50/50 to-white/50 px-8 py-6">
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => window.location.reload()}
                   disabled={saving}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="group inline-flex items-center px-6 py-3 border border-gray-300/60 text-sm font-medium rounded-xl text-gray-700 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-gray-400/60 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                 >
                   <svg
-                    className="w-4 h-4 mr-2"
+                    className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-180"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -364,17 +430,17 @@ export default function SettingsPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={saving || !hasChanges}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="group inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:-translate-y-0.5"
                 >
                   {saving ? (
                     <>
                       <InlineLoaderIcon className="mr-2" />
-                      Saving...
+                      <span className="animate-pulse">Saving...</span>
                     </>
                   ) : (
                     <>
                       <svg
-                        className="w-4 h-4 mr-2"
+                        className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
