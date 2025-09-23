@@ -205,11 +205,11 @@ const ProductsListPage: React.FC = () => {
   };
 
   const handleTrash = async (slug: string) => {
-    await handleStatusChange(slug, 'Deleted');
+    await handleStatusChange(slug, 'deleted');
   };
 
   const handleRestore = async (slug: string) => {
-    await handleStatusChange(slug, 'Published');
+    await handleStatusChange(slug, 'published');
   };
 
   const handleDelete = async (slug: string) => {
