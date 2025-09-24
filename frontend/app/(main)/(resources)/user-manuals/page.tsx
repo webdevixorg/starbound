@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface UserManual {
   id: number;
@@ -36,118 +35,143 @@ const UserManualsPage: React.FC = () => {
         const mockManuals: UserManual[] = [
           {
             id: 1,
-            title: "Complete Car Audio Installation Manual",
-            description: "Comprehensive guide covering all aspects of car audio installation including wiring diagrams, speaker placement, and troubleshooting.",
-            category: "Audio Systems",
-            file_size: "12.5 MB",
-            file_type: "PDF",
+            title: 'Complete Car Audio Installation Manual',
+            description:
+              'Comprehensive guide covering all aspects of car audio installation including wiring diagrams, speaker placement, and troubleshooting.',
+            category: 'Audio Systems',
+            file_size: '12.5 MB',
+            file_type: 'PDF',
             download_count: 5420,
-            version: "3.2",
-            last_updated: "2024-01-15",
-            language: "English",
+            version: '3.2',
+            last_updated: '2024-01-15',
+            language: 'English',
             pages: 84,
-            download_url: "/manuals/audio-installation-manual.pdf",
+            download_url: '/manuals/audio-installation-manual.pdf',
             preview_available: true,
-            tags: ["audio", "installation", "wiring", "speakers", "amplifiers"]
+            tags: ['audio', 'installation', 'wiring', 'speakers', 'amplifiers'],
           },
           {
             id: 2,
-            title: "LED Lighting Installation Guide",
-            description: "Step-by-step instructions for installing various LED lighting solutions in vehicles. Includes safety guidelines and technical specifications.",
-            category: "Lighting",
-            file_size: "8.2 MB",
-            file_type: "PDF",
+            title: 'LED Lighting Installation Guide',
+            description:
+              'Step-by-step instructions for installing various LED lighting solutions in vehicles. Includes safety guidelines and technical specifications.',
+            category: 'Lighting',
+            file_size: '8.2 MB',
+            file_type: 'PDF',
             download_count: 3180,
-            version: "2.1",
-            last_updated: "2024-01-12",
-            language: "English",
+            version: '2.1',
+            last_updated: '2024-01-12',
+            language: 'English',
             pages: 56,
-            download_url: "/manuals/led-lighting-guide.pdf",
+            download_url: '/manuals/led-lighting-guide.pdf',
             preview_available: true,
-            tags: ["LED", "lighting", "installation", "safety", "specifications"]
+            tags: [
+              'LED',
+              'lighting',
+              'installation',
+              'safety',
+              'specifications',
+            ],
           },
           {
             id: 3,
-            title: "Performance Parts Installation Handbook",
-            description: "Professional guide for installing performance parts including cold air intakes, exhaust systems, and turbochargers.",
-            category: "Performance Parts",
-            file_size: "15.7 MB",
-            file_type: "PDF",
+            title: 'Performance Parts Installation Handbook',
+            description:
+              'Professional guide for installing performance parts including cold air intakes, exhaust systems, and turbochargers.',
+            category: 'Performance Parts',
+            file_size: '15.7 MB',
+            file_type: 'PDF',
             download_count: 4890,
-            version: "4.0",
-            last_updated: "2024-01-10",
-            language: "English",
+            version: '4.0',
+            last_updated: '2024-01-10',
+            language: 'English',
             pages: 128,
-            download_url: "/manuals/performance-parts-handbook.pdf",
+            download_url: '/manuals/performance-parts-handbook.pdf',
             preview_available: true,
-            tags: ["performance", "turbo", "exhaust", "intake", "tuning"]
+            tags: ['performance', 'turbo', 'exhaust', 'intake', 'tuning'],
           },
           {
             id: 4,
-            title: "Interior Detailing Professional Manual",
-            description: "Advanced techniques for professional interior detailing. Covers all materials and surfaces with product recommendations.",
-            category: "Interior",
-            file_size: "22.1 MB",
-            file_type: "PDF",
+            title: 'Interior Detailing Professional Manual',
+            description:
+              'Advanced techniques for professional interior detailing. Covers all materials and surfaces with product recommendations.',
+            category: 'Interior',
+            file_size: '22.1 MB',
+            file_type: 'PDF',
             download_count: 2760,
-            version: "1.8",
-            last_updated: "2024-01-08",
-            language: "English",
+            version: '1.8',
+            last_updated: '2024-01-08',
+            language: 'English',
             pages: 156,
-            download_url: "/manuals/interior-detailing-manual.pdf",
+            download_url: '/manuals/interior-detailing-manual.pdf',
             preview_available: true,
-            tags: ["detailing", "interior", "cleaning", "materials", "techniques"]
+            tags: [
+              'detailing',
+              'interior',
+              'cleaning',
+              'materials',
+              'techniques',
+            ],
           },
           {
             id: 5,
-            title: "Exterior Modification Guide",
-            description: "Complete guide for exterior modifications including body kits, spoilers, and custom paint work. Legal considerations included.",
-            category: "Exterior",
-            file_size: "18.9 MB",
-            file_type: "PDF",
+            title: 'Exterior Modification Guide',
+            description:
+              'Complete guide for exterior modifications including body kits, spoilers, and custom paint work. Legal considerations included.',
+            category: 'Exterior',
+            file_size: '18.9 MB',
+            file_type: 'PDF',
             download_count: 3650,
-            version: "2.5",
-            last_updated: "2024-01-05",
-            language: "English",
+            version: '2.5',
+            last_updated: '2024-01-05',
+            language: 'English',
             pages: 102,
-            download_url: "/manuals/exterior-modification-guide.pdf",
+            download_url: '/manuals/exterior-modification-guide.pdf',
             preview_available: false,
-            tags: ["exterior", "body kit", "paint", "modifications", "legal"]
+            tags: ['exterior', 'body kit', 'paint', 'modifications', 'legal'],
           },
           {
             id: 6,
-            title: "Vehicle Maintenance Schedule & Procedures",
-            description: "Essential maintenance guide with detailed schedules and step-by-step procedures for keeping your vehicle in optimal condition.",
-            category: "Maintenance",
-            file_size: "9.8 MB",
-            file_type: "PDF",
+            title: 'Vehicle Maintenance Schedule & Procedures',
+            description:
+              'Essential maintenance guide with detailed schedules and step-by-step procedures for keeping your vehicle in optimal condition.',
+            category: 'Maintenance',
+            file_size: '9.8 MB',
+            file_type: 'PDF',
             download_count: 7230,
-            version: "3.1",
-            last_updated: "2024-01-03",
-            language: "English",
+            version: '3.1',
+            last_updated: '2024-01-03',
+            language: 'English',
             pages: 74,
-            download_url: "/manuals/maintenance-procedures.pdf",
+            download_url: '/manuals/maintenance-procedures.pdf',
             preview_available: true,
-            tags: ["maintenance", "schedule", "procedures", "oil", "filters"]
+            tags: ['maintenance', 'schedule', 'procedures', 'oil', 'filters'],
           },
           {
             id: 7,
-            title: "Troubleshooting Common Issues",
-            description: "Diagnostic guide for identifying and resolving common vehicle problems. Includes flowcharts and diagnostic procedures.",
-            category: "Troubleshooting",
-            file_size: "11.3 MB",
-            file_type: "DOC",
+            title: 'Troubleshooting Common Issues',
+            description:
+              'Diagnostic guide for identifying and resolving common vehicle problems. Includes flowcharts and diagnostic procedures.',
+            category: 'Troubleshooting',
+            file_size: '11.3 MB',
+            file_type: 'DOC',
             download_count: 4120,
-            version: "2.0",
-            last_updated: "2024-01-01",
-            language: "English",
+            version: '2.0',
+            last_updated: '2024-01-01',
+            language: 'English',
             pages: 68,
-            download_url: "/manuals/troubleshooting-guide.doc",
+            download_url: '/manuals/troubleshooting-guide.doc',
             preview_available: false,
-            tags: ["troubleshooting", "diagnostic", "problems", "repair", "flowcharts"]
-          }
+            tags: [
+              'troubleshooting',
+              'diagnostic',
+              'problems',
+              'repair',
+              'flowcharts',
+            ],
+          },
         ];
-        
+
         setManuals(mockManuals);
       } catch (error) {
         console.error('Error fetching manuals:', error);
@@ -159,17 +183,31 @@ const UserManualsPage: React.FC = () => {
     fetchManuals();
   }, []);
 
-  const categories = ['all', 'Audio Systems', 'Lighting', 'Performance Parts', 'Interior', 'Exterior', 'Maintenance', 'Troubleshooting'];
+  const categories = [
+    'all',
+    'Audio Systems',
+    'Lighting',
+    'Performance Parts',
+    'Interior',
+    'Exterior',
+    'Maintenance',
+    'Troubleshooting',
+  ];
   const fileTypes = ['all', 'PDF', 'DOC', 'DOCX'];
-  
-  const filteredManuals = manuals.filter(manual => {
-    const matchesCategory = selectedCategory === 'all' || manual.category === selectedCategory;
-    const matchesFileType = selectedFileType === 'all' || manual.file_type === selectedFileType;
-    const matchesSearch = searchTerm === '' || 
+
+  const filteredManuals = manuals.filter((manual) => {
+    const matchesCategory =
+      selectedCategory === 'all' || manual.category === selectedCategory;
+    const matchesFileType =
+      selectedFileType === 'all' || manual.file_type === selectedFileType;
+    const matchesSearch =
+      searchTerm === '' ||
       manual.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       manual.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      manual.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      manual.tags.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
     return matchesCategory && matchesFileType && matchesSearch;
   });
 
@@ -177,21 +215,45 @@ const UserManualsPage: React.FC = () => {
     switch (fileType) {
       case 'PDF':
         return (
-          <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <svg
+            className="w-6 h-6 text-red-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+              clipRule="evenodd"
+            />
           </svg>
         );
       case 'DOC':
       case 'DOCX':
         return (
-          <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <svg
+            className="w-6 h-6 text-blue-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+              clipRule="evenodd"
+            />
           </svg>
         );
       default:
         return (
-          <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+          <svg
+            className="w-6 h-6 text-gray-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              clipRule="evenodd"
+            />
           </svg>
         );
     }
@@ -250,7 +312,8 @@ const UserManualsPage: React.FC = () => {
             </h1>
           </div>
           <p className="text-lg text-gray-600 ml-11">
-            Download comprehensive guides and documentation for all your automotive needs
+            Download comprehensive guides and documentation for all your
+            automotive needs
           </p>
         </div>
 
@@ -260,8 +323,18 @@ const UserManualsPage: React.FC = () => {
             {/* Search Bar */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
               <input
@@ -278,7 +351,9 @@ const UserManualsPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Category Filter */}
                 <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-700">Categories:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Categories:
+                  </span>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -294,7 +369,9 @@ const UserManualsPage: React.FC = () => {
 
                 {/* File Type Filter */}
                 <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-700">File Type:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    File Type:
+                  </span>
                   <select
                     value={selectedFileType}
                     onChange={(e) => setSelectedFileType(e.target.value)}
@@ -311,7 +388,9 @@ const UserManualsPage: React.FC = () => {
 
               {/* Sort */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Sort by:
+                </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -344,9 +423,13 @@ const UserManualsPage: React.FC = () => {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900">{manual.file_type}</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {manual.file_type}
+                        </span>
                         <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-gray-500">{manual.file_size}</span>
+                        <span className="text-sm text-gray-500">
+                          {manual.file_size}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <span>{manual.pages} pages</span>
@@ -360,14 +443,18 @@ const UserManualsPage: React.FC = () => {
                 {/* Manual Details */}
                 <div className="lg:w-1/2">
                   <div className="mb-3">
-                    <h3 className="font-semibold text-gray-900 text-lg mb-2">{manual.title}</h3>
+                    <h3 className="font-semibold text-gray-900 text-lg mb-2">
+                      {manual.title}
+                    </h3>
                     <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                       {manual.category}
                     </span>
                   </div>
-                  
-                  <p className="text-gray-700 mb-4 leading-relaxed">{manual.description}</p>
-                  
+
+                  <p className="text-gray-700 mb-4 leading-relaxed">
+                    {manual.description}
+                  </p>
+
                   <div className="flex flex-wrap gap-1 mb-4">
                     {manual.tags.slice(0, 4).map((tag) => (
                       <span
@@ -387,7 +474,9 @@ const UserManualsPage: React.FC = () => {
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <span>Updated: {manual.last_updated}</span>
                     <span>•</span>
-                    <span>{formatDownloadCount(manual.download_count)} downloads</span>
+                    <span>
+                      {formatDownloadCount(manual.download_count)} downloads
+                    </span>
                     <span>•</span>
                     <span>{manual.language}</span>
                   </div>
@@ -399,17 +488,42 @@ const UserManualsPage: React.FC = () => {
                     onClick={() => handleDownload(manual)}
                     className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     <span>Download</span>
                   </button>
-                  
+
                   {manual.preview_available && (
                     <button className="flex items-center justify-center space-x-2 bg-white/50 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all duration-200 border border-gray-200">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
                       </svg>
                       <span>Preview</span>
                     </button>
@@ -423,12 +537,26 @@ const UserManualsPage: React.FC = () => {
         {filteredManuals.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No manuals found</h3>
-            <p className="text-gray-500">Try adjusting your search terms or filters to see more results.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No manuals found
+            </h3>
+            <p className="text-gray-500">
+              Try adjusting your search terms or filters to see more results.
+            </p>
           </div>
         )}
       </div>

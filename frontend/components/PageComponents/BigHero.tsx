@@ -5,7 +5,6 @@ import SafeImage from '../UI/SafeImage';
 import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
 import { CategoryName } from '@/helpers/fetching';
-import LoadingSpinner from '@/components/Common/Loading';
 import { getPublicImageUrl } from '@/helpers/media';
 
 const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({

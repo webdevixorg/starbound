@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface HowToVideo {
   id: number;
@@ -34,96 +33,102 @@ const HowToVideosPage: React.FC = () => {
         const mockVideos: HowToVideo[] = [
           {
             id: 1,
-            title: "How to Install Car Audio System - Complete Guide",
-            description: "Learn how to professionally install a car audio system from start to finish. Includes wiring diagrams and safety tips.",
-            duration: "15:30",
-            category: "Audio Systems",
-            difficulty: "Intermediate",
-            thumbnail: "/images/audio-install-thumb.jpg",
-            video_url: "https://example.com/video1",
+            title: 'How to Install Car Audio System - Complete Guide',
+            description:
+              'Learn how to professionally install a car audio system from start to finish. Includes wiring diagrams and safety tips.',
+            duration: '15:30',
+            category: 'Audio Systems',
+            difficulty: 'Intermediate',
+            thumbnail: '/images/audio-install-thumb.jpg',
+            video_url: 'https://example.com/video1',
             views: 12500,
             rating: 4.8,
-            created_at: "2024-01-15",
-            author: "ProInstaller Mike",
-            tags: ["audio", "installation", "wiring", "car stereo"]
+            created_at: '2024-01-15',
+            author: 'ProInstaller Mike',
+            tags: ['audio', 'installation', 'wiring', 'car stereo'],
           },
           {
             id: 2,
-            title: "LED Headlight Installation Made Easy",
-            description: "Step-by-step guide to replacing your halogen headlights with LED bulbs. No special tools required!",
-            duration: "8:45",
-            category: "Lighting",
-            difficulty: "Beginner",
-            thumbnail: "/images/led-install-thumb.jpg",
-            video_url: "https://example.com/video2",
+            title: 'LED Headlight Installation Made Easy',
+            description:
+              'Step-by-step guide to replacing your halogen headlights with LED bulbs. No special tools required!',
+            duration: '8:45',
+            category: 'Lighting',
+            difficulty: 'Beginner',
+            thumbnail: '/images/led-install-thumb.jpg',
+            video_url: 'https://example.com/video2',
             views: 8900,
             rating: 4.6,
-            created_at: "2024-01-12",
-            author: "AutoLED Expert",
-            tags: ["LED", "headlights", "bulbs", "lighting"]
+            created_at: '2024-01-12',
+            author: 'AutoLED Expert',
+            tags: ['LED', 'headlights', 'bulbs', 'lighting'],
           },
           {
             id: 3,
-            title: "Cold Air Intake Installation Tutorial",
-            description: "Boost your engine performance with this detailed cold air intake installation guide. Includes dyno results!",
-            duration: "12:20",
-            category: "Performance Parts",
-            difficulty: "Intermediate",
-            thumbnail: "/images/intake-install-thumb.jpg",
-            video_url: "https://example.com/video3",
+            title: 'Cold Air Intake Installation Tutorial',
+            description:
+              'Boost your engine performance with this detailed cold air intake installation guide. Includes dyno results!',
+            duration: '12:20',
+            category: 'Performance Parts',
+            difficulty: 'Intermediate',
+            thumbnail: '/images/intake-install-thumb.jpg',
+            video_url: 'https://example.com/video3',
             views: 15600,
             rating: 4.9,
-            created_at: "2024-01-10",
-            author: "PerformancePro",
-            tags: ["performance", "intake", "engine", "horsepower"]
+            created_at: '2024-01-10',
+            author: 'PerformancePro',
+            tags: ['performance', 'intake', 'engine', 'horsepower'],
           },
           {
             id: 4,
-            title: "Interior Detailing: Deep Clean Your Car",
-            description: "Professional techniques for deep cleaning your car's interior. Seats, dashboard, and carpet cleaning covered.",
-            duration: "18:15",
-            category: "Interior",
-            difficulty: "Beginner",
-            thumbnail: "/images/detail-thumb.jpg",
-            video_url: "https://example.com/video4",
+            title: 'Interior Detailing: Deep Clean Your Car',
+            description:
+              "Professional techniques for deep cleaning your car's interior. Seats, dashboard, and carpet cleaning covered.",
+            duration: '18:15',
+            category: 'Interior',
+            difficulty: 'Beginner',
+            thumbnail: '/images/detail-thumb.jpg',
+            video_url: 'https://example.com/video4',
             views: 22100,
             rating: 4.7,
-            created_at: "2024-01-08",
-            author: "DetailKing",
-            tags: ["detailing", "cleaning", "interior", "maintenance"]
+            created_at: '2024-01-08',
+            author: 'DetailKing',
+            tags: ['detailing', 'cleaning', 'interior', 'maintenance'],
           },
           {
             id: 5,
-            title: "Advanced Paint Correction Techniques",
-            description: "Master the art of paint correction with compound and polish. Remove swirls and scratches like a pro.",
-            duration: "25:40",
-            category: "Exterior",
-            difficulty: "Advanced",
-            thumbnail: "/images/paint-correction-thumb.jpg",
-            video_url: "https://example.com/video5",
+            title: 'Advanced Paint Correction Techniques',
+            description:
+              'Master the art of paint correction with compound and polish. Remove swirls and scratches like a pro.',
+            duration: '25:40',
+            category: 'Exterior',
+            difficulty: 'Advanced',
+            thumbnail: '/images/paint-correction-thumb.jpg',
+            video_url: 'https://example.com/video5',
             views: 9800,
             rating: 4.9,
-            created_at: "2024-01-05",
-            author: "PaintPerfection",
-            tags: ["paint", "correction", "polishing", "detailing"]
+            created_at: '2024-01-05',
+            author: 'PaintPerfection',
+            tags: ['paint', 'correction', 'polishing', 'detailing'],
           },
           {
             id: 6,
-            title: "Brake Pad Replacement Guide",
-            description: "Safety-focused tutorial on replacing brake pads. Essential maintenance every car owner should know.",
-            duration: "14:30",
-            category: "Maintenance",
-            difficulty: "Intermediate",
-            thumbnail: "/images/brake-pads-thumb.jpg",
-            video_url: "https://example.com/video6",
+            title: 'Brake Pad Replacement Guide',
+            description:
+              'Safety-focused tutorial on replacing brake pads. Essential maintenance every car owner should know.',
+            duration: '14:30',
+            category: 'Maintenance',
+            difficulty: 'Intermediate',
+            thumbnail: '/images/brake-pads-thumb.jpg',
+            video_url: 'https://example.com/video6',
             views: 18200,
             rating: 4.8,
-            created_at: "2024-01-03",
-            author: "SafeDriving Tech",
-            tags: ["brakes", "maintenance", "safety", "repair"]
-          }
+            created_at: '2024-01-03',
+            author: 'SafeDriving Tech',
+            tags: ['brakes', 'maintenance', 'safety', 'repair'],
+          },
         ];
-        
+
         setVideos(mockVideos);
       } catch (error) {
         console.error('Error fetching videos:', error);
@@ -135,26 +140,43 @@ const HowToVideosPage: React.FC = () => {
     fetchVideos();
   }, []);
 
-  const categories = ['all', 'Audio Systems', 'Lighting', 'Performance Parts', 'Interior', 'Exterior', 'Maintenance'];
+  const categories = [
+    'all',
+    'Audio Systems',
+    'Lighting',
+    'Performance Parts',
+    'Interior',
+    'Exterior',
+    'Maintenance',
+  ];
   const difficulties = ['all', 'Beginner', 'Intermediate', 'Advanced'];
-  
-  const filteredVideos = videos.filter(video => {
-    const matchesCategory = selectedCategory === 'all' || video.category === selectedCategory;
-    const matchesDifficulty = selectedDifficulty === 'all' || video.difficulty === selectedDifficulty;
-    const matchesSearch = searchTerm === '' || 
+
+  const filteredVideos = videos.filter((video) => {
+    const matchesCategory =
+      selectedCategory === 'all' || video.category === selectedCategory;
+    const matchesDifficulty =
+      selectedDifficulty === 'all' || video.difficulty === selectedDifficulty;
+    const matchesSearch =
+      searchTerm === '' ||
       video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      video.tags.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
     return matchesCategory && matchesDifficulty && matchesSearch;
   });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Beginner': return 'bg-green-100 text-green-800';
-      case 'Intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'Advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Beginner':
+        return 'bg-green-100 text-green-800';
+      case 'Intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Advanced':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -215,8 +237,18 @@ const HowToVideosPage: React.FC = () => {
             {/* Search Bar */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
               <input
@@ -231,7 +263,9 @@ const HowToVideosPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Category Filter */}
               <div className="flex flex-wrap gap-2">
-                <span className="text-sm font-medium text-gray-700 py-2">Categories:</span>
+                <span className="text-sm font-medium text-gray-700 py-2">
+                  Categories:
+                </span>
                 {categories.map((category) => (
                   <button
                     key={category}
@@ -249,7 +283,9 @@ const HowToVideosPage: React.FC = () => {
 
               {/* Difficulty Filter */}
               <div className="flex flex-wrap gap-2">
-                <span className="text-sm font-medium text-gray-700 py-2">Difficulty:</span>
+                <span className="text-sm font-medium text-gray-700 py-2">
+                  Difficulty:
+                </span>
                 {difficulties.map((difficulty) => (
                   <button
                     key={difficulty}
@@ -279,7 +315,11 @@ const HowToVideosPage: React.FC = () => {
               <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors duration-200">
-                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-8 h-8 text-white ml-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                     </svg>
                   </div>
@@ -287,7 +327,9 @@ const HowToVideosPage: React.FC = () => {
                 <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                   {video.duration}
                 </div>
-                <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${getDifficultyColor(video.difficulty)}`}>
+                <div
+                  className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${getDifficultyColor(video.difficulty)}`}
+                >
                   {video.difficulty}
                 </div>
               </div>
@@ -299,7 +341,7 @@ const HowToVideosPage: React.FC = () => {
                     {video.title}
                   </h3>
                 </div>
-                
+
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                   {video.description}
                 </p>
@@ -314,7 +356,11 @@ const HowToVideosPage: React.FC = () => {
                     {video.category}
                   </span>
                   <div className="flex items-center space-x-1">
-                    <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-4 h-4 text-yellow-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     <span className="text-sm font-medium">{video.rating}</span>
@@ -345,12 +391,26 @@ const HowToVideosPage: React.FC = () => {
         {filteredVideos.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No videos found</h3>
-            <p className="text-gray-500">Try adjusting your search terms or filters to see more results.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No videos found
+            </h3>
+            <p className="text-gray-500">
+              Try adjusting your search terms or filters to see more results.
+            </p>
           </div>
         )}
       </div>
