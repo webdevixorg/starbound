@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables with fallback
 env_files = [
     os.path.join(BASE_DIR, '.env'),  # Local development
-    os.path.join(BASE_DIR.parent, "../config/backend/.env"),      # Production
+    os.path.join(BASE_DIR.parent, "config/backend/.env"),      # Production
 ]
 
 for env_file in env_files:
