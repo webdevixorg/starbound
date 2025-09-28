@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { fetchPosts } from '@/services/api'; // Ensure this path is correct
 import { Post } from '@/types/types';
 import { formatDate } from '@/helpers/common';
-import { CategoryName } from '@/helpers/fetching';
 import SafeImage from '../UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
 
@@ -73,10 +72,10 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
                   <div className="flex flex-wrap gap-2 mb-1">
                     {post.categories.map((category, index) => (
                       <span
-                        key={`${post.id}-category-${category}-${index}`}
+                        key={`${post.id}-category-${category.id}-${index}`}
                         className="text-xs font-medium tracking-wider uppercase text-blue-600"
                       >
-                        <CategoryName categoryId={category} />
+                        {category.name}
                       </span>
                     ))}
                   </div>

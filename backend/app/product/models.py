@@ -18,7 +18,6 @@ class Product(PostAbstract):
     sku = models.CharField(max_length=100, unique=True)
     avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
     review_count = models.IntegerField(default=0)
-    is_featured = models.BooleanField(default=False)  # Manual flag
     featured_reason = models.CharField(max_length=50, null=True, blank=True)  # Optional: to show why it was featured
 
 

@@ -18,6 +18,7 @@ class PostAbstract(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)  # Automatic timestamping
     content_type_id = models.PositiveSmallIntegerField(default=0)  # Saves space
+    is_featured = models.BooleanField(default=False)  # Manual flag
 
     status = models.CharField(
         max_length=10,

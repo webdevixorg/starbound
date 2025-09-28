@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Layout stability optimizations */
+@import './layout-stability.css';
+
 /* width */
 ::-webkit-scrollbar {
   width: 5px;

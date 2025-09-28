@@ -5,6 +5,7 @@ from profiles.models import Profile
 from uploads.serializers import ImageSerializer
 from .models import Post, AggregatedVisitorCount
 from categories.models import Category
+from categories.serializers import CategorySerializer
 from uploads.models import Image, UserImage
 
 import bleach
@@ -47,7 +48,7 @@ class PostSerializer(serializers.ModelSerializer):
     aggregated_visitor_counts = AggregatedVisitorCountSerializer(required=False)
     author = UserSerializer(read_only=True, source='user')
     images = serializers.SerializerMethodField()
-    categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)  # Use PrimaryKeyRelatedField here
+    categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)  # Use PrimaryKeyRelatedField for input/output
     content_type_id = serializers.IntegerField()  # Add content_type_id field
     description = serializers.CharField(required=False)  # Handle description as raw HTML
 
@@ -72,6 +73,17 @@ class PostSerializer(serializers.ModelSerializer):
         # Mark description as safe for HTML rendering
         if 'description' in representation:
             representation['description'] = mark_safe(representation['description'])
+
+        # Convert category IDs to full category objects
+        if 'categories' in representation and representation['categories']:
+            categories_data = []
+            for category_id in representation['categories']:
+                try:
+                    category = Category.objects.get(id=category_id)
+                    categories_data.append(CategorySerializer(category).data)
+                except Category.DoesNotExist:
+                    continue
+            representation['categories'] = categories_data
 
         return representation
 

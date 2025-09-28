@@ -5,7 +5,6 @@ import Link from 'next/link';
 import NextImage from 'next/image';
 import SafeImage from '../UI/SafeImage';
 import HtmlContent from '@/helpers/content';
-import { CategoryName } from '@/helpers/fetching';
 import { getPublicImageUrl } from '@/helpers/media';
 
 import { Post } from '@/types/types';
@@ -184,10 +183,10 @@ const LatestNews: React.FC<{
                       {post.categories && post.categories.length > 0 ? (
                         post.categories.map((category, index) => (
                           <span
-                            key={`${post.id}-category-${category}-${index}`}
+                            key={`${post.id}-category-${category.id}-${index}`}
                             className="inline-block text-xs font-medium tracking-wider uppercase text-blue-600"
                           >
-                            <CategoryName categoryId={category} />
+                            {category.name}
                           </span>
                         ))
                       ) : (

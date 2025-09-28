@@ -2,7 +2,7 @@ import { fetchCategories } from '@/services/api';
 
 export async function headerMenuItems() {
   // Fetch categories for Blog
-  const blogCategories = await fetchCategories(1, 10, 14);
+  const blogCategories = await fetchCategories(1, 10, 17);
   const blogMenuItems = blogCategories
     .map((cat: { name: string; slug: string; children?: any[] }) => ({
       title: cat.name,
@@ -17,7 +17,7 @@ export async function headerMenuItems() {
     .slice(0, 5); // Limit to first 5 blog categories
 
   // Fetch categories for Shop
-  const shopCategories = await fetchCategories(1, 10, 16);
+  const shopCategories = await fetchCategories(1, 10, 19);
   const shopMenuItems = shopCategories
     .map((cat: { name: string; slug: string; children?: any[] }) => ({
       title: cat.name,

@@ -1,0 +1,62 @@
+/* Layout Stability Optimizations to Prevent CLS */
+
+/* Pagination container - reserve space */
+.pagination-container {
+  min-height: 72px;
+  contain: layout style;
+}
+
+/* Footer - prevent layout shift */
+.footer-stable {
+  contain: layout style;
+  min-height: 400px;
+}
+
+/* Image containers - prevent layout shift */
+.image-container {
+  contain: layout style;
+}
+
+/* Prevent layout shift from loading states */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Stable grid layouts */
+.stable-grid {
+  contain: layout style;
+  grid-template-rows: min-content;
+}
+
+/* Prevent button and input layout shifts */
+.stable-button {
+  contain: layout style;
+  min-height: 40px;
+}
+
+/* Form elements stability */
+.stable-input {
+  contain: layout style;
+  box-sizing: border-box;
+}
+
+/* Text content containers */
+.text-container {
+  contain: layout style;
+}
+
+/* Sidebar stability */
+.sidebar-stable {
+  contain: layout style;
+}

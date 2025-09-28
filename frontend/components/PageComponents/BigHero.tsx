@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import SafeImage from '../UI/SafeImage';
 import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 import { getPublicImageUrl } from '@/helpers/media';
 
 const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
@@ -119,10 +118,10 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
     post.categories && post.categories.length > 0 ? (
       post.categories.map((category, index) => (
         <span
-          key={`${post.id}-category-${category}-${index}`}
+          key={`${post.id}-category-${category.id}-${index}`}
           className="inline-block text-xs font-medium tracking-wider uppercase text-white mr-2"
         >
-          <CategoryName categoryId={category} />
+          {category.name}
         </span>
       ))
     ) : (

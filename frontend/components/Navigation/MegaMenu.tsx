@@ -31,14 +31,19 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
   const [page] = useState<number>(1);
   const [pageSize] = useState<number>(2);
   const [status] = useState<string>('Published');
-  const [filter] = useState<string>('latest');
+  const [filter] = useState<string>('featured');
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const loadFeaturedPosts = async () => {
       try {
         setLoadingPosts(true);
         const data = await fetchPosts(page, pageSize, filter, 'post');
-        setPosts(data.results || []);
+        // Handle both paginated response and direct array
+        if (Array.isArray(data)) {
+          setPosts(data);
+        } else {
+          setPosts(data?.results ?? []);
+        }
       } catch (err) {
         console.error('Error fetching posts:', err);
         setError('Error fetching posts');
@@ -61,7 +66,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, menuItems, label }) => {
     };
 
     if (isOpen) {
-      loadPosts();
+      loadFeaturedPosts();
       loadFeaturedProducts();
     }
   }, [page, pageSize, status, filter, isOpen]);

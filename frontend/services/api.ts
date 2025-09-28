@@ -177,7 +177,6 @@ export const fetchPosts = async (
       `/${modelName}s/f/${filter}`,
       { params }
     );
-    console.log('filter posts:', params);
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -243,16 +242,9 @@ export const fetchPostBySlug = async (
       `/${contentType}s/${roleSegment}/${slug}`
     );
 
-    // Fetch category details in parallel
-    const categories: Category[] = await Promise.all(
-      postData.categories.map((categoryId: number) =>
-        axiosInstanceNoAuth
-          .get(`/categories/${categoryId}`)
-          .then((res) => res.data)
-      )
-    );
-
-    return { ...postData, categories };
+    // Categories are now returned as full objects from the backend
+    // No need to fetch them separately
+    return postData;
   } catch (error) {
     console.error('Error fetching post:', error);
     throw error;

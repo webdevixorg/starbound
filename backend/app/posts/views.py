@@ -79,17 +79,13 @@ class FrontendPostView(viewsets.ReadOnlyModelViewSet):
     def latest(self, request):
         """
         Get latest published posts - PUBLIC ACCESS
+        Properly paginated without pre-limiting the queryset
         """
         try:
-            count = request.GET.get('count', 10)
-            try:
-                count = int(count)
-                count = min(count, 50)  # Limit maximum count
-            except ValueError:
-                count = 10
-
-            queryset = self.get_queryset()[:count]
+            # Get the full queryset (already ordered by -created_at in get_queryset)
+            queryset = self.get_queryset()
             
+            # Use Django REST framework pagination
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(
@@ -98,8 +94,9 @@ class FrontendPostView(viewsets.ReadOnlyModelViewSet):
                 )
                 return self.get_paginated_response(serializer.data)
             
+            # Fallback if pagination is not used (shouldn't happen with our setup)
             serializer = self.get_serializer(
-                queryset, many=True, 
+                queryset[:50], many=True,  # Fallback limit to prevent huge responses
                 context={'request': request, 'truncate': True}
             )
             return Response(serializer.data)
@@ -146,10 +143,21 @@ class FrontendPostView(viewsets.ReadOnlyModelViewSet):
     def featured(self, request):
         """
         Get featured posts - PUBLIC ACCESS
+        Properly paginated
         """
         try:
-            queryset = self.get_queryset().filter(featured=True)[:10]
+            queryset = self.get_queryset().filter(is_featured=True)
             
+            # Use Django REST framework pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(
+                    page, many=True, 
+                    context={'request': request, 'truncate': True}
+                )
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for direct response (shouldn't happen with our pagination setup)
             serializer = self.get_serializer(
                 queryset, many=True, 
                 context={'request': request, 'truncate': True}

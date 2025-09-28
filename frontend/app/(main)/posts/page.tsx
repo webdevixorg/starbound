@@ -11,7 +11,7 @@ const Posts: React.FC = () => {
         <BreadcrumbsComponent />
       </div>
       <Suspense fallback={<div>Loading posts...</div>}>
-        <PostPageGrid filter={'latest'} count={10000000} />
+        <PostPageGrid filter={'latest'} />
       </Suspense>
     </div>
   );

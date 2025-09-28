@@ -4,7 +4,6 @@ import HtmlContent from '@/helpers/content';
 import { getPublicImageUrl } from '@/helpers/media';
 import { formatDate } from '@/helpers/common';
 import { Post } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 
 interface BlogPostCardProps {
   post: Post;
@@ -54,7 +53,7 @@ const BlogPostCardDefault: React.FC<BlogPostCardProps> = ({
                 key={`category-${index}`}
                 className="inline-block text-xs font-medium tracking-wider uppercase mt-5 text-blue-600"
               >
-                <CategoryName categoryId={category} />
+                {category.name}
               </span>
             ))
           ) : (

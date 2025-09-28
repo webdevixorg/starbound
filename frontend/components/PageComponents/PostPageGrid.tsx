@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import NextImage from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Post, Category } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 import Link from 'next/link';
 import HtmlContent from '@/helpers/content';
 import { getPublicImageUrl } from '@/helpers/media';
@@ -18,8 +17,7 @@ import { fetchPosts, fetchCategories } from '@/services/api';
 
 const Posts: React.FC<{
   filter: string;
-  count: number;
-}> = ({ filter, count }) => {
+}> = ({ filter }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -29,6 +27,14 @@ const Posts: React.FC<{
     new Set()
   );
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [pageSize] = useState<number>(10); // Fixed page size for pagination
+  const [hasNext, setHasNext] = useState<boolean>(false);
+  const [hasPrevious, setHasPrevious] = useState<boolean>(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,13 +71,51 @@ const Posts: React.FC<{
     setSearchQuery(searchParam);
   }, [searchParams]);
 
+  // Handle pagination for filtered results
+  useEffect(() => {
+    if (selectedCategory) {
+      const loadFilteredPage = async () => {
+        setLoading(true);
+        try {
+          const searchParam = searchParams?.get('query') || '';
+          const data = await fetchPosts(
+            currentPage,
+            pageSize,
+            `?category=${selectedCategory}&query=${searchParam}`,
+            'post'
+          );
+          setFilteredPosts(data.results);
+          setTotalCount(data.count);
+          setTotalPages(Math.ceil(data.count / pageSize));
+          setHasNext(!!data.next);
+          setHasPrevious(!!data.previous);
+        } catch (error) {
+          console.error('Error fetching filtered page:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      if (currentPage > 1) {
+        loadFilteredPage();
+      }
+    }
+  }, [currentPage, selectedCategory, pageSize, searchParams]);
+
   useEffect(() => {
     const loadPosts = async () => {
       try {
         setLoading(true);
-        const data = await fetchPosts(1, count, filter, 'post');
+        const data = await fetchPosts(currentPage, pageSize, filter, 'post');
         setPosts(data.results);
         setFilteredPosts(data.results);
+
+        // Update pagination info
+        setTotalCount(data.count);
+        setTotalPages(Math.ceil(data.count / pageSize));
+        setHasNext(!!data.next);
+        setHasPrevious(!!data.previous);
+
         setLoading(false);
       } catch (error) {
         console.error(`Error fetching ${filter} posts:`, error);
@@ -90,11 +134,12 @@ const Posts: React.FC<{
 
     loadPosts();
     loadCategories();
-  }, [filter, count]);
+  }, [filter, currentPage, pageSize]);
 
   const handleCategoryFilter = useCallback(
     async (categorySlug: string) => {
       setSelectedCategory(categorySlug);
+      setCurrentPage(1); // Reset to first page when filtering
       setLoading(true);
 
       try {
@@ -103,12 +148,18 @@ const Posts: React.FC<{
 
         // Pass search query along with category filter
         const data = await fetchPosts(
-          1,
-          count,
+          currentPage,
+          pageSize,
           `?category=${categorySlug}&query=${searchParam}`,
           'post'
         );
         setFilteredPosts(data.results);
+
+        // Update pagination info for filtered results
+        setTotalCount(data.count);
+        setTotalPages(Math.ceil(data.count / pageSize));
+        setHasNext(!!data.next);
+        setHasPrevious(!!data.previous);
       } catch (error) {
         console.error(
           'Backend filtering failed, using client-side filtering:',
@@ -136,11 +187,17 @@ const Posts: React.FC<{
         }
 
         setFilteredPosts(filtered);
+
+        // Update pagination for client-side filtered results
+        setTotalCount(filtered.length);
+        setTotalPages(Math.ceil(filtered.length / pageSize));
+        setHasNext(false);
+        setHasPrevious(false);
       } finally {
         setLoading(false);
       }
     },
-    [posts, categories, count, searchParams]
+    [posts, categories, pageSize, currentPage, searchParams]
   );
 
   // Initialize category from URL params
@@ -150,15 +207,20 @@ const Posts: React.FC<{
 
     if (subcategoryParam && categories.length > 0) {
       // If there's a subcategory, use it as the selected category
-      handleCategoryFilter(subcategoryParam);
+      if (selectedCategory !== subcategoryParam) {
+        handleCategoryFilter(subcategoryParam);
+      }
     } else if (categoryParam && categories.length > 0) {
       // If there's only a category, use it as the selected category
-      handleCategoryFilter(categoryParam);
-    } else if (!categoryParam && !subcategoryParam) {
+      if (selectedCategory !== categoryParam) {
+        handleCategoryFilter(categoryParam);
+      }
+    } else if (!categoryParam && !subcategoryParam && selectedCategory) {
       setSelectedCategory(null);
+      setCurrentPage(1);
       setFilteredPosts(posts);
     }
-  }, [searchParams, categories, posts, handleCategoryFilter]);
+  }, [searchParams, categories, posts, selectedCategory, handleCategoryFilter]);
 
   const handleCategoryClick = (categorySlug: string) => {
     const params = new URLSearchParams(searchParams?.toString() ?? '');
@@ -190,7 +252,66 @@ const Posts: React.FC<{
   const handleShowAll = () => {
     const params = new URLSearchParams(searchParams?.toString() ?? '');
     params.delete('category');
+    params.delete('subcategory');
+    setCurrentPage(1);
+    setSelectedCategory(null);
     router.push(`/posts`);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // Scroll to top when changing pages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasNext) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (hasPrevious) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   };
 
   const featuredPosts = filteredPosts.filter((post) => post.is_featured);
@@ -374,21 +495,23 @@ const Posts: React.FC<{
                 {featuredPosts.map((post) => (
                   <Link key={post.id} href={`/posts/${post.slug}`}>
                     <div className="group overflow-hidden rounded-lg shadow hover:shadow-lg transition">
-                      <SafeImage
-                        alt={post.title}
-                        className="h-48 w-full object-cover group-hover:scale-105 transition-transform"
-                        images={[
-                          {
-                            image_path: getPublicImageUrl(
-                              'posts',
-                              post.id,
-                              post.images?.[0]?.image_path
-                            ),
-                          },
-                        ]}
-                        width={400}
-                        height={300}
-                      />
+                      <div className="aspect-[4/3] w-full">
+                        <SafeImage
+                          alt={post.title}
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                          images={[
+                            {
+                              image_path: getPublicImageUrl(
+                                'posts',
+                                post.id,
+                                post.images?.[0]?.image_path
+                              ),
+                            },
+                          ]}
+                          width={400}
+                          height={300}
+                        />
+                      </div>
                       <div className="p-4">
                         <h3 className="text-lg font-semibold group-hover:text-blue-600">
                           {post.title}
@@ -460,7 +583,7 @@ const Posts: React.FC<{
                   >
                     <Link
                       href={`/posts/${post.slug}`}
-                      className="relative w-full sm:w-60 h-40 flex-shrink-0"
+                      className="relative block w-full sm:w-60 h-40 flex-shrink-0"
                     >
                       <SafeImage
                         alt={post.title}
@@ -481,7 +604,7 @@ const Posts: React.FC<{
                       <div className="text-xs text-blue-600 uppercase mb-2">
                         {post.categories?.map((category, i) => (
                           <span key={i}>
-                            <CategoryName categoryId={category} />
+                            {category.name}
                             {i < post.categories.length - 1 && ', '}
                           </span>
                         ))}
@@ -498,6 +621,118 @@ const Posts: React.FC<{
               )}
             </div>
           </section>
+
+          {/* Pagination */}
+          {/* Always render pagination container to prevent layout shift */}
+          <div className="min-h-[72px] flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-8">
+            {totalPages > 1 ? (
+              <>
+                <div className="flex flex-1 justify-between sm:hidden">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={!hasPrevious}
+                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={!hasNext}
+                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing{' '}
+                      <span className="font-medium">
+                        {(currentPage - 1) * pageSize + 1}
+                      </span>{' '}
+                      to{' '}
+                      <span className="font-medium">
+                        {Math.min(currentPage * pageSize, totalCount)}
+                      </span>{' '}
+                      of <span className="font-medium">{totalCount}</span>{' '}
+                      results
+                    </p>
+                  </div>
+                  <div>
+                    <nav
+                      className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                      aria-label="Pagination"
+                    >
+                      <button
+                        onClick={handlePreviousPage}
+                        disabled={!hasPrevious}
+                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="sr-only">Previous</span>
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                      {getPageNumbers().map((page, index) => (
+                        <React.Fragment key={index}>
+                          {page === '...' ? (
+                            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                              ...
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handlePageChange(page as number)}
+                              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                currentPage === page
+                                  ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                  : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+                      <button
+                        onClick={handleNextPage}
+                        disabled={!hasNext}
+                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="sr-only">Next</span>
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-sm text-gray-500">
+                  No pagination needed
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -816,11 +1051,12 @@ const Posts: React.FC<{
                         </div>
 
                         {/* Category */}
-                        {post.categories && post.categories.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-gray-500">
-                            <CategoryName categoryId={post.categories[0]} />
-                          </div>
-                        )}
+                        {post.categories?.map((category, i) => (
+                          <span key={i}>
+                            {category.name}
+                            {i < post.categories.length - 1 && ', '}
+                          </span>
+                        ))}
                       </div>
                     </div>
 

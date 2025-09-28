@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
 import { changePostStatus, deletePost, fetchPostsAuth } from '@/services/api';
 import { Post } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
 
 const PostsListPage: React.FC = () => {
@@ -556,13 +555,7 @@ const PostsListPage: React.FC = () => {
                                   }
                                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                                 >
-                                  <CategoryName
-                                    categoryId={
-                                      typeof category === 'object'
-                                        ? category.id
-                                        : category
-                                    }
-                                  />
+                                  {category.name}
                                 </span>
                               ))}
                             </div>

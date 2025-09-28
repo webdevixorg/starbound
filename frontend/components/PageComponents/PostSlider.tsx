@@ -7,7 +7,6 @@ import LoadingSpinner from '@/components/Common/Loading';
 import HtmlContent from '@/helpers/content';
 import SafeImage from '../UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
-import { CategoryName } from '@/helpers/fetching';
 import { Post } from '@/types/types';
 import { fetchPostsByCategory } from '@/services/api';
 
@@ -64,7 +63,7 @@ const SlideCard: React.FC<{ post: Post; index: number }> = ({
                 key={`${post.id}-cat-${idx}`}
                 className="bg-red-600 text-white text-xs font-medium px-2 py-0.5 rounded-full"
               >
-                <CategoryName categoryId={category} />
+                {category.name}
               </span>
             ))}
           </div>

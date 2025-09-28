@@ -7,7 +7,6 @@ import { useContent } from '@/context/ContentContext';
 import { changePostStatus, deletePost } from '@/services/api';
 import { fetchPostsAuth } from '@/services/api';
 import { Product } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
 import LoadingSpinner from '@/components/Common/Loading';
 import SafeImage from '@/components/UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
@@ -519,7 +518,9 @@ const ProductsListPage: React.FC = () => {
                                   }
                                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                                 >
-                                  <CategoryName categoryId={category} />
+                                  {typeof category === 'object'
+                                    ? category.name
+                                    : category}
                                 </span>
                               ))}
                             </div>

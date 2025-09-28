@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
       {/* Footer content */}
       <div
         id="footer-content"
-        className="relative order-last pt-8 pb-6 xl:pt-16 xl:pb-12"
+        className="relative order-last pt-8 pb-6 xl:pt-16 xl:pb-12 min-h-[400px]"
       >
         <div className="container mx-auto px-4 sm:px-2 lg:px-6 py-4 sm:py-2 lg:py-6">
           <div className="flex flex-wrap flex-row lg:justify-between -mx-3">
