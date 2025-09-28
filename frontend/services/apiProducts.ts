@@ -145,7 +145,7 @@ export const createProduct = async (data: ProductData): Promise<Product> => {
   try {
     const formData = convertToFormData(data);
     const response = await axiosInstance.post(
-      `/${data.contentType}s/`,
+      `/${data.contentType}s/p/`,
       formData,
       {
         headers: {
