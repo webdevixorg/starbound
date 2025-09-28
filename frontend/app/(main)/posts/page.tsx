@@ -19,10 +19,184 @@ import BlogPostCardList from '@/components/UI/Cards/BlogPostCardList';
 
 // Loading component for Suspense fallback
 const PostsLoading = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-gray-600">Loading posts...</p>
+  <div className="min-h-screen">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+      {/* Breadcrumbs Skeleton */}
+      <div className="mx-auto mt-6 max-w-full mb-10">
+        <div className="h-4 bg-gray-200 rounded w-48"></div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main Content */}
+        <div className="flex-1 lg:max-w-4xl space-y-8">
+          {/* Featured Posts Skeleton */}
+          <section>
+            <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
+            <div className="grid sm:grid-cols-2 gap-6">
+              {[...Array(2)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                >
+                  <div className="aspect-[4/3] w-full bg-gray-200"></div>
+                  <div className="p-4">
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Posts List Skeleton */}
+          <section>
+            <div className="space-y-6">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-gray-200 p-6"
+                >
+                  <div className="flex gap-6">
+                    {/* Image */}
+                    <div className="w-48 h-32 bg-gray-200 rounded-xl flex-shrink-0"></div>
+
+                    {/* Content */}
+                    <div className="flex-1">
+                      {/* Categories */}
+                      <div className="flex gap-2 mb-3">
+                        <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                        <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+                      </div>
+
+                      {/* Title */}
+                      <div className="h-7 bg-gray-200 rounded w-3/4 mb-3"></div>
+
+                      {/* Description */}
+                      <div className="space-y-2 mb-4">
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+
+                      {/* Meta */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                          <div>
+                            <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
+                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          </div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Pagination Skeleton */}
+          <div className="flex items-center justify-between bg-white px-4 py-3 mt-8">
+            <div className="h-4 bg-gray-200 rounded w-32"></div>
+            <div className="flex gap-2">
+              <div className="w-8 h-8 bg-gray-200 rounded"></div>
+              <div className="w-8 h-8 bg-gray-200 rounded"></div>
+              <div className="w-8 h-8 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <aside className="lg:w-1/3 space-y-8">
+          {/* Search Skeleton */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            <div className="p-4">
+              <div className="relative">
+                <div className="relative flex items-center">
+                  {/* Search Icon */}
+                  <div className="absolute left-4 w-5 h-5 bg-gray-200 rounded"></div>
+                  {/* Input Field */}
+                  <div className="w-full h-12 bg-gray-200 rounded-xl"></div>
+                  {/* Search Button */}
+                  <div className="absolute right-2 w-16 h-8 bg-gray-200 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Skeleton */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+              <div className="h-5 bg-gray-200 rounded w-32 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-40"></div>
+            </div>
+
+            {/* Categories List */}
+            <div className="p-2">
+              {/* All Categories Button */}
+              <div className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1">
+                <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                <div className="h-4 bg-gray-200 rounded w-28"></div>
+              </div>
+
+              {/* Category Items */}
+              <div className="space-y-1">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex items-center">
+                    <div className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl">
+                      <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-16"></div>
+                      </div>
+                    </div>
+                    <div className="p-2 mr-2">
+                      <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Popular Posts Skeleton */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+              <div className="h-5 bg-gray-200 rounded w-24"></div>
+            </div>
+
+            {/* Popular Posts List */}
+            <div className="divide-y divide-gray-100/70">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-6">
+                  {/* Ranking Badge */}
+                  <div className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-full"></div>
+
+                  {/* Image */}
+                  <div className="relative w-14 h-14 flex-shrink-0 bg-gray-200 rounded-xl"></div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+
+                  {/* Arrow indicator */}
+                  <div className="flex-shrink-0 w-4 h-4 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ad Skeleton */}
+          <div className="text-sm">
+            <div className="mx-auto w-full h-40 bg-gray-200 rounded"></div>
+          </div>
+        </aside>
+      </div>
     </div>
   </div>
 );
@@ -37,7 +211,7 @@ const PostsContent: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
     new Set()
   );
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -114,37 +288,34 @@ const PostsContent: React.FC = () => {
   }, [currentPage, selectedCategory, pageSize, searchParams]);
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const loadInitialData = async () => {
       try {
-        setLoading(true);
-        const data = await fetchPosts(currentPage, pageSize, filter, 'post');
-        setPosts(data.results);
-        setFilteredPosts(data.results);
+        // Load posts and categories in parallel
+        const [postsData, categoriesData] = await Promise.all([
+          fetchPosts(currentPage, pageSize, filter, 'post'),
+          fetchCategories(1, 20, 14),
+        ]);
+
+        // Set posts data
+        setPosts(postsData.results);
+        setFilteredPosts(postsData.results);
 
         // Update pagination info
-        setTotalCount(data.count);
-        setTotalPages(Math.ceil(data.count / pageSize));
-        setHasNext(!!data.next);
-        setHasPrevious(!!data.previous);
+        setTotalCount(postsData.count);
+        setTotalPages(Math.ceil(postsData.count / pageSize));
+        setHasNext(!!postsData.next);
+        setHasPrevious(!!postsData.previous);
 
-        setLoading(false);
+        // Set categories data
+        setCategories(categoriesData);
       } catch (error) {
-        console.error(`Error fetching ${filter} posts:`, error);
+        console.error('Error fetching initial data:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    const loadCategories = async () => {
-      try {
-        const data = await fetchCategories(1, 20, 14);
-        setCategories(data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-
-    loadPosts();
-    loadCategories();
+    loadInitialData();
   }, [filter, currentPage, pageSize]);
 
   const handleCategoryFilter = useCallback(
@@ -338,6 +509,11 @@ const PostsContent: React.FC = () => {
   const popularPosts = [...filteredPosts]
     .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, 5);
+
+  // Show skeleton during loading
+  if (loading) {
+    return <PostsLoading />;
+  }
 
   return (
     <div className="min-h-screen">

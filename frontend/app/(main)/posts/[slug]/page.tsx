@@ -7,7 +7,6 @@ import { getPublicImageUrl } from '@/helpers/media';
 import { formatDate } from '@/helpers/common';
 import HtmlContent from '@/helpers/content';
 import SafeImage from '@/components/UI/SafeImage';
-import LoadingSpinner from '@/components/Common/Loading';
 
 import { useAuth } from '@/context/AuthContext';
 
@@ -41,8 +40,145 @@ const SinglePost: React.FC = () => {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="min-h-screen">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+          {/* Breadcrumbs Skeleton */}
+          <div className="mb-8">
+            <div className="h-4 bg-gray-200 rounded w-48"></div>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Content Skeleton */}
+            <article className="flex-1">
+              {/* Header Card Skeleton */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-8">
+                {/* Hero Image Skeleton */}
+                <div className="aspect-[16/9] w-full bg-gray-200"></div>
+
+                {/* Content Skeleton */}
+                <div className="p-8">
+                  {/* Title Skeleton */}
+                  <div className="space-y-3 mb-6">
+                    <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+
+                  {/* Author and Metadata Skeleton */}
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                      <div>
+                        <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-32"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 bg-gray-200 rounded w-20"></div>
+                      <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Article Content Skeleton */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-8">
+                <div className="p-8">
+                  <div className="space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Author Section Skeleton */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-8">
+                <div className="p-8">
+                  <div className="flex items-start gap-6">
+                    <div className="w-24 h-24 bg-gray-200 rounded-2xl flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                      <div className="space-y-2 mb-4">
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                      <div className="h-8 bg-gray-200 rounded w-32"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Skeleton */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="p-6">
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="h-10 bg-gray-200 rounded w-32"></div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="flex gap-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            {/* Sidebar Skeleton */}
+            <aside className="w-full lg:w-80 flex-shrink-0">
+              <div className="sticky top-8 space-y-6">
+                {/* Products Sidebar Skeleton */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                  <div className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="w-16 h-16 bg-gray-200 rounded"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Posts Sidebar Skeleton */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                  <div className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="w-16 h-16 bg-gray-200 rounded"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Newsletter Skeleton */}
+                <div className="bg-blue-600 rounded-2xl p-6">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl mx-auto mb-4"></div>
+                    <div className="h-6 bg-white/20 rounded w-32 mx-auto mb-2"></div>
+                    <div className="h-4 bg-white/20 rounded w-48 mx-auto mb-4"></div>
+                    <div className="space-y-3">
+                      <div className="h-10 bg-white/20 rounded"></div>
+                      <div className="h-10 bg-white rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
       </div>
     );
   }
@@ -347,58 +483,10 @@ const SinglePost: React.FC = () => {
           <aside className="w-full lg:w-80 flex-shrink-0">
             <div className="sticky top-8 space-y-6">
               {/* Products Sidebar */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 overflow-hidden">
-                <div className="px-6 py-4 bg-gradient-to-r from-blue-50/50 to-blue-100/30 border-b border-blue-200/50">
-                  <h3 className="text-lg font-semibold text-blue-900 flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                    </div>
-                    Featured Products
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <ProductListSidebar filter="latest" count={4} />
-                </div>
-              </div>
+              <ProductListSidebar filter="latest" count={4} />
 
               {/* Related Posts Sidebar */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 overflow-hidden">
-                <div className="px-6 py-4 bg-gradient-to-r from-green-50/50 to-green-100/30 border-b border-green-200/50">
-                  <h3 className="text-lg font-semibold text-green-900 flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                        />
-                      </svg>
-                    </div>
-                    Related Posts
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <PostListSidebar filter="latest" count={4} />
-                </div>
-              </div>
+              <PostListSidebar filter="latest" count={4} />
 
               {/* Newsletter Signup */}
               <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl overflow-hidden">

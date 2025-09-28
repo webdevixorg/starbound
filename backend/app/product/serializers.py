@@ -16,7 +16,8 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True, source='user')
     images = serializers.SerializerMethodField()
-    categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)  # Use PrimaryKeyRelatedField here
+    categories = CategorySerializer(many=True, read_only=True)  # Return full category objects with names
+    categories_write = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True, write_only=True, source='categories')  # For writing category IDs
     location_name = serializers.CharField(source='location.name', read_only=True)
     subcategory_name = serializers.CharField(source='subcategory.name', read_only=True)
     sublocation_name = serializers.CharField(source='sublocation.name', read_only=True)
@@ -42,7 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
         # Extract and clean the description
         validated_data['description'] = self.validate_description(validated_data.get('description', ''))
 
-        # Extract categories separately
+        # Extract categories separately (they come through categories_write field)
         category_ids = validated_data.pop('categories', [])
 
         # Create the product instance

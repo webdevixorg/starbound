@@ -1,54 +1,106 @@
 import React, { useEffect, useState } from 'react';
-
-import { fetchPosts } from '@/services/api'; // Ensure this path is correct
+import Link from 'next/link';
+import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
 import { formatDate } from '@/helpers/common';
 import SafeImage from '../UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
 
-const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
+interface PostListSidebarProps {
+  filter: string;
+  count: number;
+  title?: string;
+  className?: string;
+}
+
+const PostListSidebar: React.FC<PostListSidebarProps> = ({
   filter,
   count,
+  title = 'Related Posts',
+  className = '',
 }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPosts = async () => {
       try {
+        setLoading(true);
         const data = await fetchPosts(1, count, filter, 'post');
         setPosts(data.results);
       } catch (error) {
         console.error('Error fetching posts:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadPosts();
   }, [filter, count]);
 
+  if (loading) {
+    return (
+      <div
+        className={`bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden ${className}`}
+      >
+        <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+          <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
+            {title}
+          </h3>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            {Array.from({ length: count }).map((_, index) => (
+              <div key={index} className="flex gap-4 animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-xl flex-shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mb-10">
-      <div className="border-b flex justify-between items-end mb-6 pb-4">
-        <h2 className="text-gray-800 text-lg sm:text-xl lg:text-2xl">
-          <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
-          Recent Articles
-        </h2>
+    <div
+      className={`bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-sm overflow-hidden ${className}`}
+    >
+      {/* Header */}
+      <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
+        <h3 className="text-lg font-semibold text-gray-900 tracking-tight flex items-center gap-2">
+          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <svg
+              className="w-3 h-3 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          {title}
+        </h3>
       </div>
 
-      <div className="space-y-8">
-        {posts.map((post) => (
-          <div
+      {/* Posts List */}
+      <div className="divide-y divide-gray-100/70">
+        {posts.map((post, index) => (
+          <article
             key={post.id}
-            className="group cursor-pointer flex flex-col sm:flex-row items-start space-y-6 sm:space-y-0 sm:space-x-6 mb-6"
+            className="group hover:bg-gray-50/60 transition-all duration-300 ease-out"
           >
-            {/* Image */}
-            <div className="flex-shrink-0 w-24 h-20 sm:w-16 sm:h-12 lg:w-24 lg:h-20 border-gray-300">
-              <a
-                href={`/posts/${post.slug}`}
-                className="block relative overflow-hidden w-full h-full"
-              >
+            <Link
+              href={`/posts/${post.slug}`}
+              className="flex items-center gap-4 p-4"
+            >
+              {/* Post Image */}
+              <div className="relative flex-shrink-0 w-16 h-16 overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200">
                 <SafeImage
                   alt={post.title}
-                  className="object-cover w-full h-full transition-transform duration-500 ease-in-out transform hover:scale-110"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                   images={[
                     {
                       image_path: getPublicImageUrl(
@@ -59,83 +111,151 @@ const PostListSidebar: React.FC<{ filter: string; count: number }> = ({
                     },
                   ]}
                   fallback="/images/placeholders/612x612.png"
-                  width={500}
-                  height={150}
+                  fill
                 />
-              </a>
-            </div>
 
-            {/* Content */}
-            <div className="flex-1">
-              <div className="sidebar-item-categories">
-                {post.categories && post.categories.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {post.categories.map((category, index) => (
-                      <span
-                        key={`${post.id}-category-${category.id}-${index}`}
-                        className="text-xs font-medium tracking-wider uppercase text-blue-600"
-                      >
-                        {category.name}
-                      </span>
-                    ))}
+                {/* Ranking Badge for Popular Posts */}
+                {filter === 'popular' && (
+                  <div className="absolute -top-1 -left-1 w-5 h-5 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                    {index + 1}
                   </div>
-                ) : (
-                  <span className="text-xs font-medium tracking-wider uppercase text-gray-600">
-                    No categories available
-                  </span>
                 )}
               </div>
 
-              <h2 className="text-xs sm:text-sm md:text-base lg:text xl:text-lg mb-3 dark:text-white">
-                <a
-                  href={`/posts/${post.slug}`}
-                  className="transition-all duration-500 hover:text-blue-600"
-                >
+              {/* Post Content */}
+              <div className="flex-1 min-w-0 space-y-2">
+                {/* Categories */}
+                {post.categories && post.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {post.categories
+                      .slice(0, 2)
+                      .map((category, categoryIndex) => (
+                        <span
+                          key={`${post.id}-category-${category.id}-${categoryIndex}`}
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/60"
+                        >
+                          {category.name}
+                        </span>
+                      ))}
+                  </div>
+                )}
+
+                {/* Title */}
+                <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-snug">
                   {post.title}
-                </a>
-              </h2>
+                </h4>
 
-              <div className="flex items-center space-x-3 text-gray-500 dark:text-gray-400">
-                <a
-                  href={`/authors/${post.author.id}`}
-                  className="flex items-center gap-3"
-                >
-                  <SafeImage
-                    alt={post.author.first_name + ' ' + post.author.last_name}
-                    className="h-6 w-6 rounded-full object-cover"
-                    images={[
-                      {
-                        image_path: getPublicImageUrl(
-                          'profiles',
-                          post.author.id,
-                          post.author.profile.image_path
-                        ),
-                      },
-                    ]}
-                    width={400}
-                    height={400}
-                  />
+                {/* Meta Information */}
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  {/* Author */}
+                  <div className="flex items-center gap-2">
+                    <SafeImage
+                      alt={`${post.author.first_name} ${post.author.last_name}`}
+                      className="w-4 h-4 rounded-full object-cover"
+                      images={[
+                        {
+                          image_path: getPublicImageUrl(
+                            'profiles',
+                            post.author.id,
+                            post.author.profile?.image_path
+                          ),
+                        },
+                      ]}
+                      width={20}
+                      height={20}
+                    />
+                    <span className="truncate max-w-20">
+                      {post.author.first_name}
+                    </span>
+                  </div>
 
-                  <span className="truncate text-sm">
-                    {post.author.first_name}
-                  </span>
-                </a>
+                  {/* Separator */}
+                  <span className="text-gray-300">•</span>
 
-                <span className="text-xs text-gray-300 dark:text-gray-600">
-                  •
-                </span>
+                  {/* Date */}
+                  <time
+                    className="text-xs text-gray-500"
+                    dateTime={post.created_at}
+                  >
+                    {formatDate(post.created_at)}
+                  </time>
 
-                <time
-                  className="text-xs font-semibold text-gray-300 dark:text-gray-600"
-                  dateTime={post.created_at}
-                >
-                  {formatDate(post.created_at)}
-                </time>
+                  {/* Views (if available) */}
+                  {post.views !== undefined && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <span className="flex items-center gap-1">
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                        {post.views}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+
+              {/* Arrow indicator */}
+              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <svg
+                  className="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </Link>
+          </article>
         ))}
       </div>
+
+      {/* View All Link */}
+      {posts.length > 0 && (
+        <div className="p-4 bg-gradient-to-r from-gray-50/30 to-gray-100/20 border-t border-gray-100/50">
+          <Link
+            href="/posts"
+            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200 group/link"
+          >
+            <span>View all posts</span>
+            <svg
+              className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
