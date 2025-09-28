@@ -15,6 +15,26 @@ const nextConfig: NextConfig = {
   // Image optimization
   images: {
     domains: ['localhost', 'logivis.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8000',
+        pathname: '/**',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
   },
@@ -23,7 +43,10 @@ const nextConfig: NextConfig = {
   compress: true,
 
   // Bundle analyzer
-  webpack: (config: any, { buildId, dev, isServer, defaultLoaders, webpack }: any) => {
+  webpack: (
+    config: any,
+    { buildId, dev, isServer, defaultLoaders, webpack }: any
+  ) => {
     // Optimize bundle size
     if (!dev && !isServer) {
       config.optimization = {
@@ -73,7 +96,7 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:8000 http://127.0.0.1:8000; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:8000 http://127.0.0.1:8000;",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:8000 http://127.0.0.1:8000 https://*.supabase.co; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:8000 http://127.0.0.1:8000 https://*.supabase.co;",
           },
         ],
       },
