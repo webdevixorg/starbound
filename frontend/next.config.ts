@@ -133,10 +133,10 @@ const nextConfig: NextConfig = {
         has: [
           {
             type: 'host',
-            value: 'www.yourdomain.com',
+            value: 'www.logivis.com',
           },
         ],
-        destination: 'https://yourdomain.com/$1',
+        destination: 'https://logivis.com/$1',
         permanent: true,
       },
     ];
