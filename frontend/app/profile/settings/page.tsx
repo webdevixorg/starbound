@@ -3,12 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import {
-  updateAccountSettings,
-  fetchAccountSettings,
-  SecuritySettings,
-  fetchSecuritySettings,
-} from '@/services/api';
+import { updateAccountSettings, fetchAccountSettings } from '@/services/api';
 import ChangePasswordTab from '@/components/PageComponents/AccountTabs/ChangePassword';
 import AccountSecurityTab from '@/components/PageComponents/AccountTabs/AccountSecurityTab';
 import PreferencesTab from '@/components/PageComponents/AccountTabs/PreferencesTab';
@@ -16,16 +11,17 @@ import NotificationsTab from '@/components/PageComponents/AccountTabs/Notificati
 import TabsNavigation from '@/components/PageComponents/AccountTabs/TabsNavigation';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
-interface AccountSettingsData {
+// Separate interfaces for each tab
+interface BasicInfoData {
   email: string;
+  username: string;
+}
+
+interface PasswordChangeData {
   current_password: string;
   new_password: string;
   confirm_password: string;
-  username: string;
-  twoFactorSMS: boolean;
-  twoFactorTOTP: boolean;
 }
 
 const VALID_TABS = [
@@ -46,20 +42,16 @@ export default function SettingsPage() {
   const tabParam = searchParams?.get('tab') as TabType;
   const initialTab = VALID_TABS.includes(tabParam) ? tabParam : 'basic-info';
 
-  const [formData, setFormData] = useState<AccountSettingsData>({
+  // Separate state for each tab
+  const [basicInfoData, setBasicInfoData] = useState<BasicInfoData>({
     email: '',
+    username: '',
+  });
+
+  const [passwordData, setPasswordData] = useState<PasswordChangeData>({
     current_password: '',
     new_password: '',
     confirm_password: '',
-    username: '',
-    twoFactorSMS: false,
-    twoFactorTOTP: false,
-  });
-
-  const [securityData, setSecurityData] = useState<SecuritySettings>({
-    twoFactorSMS: false,
-    twoFactorTOTP: false,
-    loginNotifications: true,
   });
 
   const [loading, setLoading] = useState(true);
@@ -69,7 +61,6 @@ export default function SettingsPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
   // Ensure client-side rendering
   useEffect(() => {
@@ -79,7 +70,7 @@ export default function SettingsPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (isClient && !user) {
-      router.push('/auth/login');
+      router.push('/signin');
     }
   }, [user, router, isClient]);
 
@@ -109,24 +100,17 @@ export default function SettingsPage() {
         // Load basic account settings
         const data = await fetchAccountSettings();
 
-        setFormData({
+        setBasicInfoData({
           email: data.email || '',
+          username: data.username || '',
+        });
+
+        // Password data remains empty (for security)
+        setPasswordData({
           current_password: '',
           new_password: '',
           confirm_password: '',
-          username: data.username || '',
-          twoFactorSMS: data.twoFactorSMS || false,
-          twoFactorTOTP: data.twoFactorTOTP || false,
         });
-
-        // Load security settings
-        try {
-          const securitySettings = await fetchSecuritySettings();
-          setSecurityData(securitySettings);
-        } catch (securityError) {
-          console.warn('Could not load security settings:', securityError);
-          // Keep default security settings if fetch fails
-        }
       } catch (error) {
         console.error('Error fetching account settings:', error);
         setError('Failed to load account settings. Please try again.');
@@ -139,59 +123,83 @@ export default function SettingsPage() {
     getAccountSettings();
   }, [isClient, user]);
 
-  // Handle input changes
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setHasChanges(true);
-  }, []);
-
-  // Handle security settings changes
-  const handleSecuritySwitchChange = useCallback(
-    (name: string, value: boolean) => {
-      setSecurityData((prev) => ({
+  // Separate handlers for each tab
+  const handleBasicInfoChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setBasicInfoData((prev) => ({
         ...prev,
         [name]: value,
       }));
-      setHasChanges(true);
     },
     []
   );
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!hasChanges) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      await updateAccountSettings(formData);
-      setHasChanges(false);
-      setShowSuccessModal(true);
-
-      // Clear password fields after successful update
-      setFormData((prev) => ({
+  const handlePasswordChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setPasswordData((prev) => ({
         ...prev,
-        current_password: '',
-        new_password: '',
-        confirm_password: '',
+        [name]: value,
       }));
-    } catch (error) {
-      console.error('Error updating account settings:', error);
-      setError('Failed to update account settings. Please try again.');
-      setShowErrorModal(true);
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+    []
+  );
+
+  // Combined handler for ChangePasswordTab
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name } = e.target;
+      if (
+        ['current_password', 'new_password', 'confirm_password'].includes(name)
+      ) {
+        handlePasswordChange(e);
+      } else {
+        handleBasicInfoChange(e);
+      }
+    },
+    [handlePasswordChange, handleBasicInfoChange]
+  );
+
+  // Combined submit handler
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSaving(true);
+      setError(null);
+
+      try {
+        const dataToUpdate = passwordData.new_password
+          ? passwordData
+          : basicInfoData;
+        await updateAccountSettings(dataToUpdate);
+        setShowSuccessModal(true);
+
+        if (passwordData.new_password) {
+          setPasswordData((prev) => ({
+            ...prev,
+            current_password: '',
+            new_password: '',
+            confirm_password: '',
+          }));
+        }
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        setError('Failed to update settings. Please try again.');
+        setShowErrorModal(true);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [
+      passwordData,
+      basicInfoData,
+      setSaving,
+      setError,
+      setShowSuccessModal,
+      setShowErrorModal,
+    ]
+  );
 
   // Loading skeleton for SSR compatibility
   if (!isClient) {
@@ -287,7 +295,13 @@ export default function SettingsPage() {
       case 'basic-info':
         return (
           <ChangePasswordTab
-            formData={formData}
+            formData={{
+              email: basicInfoData.email,
+              username: basicInfoData.username,
+              current_password: passwordData.current_password,
+              new_password: passwordData.new_password,
+              confirm_password: passwordData.confirm_password,
+            }}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
             isLoading={saving}
@@ -295,12 +309,7 @@ export default function SettingsPage() {
           />
         );
       case 'account-security':
-        return (
-          <AccountSecurityTab
-            formData={securityData}
-            handleSwitchChange={handleSecuritySwitchChange}
-          />
-        );
+        return <AccountSecurityTab />;
       case 'preferences':
         return <PreferencesTab />;
       case 'notifications':
@@ -400,65 +409,6 @@ export default function SettingsPage() {
           <div className="p-8">
             <div className="max-w-3xl">{renderContent()}</div>
           </div>
-
-          {/* Action Buttons - Show on all tabs if there are changes */}
-          {hasChanges && (
-            <div className="border-t border-gray-200/40 bg-gradient-to-r from-gray-50/50 to-white/50 px-8 py-6">
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  disabled={saving}
-                  className="group inline-flex items-center px-6 py-3 border border-gray-300/60 text-sm font-medium rounded-xl text-gray-700 bg-white/80 backdrop-blur-sm hover:bg-white hover:border-gray-400/60 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  Discard Changes
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={saving || !hasChanges}
-                  className="group inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:-translate-y-0.5"
-                >
-                  {saving ? (
-                    <>
-                      <InlineLoaderIcon className="mr-2" />
-                      <span className="animate-pulse">Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

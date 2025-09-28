@@ -480,7 +480,7 @@ const ChangePasswordTab: React.FC<Props> = ({
             disabled={
               isLoading || !passwordsMatch || passwordStrength.strength < 3
             }
-            className="inline-flex items-center px-6 py-3 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="group inline-flex items-center px-6 py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:-translate-y-0.5 backdrop-blur-sm"
           >
             {isLoading ? (
               <>
@@ -504,11 +504,11 @@ const ChangePasswordTab: React.FC<Props> = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Changing Password...
+                <span className="animate-pulse">Changing Password...</span>
               </>
             ) : (
               <>
-                <ShieldCheckIcon className="w-5 h-5 mr-2" />
+                <ShieldCheckIcon className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" />
                 Change Password
               </>
             )}
