@@ -3,6 +3,7 @@ from authentication.serializers import UserSerializer
 from uploads.serializers import ImageSerializer
 from .models import Product
 from categories.models import Category
+from entities.models import Entity
 from uploads.models import Image  
 import bleach
 
@@ -13,6 +14,12 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'parent']
 
 
+class EntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entity
+        fields = ['id', 'name', 'slug', 'type', 'parent']
+
+
 class ProductSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True, source='user')
     images = serializers.SerializerMethodField()
@@ -21,6 +28,13 @@ class ProductSerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name', read_only=True)
     subcategory_name = serializers.CharField(source='subcategory.name', read_only=True)
     sublocation_name = serializers.CharField(source='sublocation.name', read_only=True)
+    
+    # Entity fields for read/write
+    brand_detail = EntitySerializer(source='brand', read_only=True)
+    model_detail = EntitySerializer(source='model', read_only=True)
+    brand_name = serializers.CharField(read_only=True)
+    model_name = serializers.CharField(read_only=True)
+    full_model_name = serializers.CharField(read_only=True)
 
     class Meta:
         model = Product

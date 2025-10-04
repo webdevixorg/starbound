@@ -189,6 +189,17 @@ export interface BaseProduct {
   featured_image?: string;
 }
 
+// Entity interface (for brands, models, etc.)
+export interface Entity {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  type: 'brand' | 'model' | 'variant' | 'other';
+  parent?: number;
+  children?: Entity[];
+}
+
 // Product pricing and inventory
 export interface ProductPricing {
   price: number;
@@ -211,6 +222,13 @@ export interface ProductMetadata {
     name: string;
     value: string;
   }>;
+  brand?: number; // Brand ID
+  model?: number; // Model ID
+  brand_detail?: Entity; // Full brand object
+  model_detail?: Entity; // Full model object
+  brand_name?: string; // Brand name
+  model_name?: string; // Model name
+  full_model_name?: string; // Brand + Model name
 }
 
 // Location interfaces
@@ -239,6 +257,8 @@ export interface ProductData
     ProductLocation,
     ContentManagement {
   categories: number[]; // For API submission (category IDs)
+  brand?: number; // Brand ID for API submission
+  model?: number; // Model ID for API submission
 }
 
 export interface Product

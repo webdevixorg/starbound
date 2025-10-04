@@ -5,6 +5,7 @@ from django.utils.timezone import now, timedelta
 from app.posts.models import PostAbstract
 from categories.models import Category
 from locations.models import Location
+from entities.models import Entity
 from decimal import Decimal
 
 class Product(PostAbstract):
@@ -19,6 +20,45 @@ class Product(PostAbstract):
     avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
     review_count = models.IntegerField(default=0)
     featured_reason = models.CharField(max_length=50, null=True, blank=True)  # Optional: to show why it was featured
+    
+    # Entity relationships for brand and model
+    brand = models.ForeignKey(
+        Entity, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='brand_products',
+        limit_choices_to={'type': 'brand'},
+        help_text="Product brand"
+    )
+    model = models.ForeignKey(
+        Entity, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='model_products',
+        limit_choices_to={'type': 'model'},
+        help_text="Product model"
+    )
+    
+    @property
+    def brand_name(self):
+        return self.brand.name if self.brand else None
+    
+    @property
+    def model_name(self):
+        return self.model.name if self.model else None
+    
+    @property
+    def full_model_name(self):
+        """Returns brand + model, e.g., 'Toyota Corolla'"""
+        if self.brand and self.model:
+            return f"{self.brand.name} {self.model.name}"
+        elif self.model:
+            return self.model.name
+        elif self.brand:
+            return self.brand.name
+        return None
 
 
 

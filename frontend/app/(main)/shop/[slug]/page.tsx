@@ -119,6 +119,7 @@ const ProductSingle: React.FC = () => {
                     </a>
                   )}
                 </div>
+
                 <div className="mb-4">
                   <Rating reviews={0} />
                 </div>
@@ -215,6 +216,15 @@ const ProductSingle: React.FC = () => {
                   <span className="sku_wrapper block">
                     SKU: <span className="sku">{product.sku}</span>
                   </span>
+
+                  {product.full_model_name && (
+                    <span className="full_model_wrapper block">
+                      Brand/ Model:{' '}
+                      <span className="full_model font-medium text-blue-600">
+                        {product.full_model_name}
+                      </span>
+                    </span>
+                  )}
                   <span className="posted_in block">
                     Categories:
                     {product.categories.map((category, index) => (

@@ -16,7 +16,12 @@ const convertToFormData = (data: ProductData): FormData => {
   };
 
   (Object.keys(data) as (keyof ProductData)[]).forEach((key) => {
-    appendToFormData(key, data[key]);
+    // Handle categories mapping for Django serializer
+    if (key === 'categories') {
+      appendToFormData('categories_write', data[key]);
+    } else {
+      appendToFormData(key, data[key]);
+    }
   });
 
   return formData;
@@ -199,7 +204,12 @@ export const updateProduct = async (
     };
 
     (Object.keys(data) as (keyof ProductData)[]).forEach((key) => {
-      appendToFormData(key, data[key]);
+      // Handle categories mapping for Django serializer
+      if (key === 'categories') {
+        appendToFormData('categories_write', data[key]);
+      } else {
+        appendToFormData(key, data[key]);
+      }
     });
 
     // Send the formData to the backend
