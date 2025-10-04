@@ -104,17 +104,35 @@ export const fetchProductBySlug = async (
     const response = await axiosClient.get(endpoint);
     const productData = response.data;
 
-    // Fetch category details for each category ID
-    const categoryPromises = productData.categories.map(
-      async (category: number) => {
-        const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
-          `/categories/${category}`
-        );
-        return categoryResponse.data;
-      }
-    );
+    // Check if categories need to be fetched or are already detailed objects
+    let categories: Category[] = [];
 
-    const categories: Category[] = await Promise.all(categoryPromises);
+    if (productData.categories && Array.isArray(productData.categories)) {
+      // Check if categories are already objects or just IDs
+      const firstCategory = productData.categories[0];
+
+      if (typeof firstCategory === 'number') {
+        // Categories are IDs, need to fetch details
+        const categoryPromises = productData.categories.map(
+          async (categoryId: number) => {
+            try {
+              const categoryResponse: AxiosResponse =
+                await axiosInstanceNoAuth.get(`/categories/${categoryId}/`);
+              return categoryResponse.data;
+            } catch (error) {
+              console.error(`Error fetching category ${categoryId}:`, error);
+              return null;
+            }
+          }
+        );
+
+        const fetchedCategories = await Promise.all(categoryPromises);
+        categories = fetchedCategories.filter(Boolean) as Category[]; // Remove null values
+      } else if (typeof firstCategory === 'object' && firstCategory !== null) {
+        // Categories are already objects
+        categories = productData.categories as Category[];
+      }
+    }
 
     // Replace response.data.categories with the fetched category details
     const result = {
