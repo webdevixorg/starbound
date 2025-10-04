@@ -375,26 +375,24 @@ class ProfileProductView(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Product.objects.none()
         
-        user_field = self._get_user_field()
-        
-        if user.is_staff:
-            # Staff users can see all products
+        if user.is_staff or user.is_superuser:
+            # Staff and admin users can see all products
             queryset = Product.objects.all()
         else:
             # Regular users see only their own products
+            user_field = self._get_user_field()
             queryset = Product.objects.filter(**{user_field: user})
         
-        # Apply status filter if provided
+        # Apply status filter if provided (for both admin/staff and regular users)
         if status_filter:
-            # Normalize status case
             status_mapping = {
-                'published': 'Published',
-                'active': 'Active',
-                'draft': 'Draft', 
-                'deleted': 'Deleted',
-                'archived': 'Archived'
+                'published': 'published',
+                'active': 'active',
+                'draft': 'draft', 
+                'deleted': 'deleted',
+                'archived': 'archived'
             }
-            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
+            normalized_status = status_mapping.get(status_filter.lower(), status_filter.lower())
             queryset = queryset.filter(status=normalized_status)
         
         return queryset.order_by('-created_at')
@@ -661,14 +659,21 @@ class ProfileProductView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def drafts(self, request):
         """
-        Get user's draft products - AUTHENTICATED ONLY
+        Get draft products - AUTHENTICATED ONLY
+        Regular users see their own drafts, admin/staff see all drafts
         """
         try:
-            user_field = self._get_user_field()
-            queryset = Product.objects.filter(
-                **{user_field: request.user}, 
-                status='Draft'
-            ).order_by('-created_at')
+            user = request.user
+            
+            # Admin/staff can see all drafts, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                queryset = Product.objects.filter(status='draft').order_by('-created_at')
+            else:
+                user_field = self._get_user_field()
+                queryset = Product.objects.filter(
+                    **{user_field: user}, 
+                    status='draft'
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -689,7 +694,8 @@ class ProfileProductView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def by_status(self, request):
         """
-        Get user's products by status - AUTHENTICATED ONLY
+        Get products by status - AUTHENTICATED ONLY
+        Regular users see their own products, admin/staff see all products
         Usage: /api/products/p/by_status/?status=published OR ?status=deleted
         """
         try:
@@ -697,10 +703,10 @@ class ProfileProductView(viewsets.ModelViewSet):
             
             # Define status mappings
             status_mappings = {
-                'published': ['Published', 'Active'],
-                'deleted': ['Deleted'],
-                'draft': ['Draft'],
-                'archived': ['Archived']
+                'published': ['published', 'active'],
+                'deleted': ['deleted'],
+                'draft': ['draft'],
+                'archived': ['archived']
             }
             
             if status_param not in status_mappings:
@@ -708,17 +714,29 @@ class ProfileProductView(viewsets.ModelViewSet):
                     'error': f'Invalid status parameter. Valid options: {list(status_mappings.keys())}'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            user_field = self._get_user_field()
+            user = request.user
             status_values = status_mappings[status_param]
             
-            if len(status_values) == 1:
-                queryset = Product.objects.filter(
-                    status=status_values[0]
-                ).order_by('-created_at')
+            # Admin/staff can see all products, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                # Staff and admin users can see all products with the specified status
+                if len(status_values) == 1:
+                    queryset = Product.objects.filter(status=status_values[0]).order_by('-created_at')
+                else:
+                    queryset = Product.objects.filter(status__in=status_values).order_by('-created_at')
             else:
-                queryset = Product.objects.filter( 
-                    status__in=status_values
-                ).order_by('-created_at')
+                # Regular users see only their own products with the specified status
+                user_field = self._get_user_field()
+                if len(status_values) == 1:
+                    queryset = Product.objects.filter(
+                        **{user_field: user},
+                        status=status_values[0]
+                    ).order_by('-created_at')
+                else:
+                    queryset = Product.objects.filter(
+                        **{user_field: user},
+                        status__in=status_values
+                    ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -729,23 +747,30 @@ class ProfileProductView(viewsets.ModelViewSet):
             return Response(serializer.data)
             
         except Exception as e:
-            logger.error(f"Error fetching products by status: {e}")
+            logger.error(f"Error fetching products by status '{status_param}': {e}")
             return Response(
-                {'error': 'Failed to fetch products by status'}, 
+                {'error': f'Failed to fetch {status_param} products'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @action(detail=False, methods=['get'])
     def trash(self, request):
         """
-        Get user's trashed products - AUTHENTICATED ONLY
+        Get trashed products - AUTHENTICATED ONLY
+        Regular users see their own trashed products, admin/staff see all trashed products
         """
         try:
-            user_field = self._get_user_field()
-            queryset = Product.objects.filter(
-                **{user_field: request.user}, 
-                status='Deleted'
-            ).order_by('-created_at')
+            user = request.user
+            
+            # Admin/staff can see all trashed products, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                queryset = Product.objects.filter(status='deleted').order_by('-created_at')
+            else:
+                user_field = self._get_user_field()
+                queryset = Product.objects.filter(
+                    **{user_field: user}, 
+                    status='deleted'
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
