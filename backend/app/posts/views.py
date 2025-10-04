@@ -281,32 +281,22 @@ class ProfilePostView(viewsets.ModelViewSet):
             return Post.objects.none()
         
         if user.is_staff or user.is_superuser:
-            # Staff and admin users can see all posts with any status
+            # Staff and admin users can see all posts
             queryset = Post.objects.all()
         else:
             # Regular users see only their own posts
             user_field = self._get_user_field()
             queryset = Post.objects.filter(**{user_field: user})
         
-        # Apply status filter if provided (only for regular users, staff/admin see all statuses)
-        if status_filter and not (user.is_staff or user.is_superuser):
+        # Apply status filter if provided (for both admin/staff and regular users)
+        if status_filter:
             status_mapping = {
-                'published': 'Published',
-                'draft': 'Draft', 
-                'deleted': 'Deleted',
-                'archived': 'Archived',
+                'published': 'published',
+                'draft': 'draft', 
+                'deleted': 'deleted',
+                'archived': 'archived',
             }
-            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
-            queryset = queryset.filter(status=normalized_status)
-        elif status_filter and (user.is_staff or user.is_superuser):
-            # Staff/admin can still filter by status if they want to
-            status_mapping = {
-                'published': 'Published',
-                'draft': 'Draft', 
-                'deleted': 'Deleted',
-                'archived': 'Archived',
-            }
-            normalized_status = status_mapping.get(status_filter.lower(), status_filter.title())
+            normalized_status = status_mapping.get(status_filter.lower(), status_filter.lower())
             queryset = queryset.filter(status=normalized_status)
         
         return queryset.order_by('-created_at')
@@ -546,7 +536,8 @@ class ProfilePostView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def by_status(self, request):
         """
-        Get user's posts by status - AUTHENTICATED ONLY
+        Get posts by status - AUTHENTICATED ONLY
+        Regular users see their own posts, admin/staff see all posts
         Usage: /api/posts/p/by_status/?status=published OR ?status=deleted
         """
         try:
@@ -554,10 +545,10 @@ class ProfilePostView(viewsets.ModelViewSet):
             
             # Define status mappings
             status_mappings = {
-                'published': ['Published', 'Active'],
-                'deleted': ['Deleted'],
-                'draft': ['Draft'],
-                'archived': ['Archived']
+                'published': ['published', 'active'],
+                'deleted': ['deleted'],
+                'draft': ['draft'],
+                'archived': ['archived']
             }
             
             if status_param not in status_mappings:
@@ -565,19 +556,29 @@ class ProfilePostView(viewsets.ModelViewSet):
                     'error': f'Invalid status parameter. Valid options: {list(status_mappings.keys())}'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            user_field = self._get_user_field()
+            user = request.user
             status_values = status_mappings[status_param]
             
-            if len(status_values) == 1:
-                queryset = Post.objects.filter(
-                    **{user_field: request.user},
-                    status=status_values[0]
-                ).order_by('-created_at')
+            # Admin/staff can see all posts, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                # Staff and admin users can see all posts with the specified status
+                if len(status_values) == 1:
+                    queryset = Post.objects.filter(status=status_values[0]).order_by('-created_at')
+                else:
+                    queryset = Post.objects.filter(status__in=status_values).order_by('-created_at')
             else:
-                queryset = Post.objects.filter(
-                    **{user_field: request.user},
-                    status__in=status_values
-                ).order_by('-created_at')
+                # Regular users see only their own posts with the specified status
+                user_field = self._get_user_field()
+                if len(status_values) == 1:
+                    queryset = Post.objects.filter(
+                        **{user_field: user},
+                        status=status_values[0]
+                    ).order_by('-created_at')
+                else:
+                    queryset = Post.objects.filter(
+                        **{user_field: user},
+                        status__in=status_values
+                    ).order_by('-created_at')
             
             # Apply pagination
             page = self.paginate_queryset(queryset)
@@ -598,14 +599,21 @@ class ProfilePostView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def drafts(self, request):
         """
-        Get user's draft posts - AUTHENTICATED ONLY
+        Get draft posts - AUTHENTICATED ONLY
+        Regular users see their own drafts, admin/staff see all drafts
         """
         try:
-            user_field = self._get_user_field()
-            queryset = Post.objects.filter(
-                **{user_field: request.user}, 
-                status='Draft'
-            ).order_by('-created_at')
+            user = request.user
+            
+            # Admin/staff can see all drafts, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                queryset = Post.objects.filter(status='draft').order_by('-created_at')
+            else:
+                user_field = self._get_user_field()
+                queryset = Post.objects.filter(
+                    **{user_field: user}, 
+                    status='draft'
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -625,14 +633,21 @@ class ProfilePostView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def published(self, request):
         """
-        Get user's published posts - AUTHENTICATED ONLY
+        Get published posts - AUTHENTICATED ONLY
+        Regular users see their own published posts, admin/staff see all published posts
         """
         try:
-            user_field = self._get_user_field()
-            queryset = Post.objects.filter(
-                **{user_field: request.user}, 
-                status='Published'
-            ).order_by('-created_at')
+            user = request.user
+            
+            # Admin/staff can see all published posts, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                queryset = Post.objects.filter(status='published').order_by('-created_at')
+            else:
+                user_field = self._get_user_field()
+                queryset = Post.objects.filter(
+                    **{user_field: user}, 
+                    status='published'
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -652,14 +667,21 @@ class ProfilePostView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def trash(self, request):
         """
-        Get user's trashed posts - AUTHENTICATED ONLY
+        Get trashed posts - AUTHENTICATED ONLY
+        Regular users see their own trashed posts, admin/staff see all trashed posts
         """
         try:
-            user_field = self._get_user_field()
-            queryset = Post.objects.filter(
-                **{user_field: request.user}, 
-                status='Deleted'
-            ).order_by('-created_at')
+            user = request.user
+            
+            # Admin/staff can see all trashed posts, regular users see only their own
+            if user.is_staff or user.is_superuser:
+                queryset = Post.objects.filter(status='deleted').order_by('-created_at')
+            else:
+                user_field = self._get_user_field()
+                queryset = Post.objects.filter(
+                    **{user_field: user}, 
+                    status='deleted'
+                ).order_by('-created_at')
             
             page = self.paginate_queryset(queryset)
             if page is not None:
