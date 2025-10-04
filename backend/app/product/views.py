@@ -906,22 +906,172 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class RelatedProducts(APIView):
     """
-    Get related products based on categories - PUBLIC ACCESS
+    Intelligent related products endpoint that finds related products based on:
+    1. Same subcategory, brand, and model (highest priority)
+    2. Same category, brand, and model
+    3. Same model (any brand/category)
+    4. Same brand (any model/category)
+    5. Same categories (any brand/model)
+    6. Featured products (fallback)
+    7. Any published products (last resort)
+    
+    Returns up to 4 related products ordered by relevance.
     """
     permission_classes = [AllowAny]
     
     def get(self, request, slug):
         try:
-            product = Product.objects.get(
-                slug=slug, 
-                status__in=['Published', 'Active']
-            )
+            # Find the base product
+            base_product = get_object_or_404(Product, slug=slug, status__in=['published'])
             
-            related_products = Product.objects.filter(
-                categories__in=product.categories.all(),
-                status__in=['Published', 'Active']
-            ).exclude(slug=slug).distinct().order_by('-created_at')[:4]
-
+            # Initialize the result list and tracking
+            related_products = []
+            max_results = 4
+            
+            # Get base product attributes
+            base_categories = list(base_product.categories.all())
+            base_brand = base_product.brand
+            base_model = base_product.model
+            
+            logger.info(f"Finding related products for: {base_product.title}")
+            logger.info(f"Base product - Brand: {base_brand}, Model: {base_model}, Categories: {[c.name for c in base_categories]}")
+            
+            # Helper function to add unique products
+            def add_products_to_result(queryset, source_description):
+                added_count = 0
+                for product in queryset:
+                    if len(related_products) >= max_results:
+                        break
+                    if product.pk not in [p.pk for p in related_products]:
+                        related_products.append(product)
+                        added_count += 1
+                        logger.info(f"Added from {source_description}: {product.title}")
+                return added_count
+            
+            # Priority 1: Same subcategory, same brand, same model
+            if base_brand and base_model and base_categories:
+                for category in base_categories:
+                    if len(related_products) >= max_results:
+                        break
+                    
+                    # Find products in same subcategory with same brand and model
+                    subcategory_products = Product.objects.filter(
+                        categories=category,
+                        brand=base_brand,
+                        model=base_model,
+                        status__in=['published']
+                    ).exclude(pk=base_product.pk).order_by('-created_at')
+                    
+                    added = add_products_to_result(
+                        subcategory_products[:max_results - len(related_products)],
+                        f"subcategory '{category.name}' + same brand + same model"
+                    )
+                    
+                    if added > 0:
+                        logger.info(f"Priority 1: Added {added} products from subcategory '{category.name}'")
+            
+            # Priority 2: Same category (parent), same brand, same model
+            if len(related_products) < max_results and base_brand and base_model and base_categories:
+                for category in base_categories:
+                    if len(related_products) >= max_results:
+                        break
+                    
+                    # Get parent category if exists
+                    parent_category = category.parent if category.parent else category
+                    
+                    # Find products in same parent category with same brand and model
+                    parent_category_products = Product.objects.filter(
+                        categories__parent=parent_category,
+                        brand=base_brand,
+                        model=base_model,
+                        status__in=['published']
+                    ).exclude(pk=base_product.pk).order_by('-created_at')
+                    
+                    added = add_products_to_result(
+                        parent_category_products[:max_results - len(related_products)],
+                        f"parent category '{parent_category.name}' + same brand + same model"
+                    )
+                    
+                    if added > 0:
+                        logger.info(f"Priority 2: Added {added} products from parent category '{parent_category.name}'")
+            
+            # Priority 3: Same model (any brand/category)
+            if len(related_products) < max_results and base_model:
+                model_products = Product.objects.filter(
+                    model=base_model,
+                    status__in=['published']
+                ).exclude(pk=base_product.pk).order_by('-created_at')
+                
+                added = add_products_to_result(
+                    model_products[:max_results - len(related_products)],
+                    f"same model '{base_model.name}'"
+                )
+                
+                if added > 0:
+                    logger.info(f"Priority 3: Added {added} products with same model")
+            
+            # Priority 4: Same brand (any model/category)
+            if len(related_products) < max_results and base_brand:
+                brand_products = Product.objects.filter(
+                    brand=base_brand,
+                    status__in=['published']
+                ).exclude(pk=base_product.pk).order_by('-created_at')
+                
+                added = add_products_to_result(
+                    brand_products[:max_results - len(related_products)],
+                    f"same brand '{base_brand.name}'"
+                )
+                
+                if added > 0:
+                    logger.info(f"Priority 4: Added {added} products with same brand")
+            
+            # Priority 5: Same categories (any brand/model)
+            if len(related_products) < max_results and base_categories:
+                category_products = Product.objects.filter(
+                    categories__in=base_categories,
+                    status__in=['published']
+                ).exclude(pk=base_product.pk).distinct().order_by('-created_at')
+                
+                added = add_products_to_result(
+                    category_products[:max_results - len(related_products)],
+                    "same categories"
+                )
+                
+                if added > 0:
+                    logger.info(f"Priority 5: Added {added} products with same categories")
+            
+            # Fallback: Featured products
+            if len(related_products) < max_results:
+                featured_products = Product.objects.filter(
+                    status__in=['published'],
+                    is_featured=True
+                ).exclude(pk=base_product.pk).order_by('-created_at')
+                
+                added = add_products_to_result(
+                    featured_products[:max_results - len(related_products)],
+                    "featured products (fallback)"
+                )
+                
+                if added > 0:
+                    logger.info(f"Fallback: Added {added} featured products")
+            
+            # Last resort: Any published products
+            if len(related_products) < max_results:
+                any_products = Product.objects.filter(
+                    status__in=['published']
+                ).exclude(pk=base_product.pk).order_by('-created_at')
+                
+                added = add_products_to_result(
+                    any_products[:max_results - len(related_products)],
+                    "any published products (last resort)"
+                )
+                
+                if added > 0:
+                    logger.info(f"Last resort: Added {added} random products")
+            
+            logger.info(f"Final result: {len(related_products)} related products found")
+            
+            # Serialize and return results
             serializer = ProductSerializer(
                 related_products, 
                 many=True, 
@@ -930,12 +1080,13 @@ class RelatedProducts(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         except Product.DoesNotExist:
+            logger.error(f"Product with slug '{slug}' not found")
             return Response(
                 {"error": "Product not found"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            logger.error(f"Error fetching related products: {e}")
+            logger.error(f"Error fetching related products for slug '{slug}': {e}")
             return Response(
                 {"error": "Failed to fetch related products"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -58,14 +58,40 @@ class ImageViewSet(viewsets.ViewSet):
         if not update_fields:
             return Response({'error': 'No fields to update'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Log the update attempt
+        print(f"Updating image {pk} with fields: {update_fields}")
+        
+        # Track which fields are actually being updated
+        updated_fields = []
+        
         for field, value in update_fields.items():
             if hasattr(image, field):
-                setattr(image, field, value)
+                # Check if the value is actually different
+                current_value = getattr(image, field)
+                if current_value != value:
+                    setattr(image, field, value)
+                    updated_fields.append(field)
+                    print(f"Updated field '{field}' from '{current_value}' to '{value}'")
+                else:
+                    print(f"Field '{field}' already has value '{value}', skipping update")
             else:
                 return Response({'error': f'Field {field} does not exist on Image model'}, status=status.HTTP_400_BAD_REQUEST)
         
-        image.save()
-        return Response({'status': 'Image updated'})
+        # Only save if there are actual changes
+        if updated_fields:
+            image.save()
+            print(f"Saved image {pk} with updated fields: {updated_fields}")
+            return Response({
+                'status': 'Image updated',
+                'updated_fields': updated_fields,
+                'image': ImageSerializer(image).data
+            })
+        else:
+            print(f"No changes detected for image {pk}")
+            return Response({
+                'status': 'No changes detected',
+                'image': ImageSerializer(image).data
+            })
     
 class UserImageViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]  # Add authentication

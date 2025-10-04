@@ -36,8 +36,14 @@ export async function uploadImage(
     fileExt = mimeToExt[fileToUpload.type] || 'png';
   }
 
-  // Unique file name and path (by content type)
-  const fileName = `${Date.now()}.${fileExt}`;
+  // Create a more unique filename using timestamp + random string + original name (sanitized)
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const sanitizedOriginalName = fileToUpload.name
+    .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special characters with underscore
+    .replace(/\..*$/, ''); // Remove original extension
+
+  const fileName = `${timestamp}_${randomString}_${sanitizedOriginalName}.${fileExt}`;
   const filePath = `${contentId}/${fileName}`;
 
   // Upload to Supabase Storage
@@ -143,7 +149,27 @@ export const fetchImagesByObjectId = async (
 // Function to update the image order
 export const updateImage = async (imageId: number, data: { order: number }) => {
   try {
-    const response = await axiosInstance.patch(`/images/${imageId}`, data);
+    // Add a small delay to prevent rapid duplicate calls
+    const updateKey = `update_${imageId}_${data.order}`;
+    const lastUpdate = sessionStorage.getItem(updateKey);
+    const now = Date.now();
+
+    // Prevent duplicate calls within 1 second
+    if (lastUpdate && now - parseInt(lastUpdate) < 1000) {
+      console.log(`Skipping duplicate update for image ${imageId}`);
+      return { status: 'skipped', reason: 'duplicate_call_prevention' };
+    }
+
+    sessionStorage.setItem(updateKey, now.toString());
+
+    const response = await axiosInstance.patch(
+      `/images/${imageId}/update/`,
+      data
+    );
+
+    // Clean up the session storage after successful update
+    sessionStorage.removeItem(updateKey);
+
     return response.data;
   } catch (error) {
     console.error(`Error updating order for image ${imageId}:`, error);
