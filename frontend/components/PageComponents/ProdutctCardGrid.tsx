@@ -40,7 +40,25 @@ const ProductCardGrid: React.FC<{
         </div>
         <Link href={`/shop/${product.slug}`}>
           <div className="relative w-full aspect-[4/3] sm:aspect-[3/2] md:aspect-[16/9] lg:aspect-[4/3] overflow-hidden group rounded-lg shadow-sm">
-            {/* First image: fades out on hover */}
+            {/* Second image: hidden by default, visible on hover (render first so it's behind) */}
+            {hasSecondImage && (
+              <SafeImage
+                alt={`${product.title} - View 2`}
+                className="absolute inset-0 object-cover rounded-lg transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100"
+                images={[
+                  {
+                    image_path: getPublicImageUrl(
+                      'products',
+                      product.id,
+                      product.images[1].image_path + '_medium.webp'
+                    ),
+                  },
+                ]}
+                fill={true}
+              />
+            )}
+
+            {/* First image: visible by default, fades out on hover (render last so it's on top) */}
             <SafeImage
               alt={product.title}
               className={`absolute inset-0 object-cover rounded-lg transition-opacity duration-500 ease-in-out ${
@@ -62,24 +80,6 @@ const ProductCardGrid: React.FC<{
               fill={true}
               priority={index < 4} // Add priority for first 4 products (above the fold)
             />
-
-            {/* Second image: always visible, zooms in on hover */}
-            {hasSecondImage && (
-              <SafeImage
-                alt={product.title}
-                className="absolute inset-0 object-cover rounded-lg transition-transform duration-500 ease-in-out z-10 opacity-100 scale-100 group-hover:scale-110"
-                images={[
-                  {
-                    image_path: getPublicImageUrl(
-                      'products',
-                      product.id,
-                      product.images[1].image_path + '_medium.webp'
-                    ),
-                  },
-                ]}
-                fill={true}
-              />
-            )}
           </div>
         </Link>
 

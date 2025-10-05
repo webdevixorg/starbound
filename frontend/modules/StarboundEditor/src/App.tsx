@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import DOMPurify from 'dompurify';
 import { TextEditor } from './TextEditor';
 import './starbound-editor.scss';
@@ -26,15 +32,18 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
   }, []);
 
   // Debounced onChange to prevent focus loss
-  const debouncedOnChange = useCallback((newValue: string) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    debounceTimeoutRef.current = setTimeout(() => {
-      onChange(newValue);
-    }, 300); // 300ms debounce for HTML textarea
-  }, [onChange]);
+  const debouncedOnChange = useCallback(
+    (newValue: string) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        onChange(newValue);
+      }, 300); // 300ms debounce for HTML textarea
+    },
+    [onChange]
+  );
 
   // Cleanup timeout on unmount
   useEffect(() => {

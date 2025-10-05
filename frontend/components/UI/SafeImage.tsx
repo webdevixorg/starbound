@@ -152,9 +152,8 @@ const SafeImage: React.FC<SafeImageProps> = ({
   const imageProps = {
     src: imageSrc,
     alt,
-    className: `${className} ${isLoading ? 'opacity-50' : 'opacity-100'} transition-opacity`,
+    className: `${className} ${isLoading ? 'opacity-50' : ''}`,
     onError: handleError,
-    // Only apply priority to non-placeholder images
     priority:
       priority &&
       !imageSrc.includes('placeholder') &&
@@ -175,11 +174,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
 
   // If fill is used, wrap in a relatively positioned container
   if (fill) {
-    return (
-      <div className="relative w-full h-full z-0">
-        <NextImage {...imageProps} />
-      </div>
-    );
+    return <NextImage {...imageProps} />;
   }
 
   return <NextImage {...imageProps} />;
