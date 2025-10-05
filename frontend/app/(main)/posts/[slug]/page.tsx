@@ -372,7 +372,7 @@ const SinglePost: React.FC = () => {
                     <div className="flex items-center gap-4">
                       <Link
                         href="/profile"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-sm font-medium shadow-blue-500/25"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 hover:text-white transition-all duration-200 text-sm font-medium shadow-blue-500/25"
                       >
                         <svg
                           className="w-4 h-4"
