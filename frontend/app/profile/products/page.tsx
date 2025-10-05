@@ -434,7 +434,9 @@ const ProductsListPage: React.FC = () => {
           {searchQuery && (
             <div className="mt-2 text-sm text-gray-600">
               Searching for:{' '}
-              <span className="font-medium text-gray-900">&ldquo;{searchQuery}&rdquo;</span>
+              <span className="font-medium text-gray-900">
+                &ldquo;{searchQuery}&rdquo;
+              </span>
             </div>
           )}
         </div>
