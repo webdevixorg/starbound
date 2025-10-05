@@ -23,17 +23,20 @@ interface TextEditorProps {
 
 export const TextEditor: React.FC<TextEditorProps> = ({ content, getHtml }) => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Debounced getHtml to prevent focus loss
-  const debouncedGetHtml = useCallback((html: string) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    debounceTimeoutRef.current = setTimeout(() => {
-      getHtml(html);
-    }, 100); // Shorter debounce for rich text editor
-  }, [getHtml]);
+  const debouncedGetHtml = useCallback(
+    (html: string) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        getHtml(html);
+      }, 100); // Shorter debounce for rich text editor
+    },
+    [getHtml]
+  );
 
   // Cleanup timeout on unmount
   useEffect(() => {
