@@ -573,7 +573,8 @@ const ProductsListPage: React.FC = () => {
                                       image_path: getPublicImageUrl(
                                         'products',
                                         post.id,
-                                        post.images[0]?.image_path
+                                        post.images[0]?.image_path +
+                                          '_thumb.webp'
                                       ),
                                     },
                                   ]}
