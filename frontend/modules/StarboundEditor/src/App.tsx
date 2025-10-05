@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import DOMPurify from 'dompurify';
 import { TextEditor } from './TextEditor';
 import './starbound-editor.scss';
@@ -16,11 +16,33 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isEditorReady, setIsEditorReady] = useState<boolean>(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Check if we're on the client side
   useEffect(() => {
     setIsClient(true);
     setIsEditorReady(true);
+  }, []);
+
+  // Debounced onChange to prevent focus loss
+  const debouncedOnChange = useCallback((newValue: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 300); // 300ms debounce
+  }, [onChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Safe HTML unescaping that works both client and server side
@@ -117,8 +139,15 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
       const sanitizedContent = sanitizeHtml(htmlContent);
       if (sanitizedContent !== htmlContent) {
         setHtmlContent(sanitizedContent);
+        // Call onChange immediately when switching views
         onChange(sanitizedContent);
+      } else {
+        // Make sure we save the current content when switching
+        onChange(htmlContent);
       }
+    } else {
+      // Make sure we save the current content when switching to HTML view
+      onChange(htmlContent);
     }
     setIsHtmlView(!isHtmlView);
   }, [isHtmlView, htmlContent, sanitizeHtml, onChange]);
@@ -127,18 +156,18 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = event.target.value;
       setHtmlContent(newValue);
-      onChange(newValue);
+      debouncedOnChange(newValue);
     },
-    [onChange]
+    [debouncedOnChange]
   );
 
   const handleGetStyledTextHtml = useCallback(
     (html: string) => {
       const sanitizedHtml = sanitizeHtml(html);
       setHtmlContent(sanitizedHtml);
-      onChange(sanitizedHtml);
+      debouncedOnChange(sanitizedHtml);
     },
-    [sanitizeHtml, onChange]
+    [sanitizeHtml, debouncedOnChange]
   );
 
   // Loading state for SSR
@@ -176,16 +205,18 @@ const StarBoundTextEditor: React.FC<StarBoundTextEditorProps> = ({
           style={{ height: '500px' }}
         >
           <textarea
+            ref={textareaRef}
             className="w-full h-full resize-none border-none focus:outline-none font-mono text-sm"
             value={htmlContent}
             onChange={handleHtmlChange}
             placeholder="Enter HTML content..."
+            spellCheck={false}
           />
         </div>
       ) : (
         <div className="h-96 border border-gray-300 rounded">
           <TextEditor
-            key={`editor-${isEditorReady}-${htmlContent}`}
+            key={`editor-${isEditorReady}`}
             content={htmlContent}
             getHtml={handleGetStyledTextHtml}
           />

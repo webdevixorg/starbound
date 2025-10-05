@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import classNames from 'classnames';
 // => Tiptap packages
 import { useEditor, EditorContent, Editor, BubbleMenu } from '@tiptap/react';
@@ -22,6 +22,28 @@ interface TextEditorProps {
 }
 
 export const TextEditor: React.FC<TextEditorProps> = ({ content, getHtml }) => {
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Debounced getHtml to prevent focus loss
+  const debouncedGetHtml = useCallback((html: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      getHtml(html);
+    }, 100); // Shorter debounce for rich text editor
+  }, [getHtml]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const editor = useEditor({
     extensions: [
       Document,
@@ -41,7 +63,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, getHtml }) => {
     onUpdate: ({ editor }) => {
       if (editor) {
         const html = editor.getHTML();
-        getHtml(html);
+        debouncedGetHtml(html);
       }
     },
     editorProps: {
@@ -51,6 +73,13 @@ export const TextEditor: React.FC<TextEditorProps> = ({ content, getHtml }) => {
     },
     immediatelyRender: false,
   });
+
+  // Update editor content when content prop changes (but avoid infinite loops)
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, false);
+    }
+  }, [editor, content]);
 
   const [modalIsOpen, setIsOpen] = useState(false);
   const [url, setUrl] = useState<string>('');
