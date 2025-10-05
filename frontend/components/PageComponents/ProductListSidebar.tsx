@@ -138,7 +138,7 @@ const ProductListSidebar: React.FC<ProductListSidebarProps> = ({
                       image_path: getPublicImageUrl(
                         'products',
                         product.id,
-                        product.images?.[0]?.image_path
+                        product.images?.[0]?.image_path + '_thumb.webp'
                       ),
                     },
                   ]}
@@ -163,22 +163,6 @@ const ProductListSidebar: React.FC<ProductListSidebarProps> = ({
 
               {/* Product Content */}
               <div className="flex-1 min-w-0 space-y-2">
-                {/* Categories/Tags */}
-                {product.categories && product.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {product.categories
-                      .slice(0, 2)
-                      .map((category, categoryIndex) => (
-                        <span
-                          key={`${product.id}-category-${category.id}-${categoryIndex}`}
-                          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                        >
-                          {category.name}
-                        </span>
-                      ))}
-                  </div>
-                )}
-
                 {/* Product Title */}
                 <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-emerald-600 transition-colors duration-200 leading-snug">
                   {product.title}

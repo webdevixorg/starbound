@@ -106,7 +106,7 @@ const PostListSidebar: React.FC<PostListSidebarProps> = ({
                       image_path: getPublicImageUrl(
                         'posts',
                         post.id,
-                        post.images?.[0]?.image_path
+                        post.images?.[0]?.image_path + '_thumb.webp'
                       ),
                     },
                   ]}
@@ -124,6 +124,10 @@ const PostListSidebar: React.FC<PostListSidebarProps> = ({
 
               {/* Post Content */}
               <div className="flex-1 min-w-0 space-y-2">
+                {/* Title */}
+                <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-snug">
+                  {post.title}
+                </h4>
                 {/* Categories */}
                 {post.categories && post.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1">
@@ -139,12 +143,6 @@ const PostListSidebar: React.FC<PostListSidebarProps> = ({
                       ))}
                   </div>
                 )}
-
-                {/* Title */}
-                <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-snug">
-                  {post.title}
-                </h4>
-
                 {/* Meta Information */}
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   {/* Author */}
