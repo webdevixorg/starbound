@@ -11,9 +11,11 @@ import QuickViewIcon from '@/components/UI/Icons/QuickView';
 import AddToWishlistButton from '@/components/UI/Buttons/AddToWishlistButton';
 import { getPublicImageUrl } from '@/helpers/media';
 
-const ProductCardGrid: React.FC<{ product: Product; imageHeight: string }> = ({
-  product,
-}) => {
+const ProductCardGrid: React.FC<{
+  product: Product;
+  imageHeight: string;
+  index?: number;
+}> = ({ product, index = 0 }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // Prepare images
@@ -41,7 +43,7 @@ const ProductCardGrid: React.FC<{ product: Product; imageHeight: string }> = ({
             {/* First image: fades out on hover */}
             <SafeImage
               alt={product.title}
-              className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-500 ease-in-out ${
+              className={`absolute inset-0 object-cover rounded-lg transition-opacity duration-500 ease-in-out ${
                 hasSecondImage
                   ? 'opacity-100 group-hover:opacity-0'
                   : 'opacity-100'
@@ -51,30 +53,31 @@ const ProductCardGrid: React.FC<{ product: Product; imageHeight: string }> = ({
                   image_path: getPublicImageUrl(
                     'products',
                     product.id,
-                    product.images[0] ? product.images[0].image_path : ''
+                    product.images[0]
+                      ? product.images[0].image_path + '_medium.webp'
+                      : ''
                   ),
                 },
               ]}
-              width={300}
-              height={300}
+              fill={true}
+              priority={index < 4} // Add priority for first 4 products (above the fold)
             />
 
             {/* Second image: always visible, zooms in on hover */}
             {hasSecondImage && (
               <SafeImage
                 alt={product.title}
-                className="absolute inset-0 w-full h-full object-cover rounded-lg transition-transform duration-500 ease-in-out z-10 opacity-100 scale-100 group-hover:scale-110"
+                className="absolute inset-0 object-cover rounded-lg transition-transform duration-500 ease-in-out z-10 opacity-100 scale-100 group-hover:scale-110"
                 images={[
                   {
                     image_path: getPublicImageUrl(
-                      'posts',
+                      'products',
                       product.id,
-                      product.images[1].image_path
+                      product.images[1].image_path + '_medium.webp'
                     ),
                   },
                 ]}
-                width={300}
-                height={300}
+                fill={true}
               />
             )}
           </div>

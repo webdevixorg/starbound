@@ -39,6 +39,9 @@ const ProductsListPage: React.FC = () => {
   });
   const [pageSize] = useState<number>(10);
   const [activeTab, setActiveTab] = useState<string>('published');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [productCounts, setProductCounts] = useState<{ [key: string]: number }>(
     {
       draft: 0,
@@ -84,17 +87,38 @@ const ProductsListPage: React.FC = () => {
     }
   }, [contentTypes, contentLoading, pathname]);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setIsSearching(false);
+    }, 500); // Wait 500ms after user stops typing
+
+    if (searchInput !== searchQuery) {
+      setIsSearching(true);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput, searchQuery]);
+
   useEffect(() => {
     if (contentLoading || !matchedContentType) return;
 
-    const loadProductsByStatus = async (status: string, page: number) => {
+    const loadProductsByStatus = async (
+      status: string,
+      page: number,
+      search: string = ''
+    ) => {
       try {
         setLoading(true);
         const response = await fetchPostsAuth<Product>(
           page,
           pageSize,
           status,
-          matchedContentType.model
+          matchedContentType.model,
+          search
         );
 
         setProducts((prev) => ({
@@ -119,7 +143,7 @@ const ProductsListPage: React.FC = () => {
       }
     };
 
-    const loadAllCounts = async () => {
+    const loadAllCounts = async (search: string = '') => {
       try {
         const statuses = ['draft', 'published', 'archived', 'deleted'];
         const countPromises = statuses.map(async (status) => {
@@ -127,7 +151,8 @@ const ProductsListPage: React.FC = () => {
             1,
             1, // Only fetch 1 item to get the count
             status,
-            matchedContentType.model
+            matchedContentType.model,
+            search
           );
           return { status, count: response.count };
         });
@@ -147,9 +172,9 @@ const ProductsListPage: React.FC = () => {
 
     if (contentTypeId) {
       // Load counts for all tabs
-      loadAllCounts();
+      loadAllCounts(searchQuery);
       // Load products for active tab
-      loadProductsByStatus(activeTab, currentPages[activeTab]);
+      loadProductsByStatus(activeTab, currentPages[activeTab], searchQuery);
     }
   }, [
     contentTypeId,
@@ -158,6 +183,7 @@ const ProductsListPage: React.FC = () => {
     matchedContentType,
     pageSize,
     contentLoading,
+    searchQuery, // Add searchQuery to dependencies
   ]);
 
   const handleStatusChange = async (slug: string, newStatus: string) => {
@@ -185,7 +211,8 @@ const ProductsListPage: React.FC = () => {
         currentPages[activeTab],
         pageSize,
         activeTab,
-        contentType
+        contentType,
+        searchQuery
       );
 
       setProducts((prev) => ({
@@ -345,6 +372,71 @@ const ProductsListPage: React.FC = () => {
               + Add Product
             </Link>
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-lg">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className={`h-5 w-5 transition-colors duration-200 ${
+                  isSearching ? 'text-blue-500' : 'text-gray-400'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-12 pr-12 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+              placeholder="Search products by title, description, or category..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            {isSearching && (
+              <div className="absolute inset-y-0 right-12 flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+              </div>
+            )}
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput('');
+                  setSearchQuery('');
+                }}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center group"
+                aria-label="Clear search"
+              >
+                <svg
+                  className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-sm text-gray-600">
+              Searching for:{' '}
+              <span className="font-medium text-gray-900">&ldquo;{searchQuery}&rdquo;</span>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}

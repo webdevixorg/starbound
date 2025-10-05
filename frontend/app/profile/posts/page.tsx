@@ -36,6 +36,9 @@ const PostsListPage: React.FC = () => {
   });
   const [pageSize] = useState<number>(10);
   const [activeTab, setActiveTab] = useState<string>('published');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [postCounts, setPostCounts] = useState<{ [key: string]: number }>({
     draft: 0,
     published: 0,
@@ -75,15 +78,32 @@ const PostsListPage: React.FC = () => {
     }
   }, [contentTypes, contentLoading, pathname]);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setIsSearching(false);
+    }, 500); // Wait 500ms after user stops typing
+
+    if (searchInput !== searchQuery) {
+      setIsSearching(true);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput, searchQuery]);
+
   const loadPostsByStatus = useCallback(
-    async (status: string, page: number) => {
+    async (status: string, page: number, search: string = '') => {
       try {
         setLoading(true);
         const response = await fetchPostsAuth<Post>(
           page,
           pageSize,
           status,
-          matchedContentType.model
+          matchedContentType.model,
+          search
         );
 
         setPosts((prev) => ({
@@ -105,40 +125,44 @@ const PostsListPage: React.FC = () => {
     [matchedContentType?.model, pageSize]
   );
 
-  const loadPostCounts = useCallback(async () => {
-    if (!matchedContentType) return;
+  const loadPostCounts = useCallback(
+    async (search: string = '') => {
+      if (!matchedContentType) return;
 
-    try {
-      const statuses = ['draft', 'published', 'archived', 'deleted'];
-      const countPromises = statuses.map(async (status) => {
-        const response = await fetchPostsAuth<Post>(
-          1,
-          1,
-          status,
-          matchedContentType.model
+      try {
+        const statuses = ['draft', 'published', 'archived', 'deleted'];
+        const countPromises = statuses.map(async (status) => {
+          const response = await fetchPostsAuth<Post>(
+            1,
+            1,
+            status,
+            matchedContentType.model,
+            search
+          );
+          return { status, count: response.count };
+        });
+
+        const results = await Promise.all(countPromises);
+        const counts = results.reduce(
+          (acc, { status, count }) => {
+            acc[status] = count;
+            return acc;
+          },
+          {} as { [key: string]: number }
         );
-        return { status, count: response.count };
-      });
 
-      const results = await Promise.all(countPromises);
-      const counts = results.reduce(
-        (acc, { status, count }) => {
-          acc[status] = count;
-          return acc;
-        },
-        {} as { [key: string]: number }
-      );
-
-      setPostCounts(counts);
-    } catch (error) {
-      console.error('Error fetching post counts:', error);
-    }
-  }, [matchedContentType]);
+        setPostCounts(counts);
+      } catch (error) {
+        console.error('Error fetching post counts:', error);
+      }
+    },
+    [matchedContentType]
+  );
 
   useEffect(() => {
     if (!matchedContentType) return;
-    loadPostsByStatus(activeTab, currentPages[activeTab]);
-    loadPostCounts();
+    loadPostsByStatus(activeTab, currentPages[activeTab], searchQuery);
+    loadPostCounts(searchQuery);
   }, [
     contentTypeId,
     activeTab,
@@ -146,6 +170,7 @@ const PostsListPage: React.FC = () => {
     matchedContentType,
     loadPostCounts,
     loadPostsByStatus,
+    searchQuery, // Add searchQuery to dependencies
   ]);
 
   const handleStatusChange = async (
@@ -197,7 +222,7 @@ const PostsListPage: React.FC = () => {
       }));
 
       // Reload current tab
-      loadPostsByStatus(activeTab, currentPages[activeTab]);
+      loadPostsByStatus(activeTab, currentPages[activeTab], searchQuery);
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Error deleting post');
@@ -209,7 +234,7 @@ const PostsListPage: React.FC = () => {
       ...prev,
       [status]: page,
     }));
-    loadPostsByStatus(status, page);
+    loadPostsByStatus(status, page, searchQuery);
   };
 
   const renderPagination = (status: string) => {
@@ -410,6 +435,71 @@ const PostsListPage: React.FC = () => {
               + Add Post
             </Link>
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-lg">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className={`h-5 w-5 transition-colors duration-200 ${
+                  isSearching ? 'text-blue-500' : 'text-gray-400'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-12 pr-12 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+              placeholder="Search posts by title, description, or content..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            {isSearching && (
+              <div className="absolute inset-y-0 right-12 flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+              </div>
+            )}
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput('');
+                  setSearchQuery('');
+                }}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center group"
+                aria-label="Clear search"
+              >
+                <svg
+                  className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-sm text-gray-600">
+              Searching for:{' '}
+              <span className="font-medium text-gray-900">&ldquo;{searchQuery}&rdquo;</span>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}

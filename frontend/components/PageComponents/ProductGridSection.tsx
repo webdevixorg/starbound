@@ -116,11 +116,12 @@ const ProductGridSection: React.FC<{ filter: string; count: number }> = ({
       {!loadingProducts && !error && products.length > 0 && (
         <div className="col-span-12 md:col-span-8 lg:col-span-8 xl:col-span-9">
           <div className="grid grid-cols-12 gap-5">
-            {products.map((product) => (
+            {products.map((product, index) => (
               <ProductCardGrid
                 key={product.id}
                 product={product}
                 imageHeight={''}
+                index={index}
               />
             ))}
           </div>

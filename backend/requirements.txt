@@ -9,3 +9,4 @@ mysqlclient==2.2.5
 bleach==6.1.0
 dj-database-url>=1.0
 python-dotenv==1.1.1
+supabase>=2.0.0

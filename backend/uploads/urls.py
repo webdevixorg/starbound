@@ -1,8 +1,14 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import ImageViewSet, UserImageViewSet
 
-urlpatterns = [ 
-    path('images/', ImageViewSet.as_view({ 'get': 'list', 'post': 'create' }), name='image-list'),
-    path('images/<int:pk>', ImageViewSet.as_view({'get': 'retrieve', 'patch': 'update', 'delete': 'delete'}), name='image-detail'),
-    path('images/user/', UserImageViewSet.as_view({'get': 'retrieve', 'post': 'create', 'patch': 'update', 'delete': 'delete'}), name='user-image-detail'),
+# Create a router and register our viewsets with it
+# Set trailing_slash=True to ensure URLs end with '/'
+router = DefaultRouter(trailing_slash=True)
+router.register(r'images', ImageViewSet, basename='image')
+router.register(r'user-images', UserImageViewSet, basename='user-image')
+
+# The API URLs are now determined automatically by the router
+urlpatterns = [
+    path('', include(router.urls)),
 ]

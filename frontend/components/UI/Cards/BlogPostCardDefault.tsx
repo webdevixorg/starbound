@@ -11,6 +11,7 @@ interface BlogPostCardProps {
   showExcerpt?: boolean;
   excerptLength?: number;
   className?: string;
+  index?: number; // Add index to determine priority
 }
 
 const BlogPostCardDefault: React.FC<BlogPostCardProps> = ({
@@ -18,6 +19,7 @@ const BlogPostCardDefault: React.FC<BlogPostCardProps> = ({
   variant = 'default',
   showExcerpt = true,
   excerptLength = 75,
+  index = 0,
 }) => {
   return (
     <div key={post.id} className="group cursor-pointer">
@@ -36,11 +38,12 @@ const BlogPostCardDefault: React.FC<BlogPostCardProps> = ({
                   image_path: getPublicImageUrl(
                     'posts',
                     post.id,
-                    post.images?.[0]?.image_path
+                    post.images?.[0]?.image_path + '_medium.webp'
                   ),
                 },
               ]}
               fill
+              priority={index < 2} // First 2 blog posts get priority
             />
           </div>
         </a>

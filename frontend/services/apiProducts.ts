@@ -8,8 +8,15 @@ import { fetchData } from './api';
 const convertToFormData = (data: ProductData): FormData => {
   const formData = new FormData();
   const appendToFormData = (key: string, value: any) => {
+    if (value === null || value === undefined) {
+      return; // Skip null/undefined values
+    }
     if (Array.isArray(value)) {
-      value.forEach((item) => formData.append(key, item.toString()));
+      value.forEach((item) => {
+        if (item !== null && item !== undefined) {
+          formData.append(key, item.toString());
+        }
+      });
     } else {
       formData.append(key, value.toString());
     }
@@ -196,8 +203,15 @@ export const updateProduct = async (
     // Convert PostData to FormData
     const formData = new FormData();
     const appendToFormData = (key: string, value: any) => {
+      if (value === null || value === undefined) {
+        return; // Skip null/undefined values
+      }
       if (Array.isArray(value)) {
-        value.forEach((item) => formData.append(key, item.toString()));
+        value.forEach((item) => {
+          if (item !== null && item !== undefined) {
+            formData.append(key, item.toString());
+          }
+        });
       } else {
         formData.append(key, value.toString());
       }

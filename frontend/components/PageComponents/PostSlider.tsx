@@ -20,12 +20,6 @@ const SlideCard: React.FC<{ post: Post; index: number }> = ({
   post,
   index,
 }) => {
-  const imageUrl = getPublicImageUrl(
-    'posts',
-    post.id,
-    post.images?.[0]?.image_path
-  );
-
   // Get day and month separately with fallback for invalid dates
   const dateObj = new Date(post.created_at);
   const isValidDate = !isNaN(dateObj.getTime());
@@ -42,11 +36,20 @@ const SlideCard: React.FC<{ post: Post; index: number }> = ({
           <SafeImage
             alt={post.title}
             className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-            images={[{ image_path: imageUrl }]}
+            images={[
+              {
+                image_path: getPublicImageUrl(
+                  'posts',
+                  post.id,
+                  post.images?.[0]?.image_path
+                ),
+              },
+            ]}
             fill
-            priority={index < 3}
+            priority={index < 4}
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
+
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
 

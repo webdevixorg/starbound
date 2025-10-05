@@ -188,7 +188,8 @@ export const fetchPostsAuth = async <T = Post>(
   page: number = 1,
   pageSize: number = 10,
   status: string = '',
-  modelName: string
+  modelName: string,
+  search: string = ''
 ): Promise<{
   page_size: number;
   results: T[];
@@ -197,10 +198,15 @@ export const fetchPostsAuth = async <T = Post>(
   previous: string | null;
 }> => {
   try {
+    const params: any = { page, pageSize };
+    if (search) {
+      params.query = search;
+    }
+
     const response = await axiosInstance.get(
       `/${modelName}s/p/by_status/?status=${status}`,
       {
-        params: { page, pageSize },
+        params,
       }
     );
 

@@ -124,12 +124,12 @@ const PostGrid_1: React.FC<{
       {/* Posts Grid */}
       {!loadingPosts && !error && posts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {posts.map((post, index) => (
             <div
               key={post.id}
               className="transform transition-transform duration-300 hover:scale-105"
             >
-              <BlogPostCardDefault post={post} />
+              <BlogPostCardDefault post={post} index={index} />
             </div>
           ))}
         </div>

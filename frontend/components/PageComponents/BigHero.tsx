@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import SafeImage from '../UI/SafeImage';
 import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
-import { getPublicImageUrl } from '@/helpers/media';
+import { getOptimizedImageUrl } from '@/services/images';
 
 const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -144,10 +144,11 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
           fill
           images={[
             {
-              image_path: getPublicImageUrl(
-                'posts',
-                posts[0].id,
-                posts[0].images?.[0]?.image_path
+              image_path: getOptimizedImageUrl(
+                posts[0].images?.[0]?.image_path || '',
+                'full',
+                'post',
+                posts[0].id
               ),
             },
           ]}
@@ -183,10 +184,11 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
                 fill
                 images={[
                   {
-                    image_path: getPublicImageUrl(
-                      'posts',
-                      post.id,
-                      post.images?.[0]?.image_path || ''
+                    image_path: getOptimizedImageUrl(
+                      post.images?.[0]?.image_path || '',
+                      'medium',
+                      'post',
+                      post.id
                     ),
                   },
                 ]}

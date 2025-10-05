@@ -7,6 +7,11 @@ from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from .models import Image
 from .serializers import ImageSerializer, UserImageSerializer
+from .image_optimizer import ImageOptimizer
+import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ImageViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]  # Add authentication
@@ -38,20 +43,18 @@ class ImageViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    @action(detail=True, methods=['get'])
     def retrieve(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         serializer = ImageSerializer(image)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['delete'])
-    def delete(self, request, pk=None):
+    def destroy(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         image.delete()
         return Response(status=204)
 
     @action(detail=True, methods=['patch'], url_path='update')
-    def update(self, request, pk=None):
+    def update_image(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         update_fields = request.data
         
@@ -92,6 +95,67 @@ class ImageViewSet(viewsets.ViewSet):
                 'status': 'No changes detected',
                 'image': ImageSerializer(image).data
             })
+
+    @action(detail=False, methods=['post'], url_path='optimize')
+    def optimize_image(self, request):
+        """
+        Optimize an uploaded image and upload all versions to Supabase.
+        
+        Expected payload:
+        {
+            "image_data": "base64_encoded_image_data",
+            "filename": "original_filename.jpg",
+            "content_type": "product", // or "post", etc.
+            "content_id": 123
+        }
+        
+        Returns information about uploaded images.
+        """
+        try:
+            image_data_b64 = request.data.get('image_data')
+            filename = request.data.get('filename')
+            content_type = request.data.get('content_type')
+            content_id = request.data.get('content_id')
+            
+            if not all([image_data_b64, filename, content_type, content_id]):
+                return Response(
+                    {'error': 'Missing required fields: image_data, filename, content_type, content_id'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Decode base64 image data
+            try:
+                image_data = base64.b64decode(image_data_b64)
+            except Exception as e:
+                return Response(
+                    {'error': f'Invalid base64 image data: {str(e)}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create optimized versions and upload all to Supabase
+            upload_results = ImageOptimizer.create_optimized_versions(
+                image_data, filename, content_type, int(content_id)
+            )
+            
+            if not upload_results:
+                return Response(
+                    {'error': 'Failed to upload images'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            return Response({
+                'status': 'success',
+                'uploaded_images': upload_results,
+                'original_filename': filename,
+                'message': f'Successfully uploaded {len(upload_results)} image versions'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error optimizing and uploading image: {str(e)}")
+            return Response(
+                {'error': f'Image optimization and upload failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 class UserImageViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]  # Add authentication
@@ -123,20 +187,18 @@ class UserImageViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    @action(detail=True, methods=['get'])
     def retrieve(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         serializer = UserImageSerializer(image)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['delete'])
-    def delete(self, request, pk=None):
+    def destroy(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         image.delete()
         return Response(status=204)
 
     @action(detail=True, methods=['patch'], url_path='update')
-    def update(self, request, pk=None):
+    def update_user_image(self, request, pk=None):
         image = get_object_or_404(Image, pk=pk)
         update_fields = request.data
         

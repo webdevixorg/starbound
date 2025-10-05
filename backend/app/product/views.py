@@ -536,7 +536,7 @@ class ProfileProductView(viewsets.ModelViewSet):
                 )
             
             new_status = request.data.get('status')
-            valid_statuses = ['Deleted', 'Active', 'Published', 'Archived', 'Draft']
+            valid_statuses = ['deleted', 'published', 'archived', 'draft']
             
             if new_status not in valid_statuses:
                 return Response(
@@ -696,10 +696,11 @@ class ProfileProductView(viewsets.ModelViewSet):
         """
         Get products by status - AUTHENTICATED ONLY
         Regular users see their own products, admin/staff see all products
-        Usage: /api/products/p/by_status/?status=published OR ?status=deleted
+        Usage: /api/products/p/by_status/?status=published&query=search_term
         """
         try:
             status_param = request.GET.get('status', '').lower()
+            search_query = request.GET.get('query', '').strip()
             
             # Define status mappings
             status_mappings = {
@@ -737,6 +738,14 @@ class ProfileProductView(viewsets.ModelViewSet):
                         **{user_field: user},
                         status__in=status_values
                     ).order_by('-created_at')
+            
+            # Apply search filtering if query is provided
+            if search_query:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query) | 
+                    Q(description__icontains=search_query) |
+                    Q(short_description__icontains=search_query)
+                )
             
             page = self.paginate_queryset(queryset)
             if page is not None:

@@ -538,10 +538,11 @@ class ProfilePostView(viewsets.ModelViewSet):
         """
         Get posts by status - AUTHENTICATED ONLY
         Regular users see their own posts, admin/staff see all posts
-        Usage: /api/posts/p/by_status/?status=published OR ?status=deleted
+        Usage: /api/posts/p/by_status/?status=published&query=search_term
         """
         try:
             status_param = request.GET.get('status', '').lower()
+            search_query = request.GET.get('query', '').strip()
             
             # Define status mappings
             status_mappings = {
@@ -579,6 +580,14 @@ class ProfilePostView(viewsets.ModelViewSet):
                         **{user_field: user},
                         status__in=status_values
                     ).order_by('-created_at')
+            
+            # Apply search filtering if query is provided
+            if search_query:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query) | 
+                    Q(slug__icontains=search_query) |
+                    Q(description__icontains=search_query)
+                )
             
             # Apply pagination
             page = self.paginate_queryset(queryset)
