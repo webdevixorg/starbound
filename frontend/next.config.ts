@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
 
-  // Image optimization
+  // Image optimization .
   images: {
     domains: ['localhost', 'logivis.com'],
     remotePatterns: [
