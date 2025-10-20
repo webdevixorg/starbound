@@ -73,7 +73,7 @@ export const getBestAvailableImageUrl = async (
   }
 
   // Fall back to original image
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
   const bucketName = `${contentType}s`;
   return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${contentId}/${originalFilename}`;
 };

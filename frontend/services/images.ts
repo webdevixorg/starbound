@@ -259,7 +259,7 @@ export const getOptimizedImageUrl = (
   contentType: string,
   contentId: number
 ): string => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
   const bucketName = `${contentType}s`;
 
   // Since originalUrl is now stored without extension, just add the suffix and .webp
@@ -280,7 +280,7 @@ export const getResponsiveImageUrls = (
   contentType: string,
   contentId: number
 ) => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
   const bucketName = `${contentType}s`;
   // For original, we'll default to the medium version since we don't store original files
   const originalFullUrl = getOptimizedImageUrl(
