@@ -26,14 +26,7 @@ jobs:
           # Fetch complete git history for better versioning and changelog generation
           fetch-depth: 0
 
-      # Step 2: Copy environment file
-      - name: Copy environment file
-        run: |
-          # Copy .env file from config to frontend
-          cp /var/www/starbound/config/frontend/.env frontend/.env
-          echo "Environment file copied successfully"
-
-      # Step 3: Set up Node.js environment
+      # Step 2: Set up Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -77,7 +70,14 @@ jobs:
           # Add VPS host to known hosts
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # Step 6: Prepare deployment directory on VPS
+      # Step 6: Copy environment file from VPS
+      - name: Copy environment file from VPS
+        run: |
+          # Copy .env file from VPS using scp
+          scp -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/starbound/config/frontend/.env frontend/.env
+          echo "Environment file copied successfully from VPS"
+
+      # Step 7: Prepare deployment directory on VPS
       - name: Create directories on VPS
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
