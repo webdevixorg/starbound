@@ -2,9 +2,45 @@
 import type { NextConfig } from 'next';
 
 const pathModule = require('path');
-require('dotenv').config({
-  path: pathModule.resolve(__dirname, '../config/frontend/.env'),
-});
+const fs = require('fs');
+
+// Function to load environment variables
+function loadEnvConfig() {
+  const envPath = pathModule.resolve(__dirname, '../config/frontend/.env');
+
+  if (!fs.existsSync(envPath)) {
+    console.error(`Environment file not found at ${envPath}`);
+    throw new Error(`Environment file not found at ${envPath}`);
+  }
+
+  const envConfig = require('dotenv').config({
+    path: envPath,
+  });
+
+  if (envConfig.error) {
+    console.error('Error loading .env file:', envConfig.error);
+    throw envConfig.error;
+  }
+
+  // Verify required environment variables
+  const requiredEnvVars = [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  ];
+
+  const missingVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}`
+    );
+  }
+
+  return envConfig;
+}
+
+// Load environment configuration
+loadEnvConfig();
 
 const nextConfig: NextConfig = {
   // Performance optimizations
