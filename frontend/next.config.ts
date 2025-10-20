@@ -6,6 +6,11 @@ require('dotenv').config({
   path: pathModule.resolve(__dirname, '../config/frontend/.env'),
 });
 
+// Also load .env from the frontend folder
+require('dotenv').config({
+  path: pathModule.resolve(__dirname, './.env'),
+});
+
 const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
