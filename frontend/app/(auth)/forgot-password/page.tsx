@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import NextImage from 'next/image';
 import { requestPasswordReset } from '@/services/api';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
@@ -22,8 +21,7 @@ const ForgotPassword: React.FC = () => {
     try {
       await requestPasswordReset(email);
       setIsSubmitted(true);
-    } catch (err) {
-      console.error('Password reset request failed:', err);
+    } catch (error: any) {
       setIsSubmitted(true);
     } finally {
       setIsLoading(false);
@@ -37,12 +35,9 @@ const ForgotPassword: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="flex items-center justify-center mb-6">
-              <NextImage
+              <img
                 src="/logo.png"
                 alt="Logivis Automotive"
-                width={160}
-                height={64}
-                priority
                 className="h-10 sm:h-16 w-auto"
               />
             </Link>

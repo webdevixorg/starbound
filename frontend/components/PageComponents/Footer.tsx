@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
       {/* Footer content */}
       <div
         id="footer-content"
-        className="relative order-last pt-8 pb-6 xl:pt-16 xl:pb-12 min-h-[400px]"
+        className="relative order-last pt-8 pb-6 xl:pt-16 xl:pb-12"
       >
         <div className="container mx-auto px-4 sm:px-2 lg:px-6 py-4 sm:py-2 lg:py-6">
           <div className="flex flex-wrap flex-row lg:justify-between -mx-3">
@@ -143,17 +143,20 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/about-us">About Us</Link>
+                      <a href="/about-us">About Us</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/career">Career</Link>
+                      <a href="/career">Career</a>
+                    </li>
+                    <li className="py-1 hover:text-white">
+                      <a href="/posts">News & Blog</a>
                     </li>
 
                     <li className="py-1 hover:text-white">
-                      <Link href="/privacy-policy">Privacy Policy</Link>
+                      <a href="/privacy-policy">Privacy Policy</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/terms-of-use">Terms of Use</Link>
+                      <a href="/terms-of-use">Terms of Use</a>
                     </li>
                   </ul>
                 </div>
@@ -164,16 +167,14 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/contact-us">Contact Us</Link>
+                      <a href="/contact-support">Contact Us</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/help-center">Help Center</Link>
+                      <a href="/help-center">Help Center</a>
                     </li>
+
                     <li className="py-1 hover:text-white">
-                      <Link href="/feedback">Feedback</Link>
-                    </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href="/warranty">Warranty & Returns</Link>
+                      <a href="/warranty-and-return">Warranty & Returns</a>
                     </li>
                   </ul>
                 </div>
@@ -184,24 +185,16 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/services/vehicle-diagnostics">
-                        Vehicle Diagnostics
-                      </Link>
+                      <a href="#">Vehicle Diagnostics</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/services/custom-installation">
-                        Custom Installation
-                      </Link>
+                      <a href="#">Custom Installation</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/services/repair-maintenance">
-                        Repair & Maintenance
-                      </Link>
+                      <a href="#">Repair & Maintenance</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/services/software-updates">
-                        Software Updates
-                      </Link>
+                      <a href="#">Software Updates</a>
                     </li>
                   </ul>
                 </div>
@@ -212,19 +205,19 @@ const Footer: React.FC = () => {
                   </h4>
                   <ul>
                     <li className="py-1 hover:text-white">
-                      <Link href="/posts">News & Blog</Link>
+                      <a href="#">User Manuals</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/forum">Community Forum</Link>
+                      <a href="#">Product Reviews</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/product-reviews">Product Reviews</Link>
+                      <a href="#">How-To Videos</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/how-to-videos">How-To Videos</Link>
+                      <a href="/forum">Community Forum</a>
                     </li>
                     <li className="py-1 hover:text-white">
-                      <Link href="/user-manuals">User Manuals</Link>
+                      <a href="#">Feedback</a>
                     </li>
                   </ul>
                 </div>

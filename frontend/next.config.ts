@@ -1,150 +1,67 @@
 /** @type {import('next').NextConfig} */
-import type { NextConfig } from 'next';
-
-const pathModule = require('path');
-require('dotenv').config({
-  path: pathModule.resolve(__dirname, '../config/frontend/.env'),
-});
-
-const nextConfig: NextConfig = {
-  // Performance optimizations
+const nextConfig = {
+  // Prevent CSS caching issues
   experimental: {
     optimizeCss: true,
   },
-
-  // Image optimization
-  images: {
-    domains: ['localhost', 'logivis.com'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-        port: '8000',
-        pathname: '/**',
-      },
-    ],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
-  },
-
-  // Compression
-  compress: true,
-
-  // Bundle analyzer
-  webpack: (
-    config: any,
-    { buildId, dev, isServer, defaultLoaders, webpack }: any
-  ) => {
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-            },
-          },
-        },
-      };
-    }
-
-    // Development optimizations
+  // Force CSS reloads in development
+  webpack: (config: any, { dev }: { dev: boolean }) => {
     if (dev) {
       config.watchOptions = {
         poll: 1000,
         aggregateTimeout: 300,
       };
     }
-
     return config;
   },
-
-  // Security headers
-  headers: async () => {
-    return [
+  images: {
+    domains: [
+      'logivis.com',
+      '127.0.0.1',
+      'localhost',
+      'pxrnjcxsxlridkkqehyo.supabase.co',
+    ],
+    remotePatterns: [
       {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:8000 http://127.0.0.1:8000 https://*.supabase.co; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:8000 http://127.0.0.1:8000 https://*.supabase.co;",
-          },
-        ],
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8000',
+        pathname: '/media/**',
       },
-    ];
-  },
-
-  reactStrictMode: true,
-
-  // Environment variables
-  env: {
-    // API
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    // Supabase
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    // Third-party services
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
-      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET:
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    // Analytics
-    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-  },
-
-  // Redirect www to non-www
-  redirects: async () => {
-    return [
       {
-        source: '/(.*)',
-        has: [
-          {
-            type: 'host',
-            value: 'www.logivis.com',
-          },
-        ],
-        destination: 'https://logivis.com/$1',
-        permanent: true,
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/media/**',
       },
-    ];
-  },
+      {
+        protocol: 'https',
+        hostname: 'logivis.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pxrnjcxsxlridkkqehyo.supabase.co',
+        pathname: '/storage/v1/object/**', // Supabase storage path
+      },
+    ],
+    // Alternative: Use domains (deprecated but still works)
+    // domains: ['127.0.0.1', 'localhost', 'logivis.com', 'your-production-domain.com'],
 
-  // Static file caching
-  poweredByHeader: false,
-  generateEtags: true,
+    // Optional: Configure image formats and quality
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+
+    // Handle image loading errors gracefully
+    unoptimized: false,
+
+    // Improve image loading
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  // Other config options...
 };
 
-export default nextConfig;
+module.exports = nextConfig;

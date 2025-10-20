@@ -8,27 +8,15 @@ import { fetchData } from './api';
 const convertToFormData = (data: ProductData): FormData => {
   const formData = new FormData();
   const appendToFormData = (key: string, value: any) => {
-    if (value === null || value === undefined) {
-      return; // Skip null/undefined values
-    }
     if (Array.isArray(value)) {
-      value.forEach((item) => {
-        if (item !== null && item !== undefined) {
-          formData.append(key, item.toString());
-        }
-      });
+      value.forEach((item) => formData.append(key, item.toString()));
     } else {
       formData.append(key, value.toString());
     }
   };
 
   (Object.keys(data) as (keyof ProductData)[]).forEach((key) => {
-    // Handle categories mapping for Django serializer
-    if (key === 'categories') {
-      appendToFormData('categories_write', data[key]);
-    } else {
-      appendToFormData(key, data[key]);
-    }
+    appendToFormData(key, data[key]);
   });
 
   return formData;
@@ -88,6 +76,77 @@ export const fetchProducts = async (
   }
 };
 
+export const fetchProductsAuth = async (
+  page: number = 1,
+  pageSize: number = 10,
+  contentType: number,
+  filter: string = ''
+): Promise<{
+  page_size: number;
+  results: Product[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}> => {
+  try {
+    const response = await axiosInstance.get(`/${contentType}/p/${filter}`, {
+      params: { page, pageSize },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching ${contentType}:`, error);
+    throw error;
+  }
+};
+
+export const fetchTrashedProducts = async (
+  page: number = 1,
+  pageSize: number = 10,
+  isDeleted: boolean,
+  filter: string = ''
+): Promise<{
+  page_size: number;
+  results: Product[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}> => {
+  try {
+    const response = await axiosInstance.get(`/products/p/${filter}`, {
+      params: { is_deleted: isDeleted, page, page_size: pageSize },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+export const trashProduct = async (slug: string) => {
+  try {
+    const response = await axiosInstance.patch(
+      `/posts/p/${slug}/soft-delete/`,
+      {
+        is_deleted: true,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.status !== 200) {
+      throw new Error('Post deletion failed');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    throw error;
+  }
+};
+
 export const fetchProductsForSections = async (
   filter: string,
   count: number
@@ -105,56 +164,64 @@ export const fetchProductsForSections = async (
   }
 };
 
-export const fetchProductBySlug = async (
-  slug: string,
-  isStaff: boolean = false
-): Promise<Product> => {
+export const fetchProductBySlug = async (slug: string): Promise<Product> => {
   try {
-    const axiosClient = isStaff ? axiosInstance : axiosInstanceNoAuth;
-    const endpoint = isStaff ? `/products/p/${slug}` : `/products/f/${slug}`;
+    const response = await axiosInstanceNoAuth.get(`/products/f/${slug}`);
+    const postData = response.data;
 
-    const response = await axiosClient.get(endpoint);
-    const productData = response.data;
-
-    // Check if categories need to be fetched or are already detailed objects
-    let categories: Category[] = [];
-
-    if (productData.categories && Array.isArray(productData.categories)) {
-      // Check if categories are already objects or just IDs
-      const firstCategory = productData.categories[0];
-
-      if (typeof firstCategory === 'number') {
-        // Categories are IDs, need to fetch details
-        const categoryPromises = productData.categories.map(
-          async (categoryId: number) => {
-            try {
-              const categoryResponse: AxiosResponse =
-                await axiosInstanceNoAuth.get(`/categories/${categoryId}/`);
-              return categoryResponse.data;
-            } catch (error) {
-              console.error(`Error fetching category ${categoryId}:`, error);
-              return null;
-            }
-          }
+    // Fetch category details for each category ID
+    const categoryPromises = postData.categories.map(
+      async (category: number) => {
+        const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
+          `/categories/${category}`
         );
-
-        const fetchedCategories = await Promise.all(categoryPromises);
-        categories = fetchedCategories.filter(Boolean) as Category[]; // Remove null values
-      } else if (typeof firstCategory === 'object' && firstCategory !== null) {
-        // Categories are already objects
-        categories = productData.categories as Category[];
+        return categoryResponse.data;
       }
-    }
+    );
+
+    const categories: Category[] = await Promise.all(categoryPromises);
 
     // Replace response.data.categories with the fetched category details
     const result = {
-      ...productData,
+      ...postData,
       categories: categories,
     };
 
     return result;
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error fetching post:', error);
+    throw error;
+  }
+};
+
+export const fetchProductBySlugAuth = async (
+  slug: string
+): Promise<Product> => {
+  try {
+    const response = await axiosInstance.get(`/products/p/${slug}`);
+    const postData = response.data;
+
+    // Fetch category details for each category ID
+    const categoryPromises = postData.categories.map(
+      async (category: number) => {
+        const categoryResponse: AxiosResponse = await axiosInstanceNoAuth.get(
+          `/categories/${category}`
+        );
+        return categoryResponse.data;
+      }
+    );
+
+    const categories: Category[] = await Promise.all(categoryPromises);
+
+    // Replace response.data.categories with the fetched category details
+    const result = {
+      ...postData,
+      categories: categories,
+    };
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching post:', error);
     throw error;
   }
 };
@@ -175,7 +242,7 @@ export const createProduct = async (data: ProductData): Promise<Product> => {
   try {
     const formData = convertToFormData(data);
     const response = await axiosInstance.post(
-      `/${data.contentType}s/p/`,
+      `/${data.contentType}s/`,
       formData,
       {
         headers: {
@@ -203,27 +270,15 @@ export const updateProduct = async (
     // Convert PostData to FormData
     const formData = new FormData();
     const appendToFormData = (key: string, value: any) => {
-      if (value === null || value === undefined) {
-        return; // Skip null/undefined values
-      }
       if (Array.isArray(value)) {
-        value.forEach((item) => {
-          if (item !== null && item !== undefined) {
-            formData.append(key, item.toString());
-          }
-        });
+        value.forEach((item) => formData.append(key, item.toString()));
       } else {
         formData.append(key, value.toString());
       }
     };
 
     (Object.keys(data) as (keyof ProductData)[]).forEach((key) => {
-      // Handle categories mapping for Django serializer
-      if (key === 'categories') {
-        appendToFormData('categories_write', data[key]);
-      } else {
-        appendToFormData(key, data[key]);
-      }
+      appendToFormData(key, data[key]);
     });
 
     // Send the formData to the backend
@@ -266,7 +321,7 @@ export const fetchRelatedProducts = async (slug: string) => {
 
 export const createOrder = async (transactionData: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(
+    const response = await axiosInstanceNoAuth.post(
       '/product-orders/',
       transactionData,
       {
@@ -298,85 +353,14 @@ export const fetchOrders = async (): Promise<any> => {
   }
 };
 
-export const fetchUserOrders = async (userId: number): Promise<any> => {
-  try {
-    const response = await axiosInstance.get('/product-orders/', {
-      params: { user_id: userId },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching User Orders:', error);
-    throw error;
-  }
-};
-
 export const fetchOrder = async (orderId: number) => {
   try {
-    const response = await axiosInstance.get(`/product-orders/${orderId}/`);
+    const response = await axiosInstanceNoAuth.get(
+      `/product-orders/${orderId}/`
+    );
     return response.data;
   } catch (error) {
     console.error('Error fetching order:', error);
-    throw error;
-  }
-};
-
-export const updateOrderFulfillment = async (
-  orderId: number,
-  fulfillmentStatus: string
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
-      fulfillment: fulfillmentStatus,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating order fulfillment:', error);
-    throw error;
-  }
-};
-
-export const updateOrderTracking = async (
-  orderId: number,
-  trackingNumber: string
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
-      tracking_number: trackingNumber,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating order tracking:', error);
-    throw error;
-  }
-};
-
-export const addOrderNote = async (
-  orderId: number,
-  note: string
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.patch(`/product-orders/${orderId}/`, {
-      notes: note,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error adding order note:', error);
-    throw error;
-  }
-};
-
-export const bulkUpdateOrderStatus = async (
-  orderIds: number[],
-  fulfillmentStatus: string
-): Promise<any> => {
-  try {
-    const response = await axiosInstance.post('/product-orders/bulk-update/', {
-      order_ids: orderIds,
-      fulfillment: fulfillmentStatus,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error bulk updating orders:', error);
     throw error;
   }
 };

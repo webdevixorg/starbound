@@ -2,8 +2,6 @@
 
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
-import NextImage from 'next/image'; // Add this import
-
 import MenuIcon from '@/components/UI/Icons/Menu';
 import { useAuth } from '@/context/AuthContext';
 import SideBarMobile from '@/components/PageComponents/SideBarMobile';
@@ -21,13 +19,10 @@ const DashboardHeader: React.FC = () => {
       <div className="flex items-center justify-between px-4 py-3 md:px-8">
         {/* Logo */}
         <Link href="/profile/dashboard" className="flex items-center gap-2">
-          <NextImage
+          <img
             src="/logo.png"
             alt="Logivis Automotive"
-            width={120}
-            height={80}
-            priority
-            className="h-14 w-auto"
+            className="h-10 w-auto"
           />
         </Link>
 

@@ -47,6 +47,8 @@ export default function TermsOfUsePage() {
   const companyEmail =
     process.env.NEXT_PUBLIC_COMPANY_GENERAL_EMAIL || 'info@starbound.com';
   const websiteName = process.env.NEXT_PUBLIC_WEBSITE_NAME || 'starbound.com';
+  const websiteUrl =
+    process.env.NEXT_PUBLIC_WEBSITE_URL || 'https://starbound.com';
 
   return (
     <>
@@ -466,7 +468,7 @@ export default function TermsOfUsePage() {
                           </h4>
                           <ul className="space-y-2 text-orange-800">
                             <li>• Ensure content legality</li>
-                            <li>• Respect others&apos; rights</li>
+                            <li>• Respect others' rights</li>
                             <li>• Provide accurate information</li>
                             <li>• Follow community guidelines</li>
                           </ul>
@@ -494,13 +496,13 @@ export default function TermsOfUsePage() {
                           </svg>
                           <div>
                             <h3 className="text-lg font-semibold text-yellow-900 mb-2">
-                              &apos;As Is&apos; Service
+                              "As Is" Service
                             </h3>
                             <p className="text-yellow-800 text-lg">
-                              Our service is provided &apos;as is&apos; without
-                              warranties of any kind, either express or implied.
-                              We do not warrant that the service will be
-                              uninterrupted, secure, or error-free.
+                              Our service is provided "as is" without warranties
+                              of any kind, either express or implied. We do not
+                              warrant that the service will be uninterrupted,
+                              secure, or error-free.
                             </p>
                           </div>
                         </div>

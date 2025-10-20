@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signup } from '@/services/api';
 import UserIcon from '@/components/UI/Icons/User';
@@ -42,7 +41,6 @@ const SignUp: React.FC = () => {
         last_name: '',
         password,
         groups: [2],
-        role: '',
       });
 
       setSuccess('Account created successfully! Redirecting to sign in...');
@@ -51,8 +49,7 @@ const SignUp: React.FC = () => {
       setTimeout(() => {
         navigate.push('/signin');
       }, 5000);
-    } catch (err) {
-      console.error('Registration failed:', err);
+    } catch (error) {
       setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -89,12 +86,10 @@ const SignUp: React.FC = () => {
           <div className="max-w-md w-full">
             {/* Logo */}
             <Link href="/" className="flex items-center justify-center mb-6">
-              <Image
+              <img
                 src="/logo.png"
                 alt="Logivis Automotive"
                 className="h-10 sm:h-16 w-auto"
-                width={64}
-                height={40}
               />
             </Link>
 

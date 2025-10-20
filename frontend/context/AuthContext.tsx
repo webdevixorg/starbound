@@ -54,34 +54,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setProfile(profileData);
 
       if (Array.isArray(userData?.groups)) {
-        if (userData.groups.includes(1)) {
-          setRole('admin'); // Group 1 = Admin
-        } else if (userData.groups.includes(2)) {
-          setRole('staff'); // Group 2 = Staff
-        } else if (userData.groups.includes(3)) {
-          setRole('client'); // Group 3 = Client
-        } else {
-          setRole('client'); // default to client
-        }
+        setRole(userData.groups.includes(1) ? 'admin' : 'staff');
       } else {
         setRole(null);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching user details:', error);
-
-      // If it's an authentication error (401/403), sign out the user
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        setIsAuthenticated(false);
-        setUser(null);
-        setRole(null);
-        setProfile(null);
-      } else {
-        // For other errors, just clear user data but keep authentication state
-        setUser(null);
-        setRole(null);
-      }
+      setUser(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -92,17 +72,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const token = localStorage.getItem('access_token');
     if (token) {
       if (isTokenExpired(token)) {
-        // Clear expired token without triggering confirmSignOut to avoid redirect loop
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        setIsAuthenticated(false);
-        setUser(null);
-        setRole(null);
+        confirmSignOut();
       } else {
         setIsAuthenticated(true);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   // Fetch user details when authentication status changes to true

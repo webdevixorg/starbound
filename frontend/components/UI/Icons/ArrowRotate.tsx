@@ -1,32 +1,17 @@
+import React from 'react';
+
 interface ArrowRotateIconProps {
-  isExpanded: boolean;
-  className?: string;
-  onClick?: () => void;
-  size?: number;
-  stroke?: string; // Declare as optional
+  rotation?: number; // Add this line
 }
 
-const ArrowRotateIcon: React.FC<ArrowRotateIconProps> = ({
-  isExpanded,
-  className,
-  onClick,
-  size = 24,
-  stroke = '#000', // Set default here
-}) => {
+const ArrowRotateIcon: React.FC<ArrowRotateIconProps> = ({ rotation }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      stroke={stroke}
       viewBox="0 0 24 24"
       fill="currentColor"
-      className={`${
-        className
-      } w-3 h-3 text-gray-400 transition-transform duration-200 ${
-        isExpanded ? 'rotate-180' : 'rotate-90'
-      }`}
-      onClick={onClick}
-      width={size}
-      height={size}
+      aria-hidden="true"
+      className={`ml-1 -mr-1 h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out rotate-${rotation}`}
     >
       <path
         fillRule="evenodd"

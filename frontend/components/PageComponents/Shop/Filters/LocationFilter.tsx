@@ -14,7 +14,7 @@ interface LocationFilterProps {
   onBack: (type: 'locations') => void;
 }
 
-const LocationFilter = ({
+const LocationFilter: React.FC<LocationFilterProps> = ({
   locations,
   subLocations,
   filters,
@@ -22,7 +22,7 @@ const LocationFilter = ({
   onToggle,
   onFilterChange,
   onBack,
-}: LocationFilterProps) => {
+}) => {
   return (
     <CollapsibleSection title="Location" open={isOpen} setOpen={onToggle}>
       <div className="max-h-96 overflow-y-auto rounded-md scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 dark:scrollbar-track-gray-800 dark:scrollbar-thumb-gray-600 hover:dark:scrollbar-thumb-gray-500 transition-all duration-200">

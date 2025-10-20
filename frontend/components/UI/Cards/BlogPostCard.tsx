@@ -35,7 +35,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
   };
 
   return (
-    <div className={`${cardClasses[variant]} ${className}`}>
+    <article className={`${cardClasses[variant]} ${className}`}>
       {/* Image Section */}
       <div className="relative flex-none">
         <div className={imageClasses[variant]}>
@@ -45,7 +45,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
           >
             <SafeImage
               alt={post.title}
-              className="object-cover absolute inset-0 m-0 w-full h-full"
+              className="object-cover absolute inset-0 w-full h-full"
               images={[
                 {
                   image_path: getPublicImageUrl(
@@ -68,7 +68,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
         <div className="flex items-center gap-x-4 mb-2">
           <time
             dateTime={post.created_at}
-            className="text-xs leading-6 text-gray-600"
+            className="text-sm leading-6 text-gray-600"
           >
             {formatDate(post.created_at)}
           </time>
@@ -98,7 +98,7 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
 
         {/* Excerpt */}
         {showExcerpt && post.description && (
-          <div
+          <p
             className={`leading-6 text-gray-600 ${
               variant === 'featured' ? 'text-base mt-3' : 'text-sm mt-2'
             }`}
@@ -108,10 +108,10 @@ const BlogPostCard: React.FC<BlogPostCardProps> = ({
               maxLength={excerptLength}
               showReadMore={false}
             />
-          </div>
+          </p>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 

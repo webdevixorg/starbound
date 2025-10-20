@@ -31,6 +31,42 @@ export const getMatchedContentType = (
 };
 
 /**
+ * Component that fetches and displays the name of a category based on its ID.
+ *
+ * @param categoryId - the ID of the category
+ */
+export const CategoryName: React.FC<{ categoryId: any }> = ({ categoryId }) => {
+  const [name, setName] = useState<string>(''); // State to hold the category name
+
+  /**
+   * Fetches the category name from the backend by ID.
+   * @param id - category ID
+   * @returns category name as string
+   */
+  const getCategoryName = async (id: string): Promise<string> => {
+    try {
+      const response = await axiosInstance.get(`/categories/${id}/`);
+      return response.data.name; // Extract the name from response
+    } catch (error) {
+      console.error(`Error fetching category with ID ${id}:`, error);
+      throw new Error('Failed to fetch category name. Please try again later.');
+    }
+  };
+
+  // Fetch category name when component mounts or when categoryId changes
+  useEffect(() => {
+    const fetchName = async () => {
+      const categoryName = await getCategoryName(categoryId);
+      setName(categoryName); // Update state with fetched name
+    };
+
+    fetchName();
+  }, [categoryId]);
+
+  return <>{name}</>; // Display the category name
+};
+
+/**
  * Recursively searches for a category or its child by slug.
  *
  * @param categories - list of top-level categories

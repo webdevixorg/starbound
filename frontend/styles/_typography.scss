@@ -17,8 +17,8 @@ article {
   h3,
   h4 {
     font-weight: 600;
-    margin-top: 0.25rem;
-    margin-bottom: 0.25rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
     line-height: 1.2;
   }
 
@@ -40,6 +40,7 @@ article {
 
   p {
     font-size: 1rem;
+    margin-bottom: 1rem;
     color: #343a40;
   }
 
@@ -88,7 +89,7 @@ article {
 
   a {
     color: #0d6efd;
-    text-decoration: none;
+    text-decoration: underline;
 
     &:hover {
       color: #0a58ca;
@@ -116,6 +117,7 @@ article {
   img {
     max-width: 100%;
     height: auto;
+    margin: 1rem 0;
     border-radius: 0.375rem;
   }
 

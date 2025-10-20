@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Popover, Transition } from '@headlessui/react';
-import { usePathname, useSearchParams } from 'next/navigation';
 import ArrowDownIcon from '@/components/UI/Icons/ArrowDown';
 import MegaMenu from './MegaMenu';
-import Link from 'next/link';
 
 interface SubItem {
   label: string;
@@ -12,7 +10,6 @@ interface SubItem {
 
 interface MenuItem {
   title: string;
-  href: string;
   items: SubItem[];
 }
 
@@ -41,13 +38,6 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  // Close menu when URL changes
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname, searchParams]);
 
   const handleMouseEnter = () => {
     setIsOpen(true);
@@ -67,22 +57,23 @@ const Navigation: React.FC<NavigationProps> = ({ item }) => {
       {() => (
         <>
           {item.direct ? (
-            <Link
-              href={item.href}
+            <a
               className="inline-flex items-center text-base text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full 
-      hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
+              hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
+              href={item.href}
             >
               {item.label}
-            </Link>
+            </a>
           ) : (
             <Popover.Button as="div" className="flex items-center">
-              <Link
-                href={item.href}
+              <a
                 className="inline-flex items-center text-base text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full 
-      hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
+              hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition duration-150 ease-in-out"
+                href={item.href}
               >
-                {item.label} <ArrowDownIcon />
-              </Link>
+                {item.label}
+                <ArrowDownIcon />
+              </a>
             </Popover.Button>
           )}
           {item.subItems && (

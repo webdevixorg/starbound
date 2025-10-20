@@ -10,15 +10,14 @@ import React, {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetchConversations, fetchMessages, sendMessage } from '@/services/api';
-import { Conversation, Message } from '@/types/types';
+import { Conversation, Message, Participant } from '@/types/types';
 import LoadingSpinner from '@/components/Common/Loading';
-import SafeImage from '@/components/UI/SafeImage';
+import ProfileImage from '@/components/UI/ProfileImage/ProfileImage';
 import ImageIcon from '@/components/UI/Icons/Image';
 import PaperPlaneIcon from '@/components/UI/Icons/PaperPlane';
 import PaperClipIcon from '@/components/UI/Icons/PaperClip';
 import SmileIcon from '@/components/UI/Icons/Smile';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import { getPublicImageUrl } from '@/helpers/media';
 
 // Types for better type safety
 interface CachedMessages {
@@ -69,6 +68,39 @@ export default function ChatPage() {
       router.push('/auth/login');
     }
   }, [user, router, state.isClient]);
+
+  // Fetch initial conversations
+  useEffect(() => {
+    if (!state.isClient || !user) return;
+
+    const fetchInitialData = async () => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const initialConversations = await fetchConversations();
+        setState((prev) => ({
+          ...prev,
+          conversations: initialConversations,
+          isLoading: false,
+        }));
+
+        // Auto-select first conversation if available
+        if (initialConversations.length > 0) {
+          await handleConversationSelect(initialConversations[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to load conversations. Please try again.',
+          showErrorModal: true,
+          isLoading: false,
+        }));
+      }
+    };
+
+    fetchInitialData();
+  }, [state.isClient, user]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -123,47 +155,9 @@ export default function ChatPage() {
     [state.cachedMessages]
   );
 
-  // Fetch initial conversations
-  useEffect(() => {
-    if (!state.isClient || !user) return;
-
-    const fetchInitialData = async () => {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-      try {
-        const initialConversations = await fetchConversations();
-        setState((prev) => ({
-          ...prev,
-          conversations: initialConversations,
-          isLoading: false,
-        }));
-
-        // Auto-select first conversation if available
-        if (initialConversations.length > 0) {
-          await handleConversationSelect(initialConversations[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        setState((prev) => ({
-          ...prev,
-          error: 'Failed to load conversations. Please try again.',
-          showErrorModal: true,
-          isLoading: false,
-        }));
-      }
-    };
-
-    fetchInitialData();
-  }, [state.isClient, user, handleConversationSelect]);
-
   // Handle sending messages
   const handleSendMessage = useCallback(async () => {
-    if (
-      !state.selectedConversation ||
-      !profile ||
-      !profile.user ||
-      !state.messageInput.trim()
-    ) {
+    if (!state.selectedConversation || !profile || !state.messageInput.trim()) {
       return;
     }
 
@@ -250,9 +244,7 @@ export default function ChatPage() {
   // Utility functions
   const renderMessageClass = useCallback(
     (message: Message): string => {
-      return profile &&
-        profile.user &&
-        message.sender === Number(profile.user.id)
+      return profile && message.sender === Number(profile.user.id)
         ? 'sent'
         : 'received';
     },
@@ -272,9 +264,7 @@ export default function ChatPage() {
     (conversation: Conversation): string => {
       if (conversation.participants.length === 2) {
         const otherParticipant = conversation.participants.find(
-          (participant) =>
-            profile?.user?.id !== undefined &&
-            participant.id !== profile.user.id
+          (participant) => participant.id !== profile?.user.id
         );
         return otherParticipant
           ? `${otherParticipant.first_name} ${otherParticipant.last_name}`
@@ -294,69 +284,51 @@ export default function ChatPage() {
   }, []);
 
   // Memoized components
-  const ProfileImageInMessage = useMemo(() => {
-    const Component = React.memo<{ message: Message }>(({ message }) => {
-      const participant = state.selectedConversation?.participants.find(
-        (p) => p.id === message.sender
-      );
+  const ProfileImageInMessage = useMemo(
+    () =>
+      React.memo<{ message: Message }>(({ message }) => {
+        const participant = state.selectedConversation?.participants.find(
+          (p) => p.id === message.sender
+        );
 
-      if (!participant || !profile) return null;
+        if (!participant || !profile) return null;
 
-      return (
-        <div className="chat-bubble-img relative block mr-2">
-          <SafeImage
-            alt={participant.first_name + ' ' + participant.last_name}
-            className="relative rounded-full h-10 w-10 object-cover"
-            images={[
-              {
-                image_path: getPublicImageUrl(
-                  'profiles',
-                  participant.id,
-                  participant.image
-                ),
-              },
-            ]}
-            width={400}
-            height={400}
-          />
-        </div>
-      );
-    });
-    Component.displayName = 'ProfileImageInMessage';
-    return Component;
-  }, [state.selectedConversation, profile]);
+        return (
+          <div className="chat-bubble-img relative block mr-2">
+            <ProfileImage
+              alt={`${participant.first_name} ${participant.last_name}`}
+              src={
+                typeof participant.image === 'string' ? participant.image : ''
+              }
+            />
+          </div>
+        );
+      }),
+    [state.selectedConversation, profile]
+  );
 
-  const ProfileImageInList = useMemo(() => {
-    const Component = React.memo<{ conversation: Conversation }>(
-      ({ conversation }) => {
+  const ProfileImageInList = useMemo(
+    () =>
+      React.memo<{ conversation: Conversation }>(({ conversation }) => {
         const otherParticipant = conversation.participants.find(
-          (participant) => participant.id !== profile?.user?.id
+          (participant) => participant.id !== profile?.user.id
         );
 
         if (!otherParticipant) return null;
 
         return (
-          <SafeImage
-            alt={otherParticipant.first_name + ' ' + otherParticipant.last_name}
-            className="relative rounded-full h-10 w-10 object-cover"
-            images={[
-              {
-                image_path: getPublicImageUrl(
-                  'profiles',
-                  otherParticipant.id,
-                  otherParticipant.image
-                ),
-              },
-            ]}
-            width={400}
-            height={400}
+          <ProfileImage
+            alt={`${otherParticipant.first_name} ${otherParticipant.last_name}`}
+            src={
+              typeof otherParticipant.image === 'string'
+                ? otherParticipant.image
+                : ''
+            }
           />
         );
-      }
-    );
-    Component.displayName = 'ProfileImageInList';
-    return Component;
-  }, [profile]);
+      }),
+    [profile]
+  );
 
   // Render messages with date headers
   const renderMessagesWithDateHeaders = useCallback(
@@ -427,7 +399,7 @@ export default function ChatPage() {
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="container">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -440,7 +412,7 @@ export default function ChatPage() {
 
   if (state.isLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
@@ -455,7 +427,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <div className="">
         {/* Header */}
         <div className="p-4">

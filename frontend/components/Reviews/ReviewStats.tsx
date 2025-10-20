@@ -7,8 +7,8 @@ interface ReviewStatsProps {
 
 export const ReviewStats: React.FC<ReviewStatsProps> = ({ reviews }) => {
   const totalReviews = reviews.length;
-  const pendingReviews = reviews.filter((r) => r.status === 0).length; // Assuming 0 is pending
-  const approvedReviews = reviews.filter((r) => r.status === 1).length; // Assuming 1 is approved
+  const pendingReviews = reviews.filter((r) => !r.approved).length;
+  const approvedReviews = reviews.filter((r) => r.approved).length;
   const averageRating =
     totalReviews > 0
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(

@@ -121,7 +121,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between ml-2">
+              <div className="flex items-center justify-between mb-3">
                 <button
                   onClick={onClearAllFilters}
                   className="text-sm text-blue-600 hover:text-blue-800"

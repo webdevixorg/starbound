@@ -3,8 +3,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
-import SafeImage from '@/components/UI/SafeImage';
-
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 import { formatCurrency } from '@/helpers/common';
 import { useModal } from '@/context/ModalAlertContext';
@@ -84,16 +82,10 @@ const CartPage: React.FC = () => {
         {state.items.length === 0 ? (
           <div className="p-6">
             <div className="flex flex-col items-center text-center">
-              <SafeImage
-                alt={'Empty Cart'}
+              <img
+                src="https://i.imgur.com/dCdflKN.png"
+                alt="Empty Cart"
                 className="w-32 h-32 mb-6"
-                images={[
-                  {
-                    image_path: `https://i.imgur.com/dCdflKN.png`,
-                  },
-                ]}
-                width={40}
-                height={40}
               />
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
                 Your Cart is Empty
@@ -147,16 +139,10 @@ const CartPage: React.FC = () => {
                       {/* Product image and name */}
                       <div className="flex-1 flex items-center ml-4">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <SafeImage
-                            alt={item.name}
+                          <img
                             className="h-10 w-10 rounded-full"
-                            images={[
-                              {
-                                image_path: item.image,
-                              },
-                            ]}
-                            width={400}
-                            height={300}
+                            src={item.image}
+                            alt={item.name}
                           />
                         </div>
                         <div className="ml-4 text-sm font-medium text-gray-900">

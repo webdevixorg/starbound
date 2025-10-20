@@ -152,7 +152,6 @@ interface CommonParams {
 }
 
 export interface Post extends CommonParams {
-  is_featured: unknown;
   id: number;
   categories: Category[];
   author: Author;
@@ -189,17 +188,6 @@ export interface BaseProduct {
   featured_image?: string;
 }
 
-// Entity interface (for brands, models, etc.)
-export interface Entity {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  type: 'brand' | 'model' | 'variant' | 'other';
-  parent?: number;
-  children?: Entity[];
-}
-
 // Product pricing and inventory
 export interface ProductPricing {
   price: number;
@@ -222,13 +210,6 @@ export interface ProductMetadata {
     name: string;
     value: string;
   }>;
-  brand?: number; // Brand ID
-  model?: number; // Model ID
-  brand_detail?: Entity; // Full brand object
-  model_detail?: Entity; // Full model object
-  brand_name?: string; // Brand name
-  model_name?: string; // Model name
-  full_model_name?: string; // Brand + Model name
 }
 
 // Location interfaces
@@ -257,8 +238,6 @@ export interface ProductData
     ProductLocation,
     ContentManagement {
   categories: number[]; // For API submission (category IDs)
-  brand?: number; // Brand ID for API submission
-  model?: number; // Model ID for API submission
 }
 
 export interface Product
@@ -456,32 +435,4 @@ export interface Visit {
   item_type: string;
   timestamp: string; // ISO string
   [key: string]: any; // extra fields allowed
-}
-
-export interface ForumPost {
-  id: number;
-  title: string;
-  slug: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-  };
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-  replies_count: number;
-  views_count: number;
-}
-
-export interface ForumPostsResponse {
-  results: ForumPost[];
-  count: number;
-  next: string | null;
-  previous: string | null;
 }

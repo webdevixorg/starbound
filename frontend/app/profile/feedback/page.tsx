@@ -5,19 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import {
-  feedbackAPI,
-  CreateFeedbackData,
-  supportUtils,
-} from '@/services/apiSupport';
+import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
 interface FeedbackFormData {
-  subject: string;
-  contact_email: string;
-  feedback_type: string;
-  overall_rating: number;
-  message: string;
-  allow_contact: boolean;
+  name: string;
+  email: string;
+  category: string;
+  rating: number;
+  feedback: string;
+  suggestions?: string;
 }
 
 interface FeedbackState {
@@ -31,12 +27,13 @@ interface FeedbackState {
 }
 
 const FEEDBACK_CATEGORIES = [
-  { value: 'general', label: 'General Feedback' },
-  { value: 'bug_report', label: 'Bug Report' },
-  { value: 'feature_request', label: 'Feature Request' },
-  { value: 'improvement', label: 'Improvement Suggestion' },
-  { value: 'compliment', label: 'Compliment' },
-  { value: 'complaint', label: 'Complaint' },
+  { value: 'general', label: 'General Experience' },
+  { value: 'website', label: 'Website/App Performance' },
+  { value: 'booking', label: 'Booking Process' },
+  { value: 'customer-service', label: 'Customer Service' },
+  { value: 'destinations', label: 'Destinations & Activities' },
+  { value: 'pricing', label: 'Pricing & Value' },
+  { value: 'other', label: 'Other' },
 ] as const;
 
 const RATING_OPTIONS = [
@@ -52,12 +49,12 @@ export default function FeedbackPage() {
   const { user, profile } = useAuth();
 
   const [formData, setFormData] = useState<FeedbackFormData>({
-    subject: '',
-    contact_email: '',
-    feedback_type: 'general',
-    overall_rating: 5,
-    message: '',
-    allow_contact: true,
+    name: '',
+    email: '',
+    category: 'general',
+    rating: 5,
+    feedback: '',
+    suggestions: '',
   });
 
   const [state, setState] = useState<FeedbackState>({
@@ -78,17 +75,19 @@ export default function FeedbackPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (state.isClient && !user) {
-      router.push('/signin');
+      router.push('/auth/login');
     }
   }, [user, router, state.isClient]);
 
   // Pre-fill form with user data
   useEffect(() => {
-    if (state.isClient && user && profile && profile.user) {
+    if (state.isClient && user && profile) {
       setFormData((prev) => ({
         ...prev,
-        subject: prev.subject,
-        contact_email: profile.user?.email || prev.contact_email,
+        name:
+          `${profile.user.first_name} ${profile.user.last_name}`.trim() ||
+          prev.name,
+        email: profile.user.email || prev.email,
       }));
 
       setState((prev) => ({ ...prev, loading: false }));
@@ -104,15 +103,10 @@ export default function FeedbackPage() {
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >
     ) => {
-      const { name, value, type } = e.target;
+      const { name, value } = e.target;
       setFormData((prev) => ({
         ...prev,
-        [name]:
-          type === 'number' || name === 'overall_rating'
-            ? parseInt(value)
-            : type === 'checkbox'
-              ? (e.target as HTMLInputElement).checked
-              : value,
+        [name]: name === 'rating' ? parseInt(value) : value,
       }));
     },
     []
@@ -120,7 +114,7 @@ export default function FeedbackPage() {
 
   // Handle rating selection
   const handleRatingSelect = useCallback((rating: number) => {
-    setFormData((prev) => ({ ...prev, overall_rating: rating }));
+    setFormData((prev) => ({ ...prev, rating }));
   }, []);
 
   // Submit feedback
@@ -129,9 +123,9 @@ export default function FeedbackPage() {
       e.preventDefault();
 
       if (
-        !formData.subject.trim() ||
-        !formData.contact_email.trim() ||
-        !formData.message.trim()
+        !formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.feedback.trim()
       ) {
         setState((prev) => ({
           ...prev,
@@ -149,27 +143,31 @@ export default function FeedbackPage() {
       }));
 
       try {
-        const feedbackData: CreateFeedbackData = {
-          feedback_type: formData.feedback_type,
-          subject: formData.subject,
-          message: formData.message,
-          overall_rating: formData.overall_rating,
-          contact_email: formData.contact_email,
-          allow_contact: formData.allow_contact,
-          browser_info: supportUtils.getBrowserInfo(),
-          page_url: supportUtils.getCurrentPageUrl(),
-        };
+        // TODO: Replace with actual API call to submit feedback
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            userId: user?.id,
+            timestamp: new Date().toISOString(),
+          }),
+        });
 
-        await feedbackAPI.createFeedback(feedbackData);
+        if (!response.ok) {
+          throw new Error('Failed to submit feedback');
+        }
 
         // Success - reset form and show success message
         setFormData((prev) => ({
-          subject: '',
-          contact_email: prev.contact_email, // Keep user's email
-          feedback_type: 'general',
-          overall_rating: 5,
-          message: '',
-          allow_contact: true,
+          name: prev.name, // Keep user's name
+          email: prev.email, // Keep user's email
+          category: 'general',
+          rating: 5,
+          feedback: '',
+          suggestions: '',
         }));
 
         setState((prev) => ({
@@ -178,52 +176,43 @@ export default function FeedbackPage() {
             'Thank you for your feedback! Your input helps us improve our services.',
           showSuccessModal: true,
         }));
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error submitting feedback:', error);
-
-        const errorMessage =
-          error instanceof Error &&
-          'response' in error &&
-          typeof (error as { response?: { data?: { message?: string } } })
-            .response?.data?.message === 'string'
-            ? (error as { response: { data: { message: string } } }).response
-                .data.message
-            : 'Failed to submit your feedback. Please try again or contact us directly.';
-
         setState((prev) => ({
           ...prev,
-          error: errorMessage,
+          error:
+            'Failed to submit your feedback. Please try again or contact us directly.',
           showErrorModal: true,
         }));
       } finally {
         setState((prev) => ({ ...prev, submitting: false }));
       }
     },
-    [formData]
+    [formData, user]
   );
 
   // Reset form
   const handleReset = useCallback(() => {
     setFormData((prev) => ({
-      subject: '',
-      contact_email: prev.contact_email, // Keep user's email
-      feedback_type: 'general',
-      overall_rating: 5,
-      message: '',
-      allow_contact: true,
+      name: prev.name, // Keep user's name
+      email: prev.email, // Keep user's email
+      category: 'general',
+      rating: 5,
+      feedback: '',
+      suggestions: '',
     }));
   }, []);
 
   // Get selected rating details
   const selectedRating =
-    RATING_OPTIONS.find((r) => r.value === formData.overall_rating) ||
+    RATING_OPTIONS.find((r) => r.value === formData.rating) ||
     RATING_OPTIONS[4];
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="bg-white rounded-lg shadow p-6">
@@ -244,8 +233,8 @@ export default function FeedbackPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -259,14 +248,26 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Share Your Feedback
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Help us improve by sharing your experience and suggestions.
+              </p>
+            </div>
+
+            <button
+              onClick={() => router.push('/profile')}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
               <svg
-                className="w-6 h-6 text-white"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -275,18 +276,11 @@ export default function FeedbackPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  d="M15 19l-7-7 7-7"
                 />
               </svg>
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Share Your Feedback
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Help us improve by sharing your experience and suggestions.
-              </p>
-            </div>
+              Back to Profile
+            </button>
           </div>
         </div>
 
@@ -342,22 +336,21 @@ export default function FeedbackPage() {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Subject */}
+                  {/* Name */}
                   <div>
                     <label
-                      htmlFor="subject"
+                      htmlFor="name"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Subject *
+                      Full Name *
                     </label>
                     <input
                       type="text"
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
+                      id="name"
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
                       disabled={state.submitting}
-                      placeholder="Brief description of your feedback"
                       className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       required
                     />
@@ -366,16 +359,16 @@ export default function FeedbackPage() {
                   {/* Email */}
                   <div>
                     <label
-                      htmlFor="contact_email"
+                      htmlFor="email"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
                       Email Address *
                     </label>
                     <input
                       type="email"
-                      id="contact_email"
-                      name="contact_email"
-                      value={formData.contact_email}
+                      id="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
                       disabled={state.submitting}
                       className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -384,18 +377,18 @@ export default function FeedbackPage() {
                   </div>
                 </div>
 
-                {/* Feedback Type */}
+                {/* Feedback Category */}
                 <div>
                   <label
-                    htmlFor="feedback_type"
+                    htmlFor="category"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Feedback Type
+                    Feedback Category
                   </label>
                   <select
-                    id="feedback_type"
-                    name="feedback_type"
-                    value={formData.feedback_type}
+                    id="category"
+                    name="category"
+                    value={formData.category}
                     onChange={handleChange}
                     disabled={state.submitting}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -421,7 +414,7 @@ export default function FeedbackPage() {
                         onClick={() => handleRatingSelect(rating.value)}
                         disabled={state.submitting}
                         className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
-                          formData.overall_rating === rating.value
+                          formData.rating === rating.value
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -441,19 +434,19 @@ export default function FeedbackPage() {
                   </p>
                 </div>
 
-                {/* Message */}
+                {/* Feedback */}
                 <div>
                   <label
-                    htmlFor="message"
+                    htmlFor="feedback"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Your Feedback *
                   </label>
                   <textarea
-                    id="message"
-                    name="message"
+                    id="feedback"
+                    name="feedback"
                     rows={6}
-                    value={formData.message}
+                    value={formData.feedback}
                     onChange={handleChange}
                     disabled={state.submitting}
                     placeholder="Please share your experience, what you liked, what could be improved, or any issues you encountered..."
@@ -462,21 +455,27 @@ export default function FeedbackPage() {
                   />
                 </div>
 
-                {/* Allow Contact Checkbox */}
+                {/* Suggestions */}
                 <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="allow_contact"
-                      checked={formData.allow_contact}
-                      onChange={handleChange}
-                      disabled={state.submitting}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      Allow our team to contact me about this feedback
+                  <label
+                    htmlFor="suggestions"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Suggestions for Improvement
+                    <span className="text-gray-500 text-xs ml-1">
+                      (Optional)
                     </span>
                   </label>
+                  <textarea
+                    id="suggestions"
+                    name="suggestions"
+                    rows={4}
+                    value={formData.suggestions}
+                    onChange={handleChange}
+                    disabled={state.submitting}
+                    placeholder="Any specific suggestions or ideas for how we can improve our services?"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors resize-vertical"
+                  />
                 </div>
 
                 {/* Form Actions */}
@@ -494,34 +493,15 @@ export default function FeedbackPage() {
                     type="submit"
                     disabled={
                       state.submitting ||
-                      !formData.subject.trim() ||
-                      !formData.contact_email.trim() ||
-                      !formData.message.trim()
+                      !formData.name.trim() ||
+                      !formData.email.trim() ||
+                      !formData.feedback.trim()
                     }
                     className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {state.submitting ? (
                       <>
-                        <svg
-                          className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
+                        <InlineLoaderIcon className="mr-2" />
                         Submitting...
                       </>
                     ) : (
@@ -557,8 +537,7 @@ export default function FeedbackPage() {
               <li>• Helps us understand your experience and needs</li>
               <li>• Guides our product development and service improvements</li>
               <li>
-                • Ensures we&apos;re delivering the best possible travel
-                experience
+                • Ensures we're delivering the best possible travel experience
               </li>
               <li>• Connects us with our community of travelers</li>
             </ul>

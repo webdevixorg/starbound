@@ -1,6 +1,5 @@
-'use client';
+"use client";
 
-import Link from 'next/link'; // Add this import
 import { Post, Product } from '@/types/types';
 import { usePathname } from 'next/navigation';
 
@@ -16,7 +15,7 @@ const BreadcrumbsComponent = ({
   optional,
 }: BreadcrumbsProps) => {
   const pathname = usePathname();
-  const pathSegments = (pathname ?? '').split('/').filter(Boolean);
+  const pathSegments = pathname.split('/').filter(Boolean);
   const pageName =
     pathSegments[0]?.charAt(0).toUpperCase() + pathSegments[0]?.slice(1) ||
     'Home';
@@ -38,12 +37,12 @@ const BreadcrumbsComponent = ({
 
       return (
         <li>
-          <Link
+          <a
             href={`${baseHref}/categories/${categorySlug}`}
             className="underline"
           >
             {categoryNames}
-          </Link>
+          </a>
         </li>
       );
     }
@@ -64,17 +63,17 @@ const BreadcrumbsComponent = ({
     <nav aria-label="breadcrumb" className="text-sm">
       <ol className="inline-flex space-x-2">
         <li>
-          <Link href="/" className="underline">
+          <a href="/" className="underline">
             Home
-          </Link>
+          </a>
         </li>
         <li>
           <span className="text-gray-500">/</span>
         </li>
         <li>
-          <Link href={baseHref} className="underline">
+          <a href={baseHref} className="underline">
             {pageName}
-          </Link>
+          </a>
         </li>
 
         {(product || post) && (
@@ -100,9 +99,9 @@ const BreadcrumbsComponent = ({
               <span className="text-gray-500">/</span>
             </li>
             <li>
-              <Link href={optional} className="underline">
+              <a href={optional} className="underline">
                 {optional}
-              </Link>
+              </a>
             </li>
           </>
         )}

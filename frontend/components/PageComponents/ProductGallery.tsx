@@ -46,18 +46,18 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ product }) => {
           >
             <SafeImage
               alt={product.title}
-              className="object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-lg"
               images={[
                 {
                   image_path: getPublicImageUrl(
                     'products',
                     product.id,
-                    selectedImage.image_path + '_full.webp'
+                    selectedImage.image_path
                   ),
                 },
               ]}
-              fill={true}
-              priority={true} // Add priority for LCP optimization
+              width={800}
+              height={485}
             />
           </div>
         </div>
@@ -85,7 +85,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ product }) => {
                       image_path: getPublicImageUrl(
                         'products',
                         product.id,
-                        image.image_path + '_thumb.webp'
+                        image.image_path
                       ),
                     },
                   ]}

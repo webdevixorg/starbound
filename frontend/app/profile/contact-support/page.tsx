@@ -1,67 +1,63 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import { contactSupportAPI, SupportTicket } from '@/services/apiSupport';
+import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
-const STATUS_COLORS = {
-  open: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
-  resolved: 'bg-green-100 text-green-800',
-  closed: 'bg-gray-100 text-gray-800',
-  reopened: 'bg-purple-100 text-purple-800',
-} as const;
+interface ContactFormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+}
 
-interface HelpCenterState {
+interface ContactSupportState {
   loading: boolean;
-  tickets: SupportTicket[];
-  filteredTickets: SupportTicket[];
+  submitting: boolean;
   error: string | null;
+  success: string | null;
+  showSuccessModal: boolean;
   showErrorModal: boolean;
   isClient: boolean;
 }
 
-const HELP_CATEGORIES = [
-  { id: 'all', label: 'All Tickets', icon: '📋' },
-  { id: 'open', label: 'Open Tickets', icon: '🔓' },
-  { id: 'in-progress', label: 'In Progress', icon: '⏳' },
-  { id: 'resolved', label: 'Resolved', icon: '✅' },
-  { id: 'closed', label: 'Closed', icon: '🔒' },
-] as const;
-
-const TICKET_CATEGORIES = [
-  { value: 'general', label: 'General Support' },
+const SUPPORT_CATEGORIES = [
+  { value: 'general', label: 'General Inquiry' },
   { value: 'technical', label: 'Technical Issue' },
-  { value: 'billing', label: 'Billing & Payment' },
-  { value: 'account', label: 'Account Management' },
-  { value: 'booking', label: 'Booking Assistance' },
-  { value: 'refund', label: 'Refund Request' },
+  { value: 'billing', label: 'Billing Question' },
+  { value: 'account', label: 'Account Issue' },
+  { value: 'feature', label: 'Feature Request' },
+  { value: 'bug', label: 'Bug Report' },
 ] as const;
 
 const PRIORITY_LEVELS = [
-  { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
-  { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-800' },
-  { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' },
+  { value: 'low', label: 'Low', color: 'text-green-600' },
+  { value: 'medium', label: 'Medium', color: 'text-yellow-600' },
+  { value: 'high', label: 'High', color: 'text-red-600' },
 ] as const;
 
-export default function HelpCenterPage() {
+export default function ContactSupportPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<string>(
-    searchParams?.get('tab') || 'all'
-  );
+  const [formData, setFormData] = useState<ContactFormData>({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+    priority: 'medium',
+  });
 
-  const [state, setState] = useState<HelpCenterState>({
+  const [state, setState] = useState<ContactSupportState>({
     loading: true,
-    tickets: [],
-    filteredTickets: [],
+    submitting: false,
     error: null,
+    success: null,
+    showSuccessModal: false,
     showErrorModal: false,
     isClient: false,
   });
@@ -74,172 +70,139 @@ export default function HelpCenterPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (state.isClient && !user) {
-      router.push('/signin/');
+      router.push('/auth/login');
     }
   }, [user, router, state.isClient]);
 
-  // Load tickets
-  const loadTickets = useCallback(async () => {
-    if (!state.isClient || !user) return;
-
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    try {
-      const response = await contactSupportAPI.getTickets();
-      const tickets = response.results;
-
-      setState((prev) => ({
-        ...prev,
-        tickets,
-        loading: false,
-      }));
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-      setState((prev) => ({
-        ...prev,
-        error: 'Failed to load support tickets. Please try again.',
-        showErrorModal: true,
-        loading: false,
-      }));
-    }
-  }, [state.isClient, user]);
-
-  // Initial load
+  // Pre-fill form with user data
   useEffect(() => {
-    if (state.isClient && user) {
-      loadTickets();
+    if (state.isClient && user && profile) {
+      setFormData((prev) => ({
+        ...prev,
+        name:
+          `${profile.user.first_name} ${profile.user.last_name}`.trim() ||
+          prev.name,
+        email: profile.user.email || prev.email,
+      }));
+
+      setState((prev) => ({ ...prev, loading: false }));
+    } else if (state.isClient && !user) {
+      setState((prev) => ({ ...prev, loading: false }));
     }
-  }, [loadTickets, state.isClient, user]);
+  }, [state.isClient, user, profile]);
 
-  // Filter tickets based on active tab
-  useEffect(() => {
-    const filtered =
-      activeTab === 'all'
-        ? state.tickets
-        : state.tickets.filter((ticket) => ticket.status === activeTab);
-
-    setState((prev) => ({ ...prev, filteredTickets: filtered }));
-  }, [state.tickets, activeTab]);
-
-  // Handle tab change with URL update
-  const handleTabChange = useCallback(
-    (tab: string) => {
-      setActiveTab(tab);
-      const params = new URLSearchParams(searchParams?.toString() || '');
-      params.set('tab', tab);
-      router.replace(`/profile/contact-support?${params.toString()}`);
+  // Handle form field changes
+  const handleChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >
+    ) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     },
-    [router, searchParams]
+    []
   );
 
-  // Format date
-  const formatDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }, []);
+  // Submit form
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-  // Get priority badge
-  const getPriorityBadge = useCallback((priority: string) => {
-    const priorityConfig = PRIORITY_LEVELS.find((p) => p.value === priority);
-    return priorityConfig || PRIORITY_LEVELS[1]; // Default to medium
-  }, []);
-
-  // Get ticket count for category
-  const getTicketCount = useCallback(
-    (categoryId: string) => {
-      if (categoryId === 'all') {
-        return state.tickets.length;
+      if (
+        !formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.message.trim()
+      ) {
+        setState((prev) => ({
+          ...prev,
+          error: 'Please fill in all required fields.',
+          showErrorModal: true,
+        }));
+        return;
       }
-      return state.tickets.filter((ticket) => ticket.status === categoryId)
-        .length;
+
+      setState((prev) => ({
+        ...prev,
+        submitting: true,
+        error: null,
+        success: null,
+      }));
+
+      try {
+        // TODO: Replace with actual API call to submit support ticket
+        const response = await fetch('/api/support/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            userId: user?.id,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit support request');
+        }
+
+        // Success - reset form and show success message
+        setFormData((prev) => ({
+          ...prev,
+          subject: '',
+          message: '',
+          priority: 'medium',
+        }));
+
+        setState((prev) => ({
+          ...prev,
+          success:
+            "Your support request has been submitted successfully! We'll get back to you within 24 hours.",
+          showSuccessModal: true,
+        }));
+      } catch (error) {
+        console.error('Error submitting support request:', error);
+        setState((prev) => ({
+          ...prev,
+          error:
+            'Failed to submit your request. Please try again or contact us directly.',
+          showErrorModal: true,
+        }));
+      } finally {
+        setState((prev) => ({ ...prev, submitting: false }));
+      }
     },
-    [state.tickets]
+    [formData, user]
   );
 
-  // Memoized sidebar component
-  const Sidebar = useMemo(
-    () => (
-      <div className="w-64 bg-white border-r border-gray-200 h-full">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Help Center</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage your support tickets
-          </p>
-        </div>
-
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {HELP_CATEGORIES.map((category) => (
-              <li key={category.id}>
-                <button
-                  onClick={() => handleTabChange(category.id)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeTab === category.id
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="mr-3">{category.icon}</span>
-                  {category.label}
-                  <span className="ml-auto bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                    {getTicketCount(category.id)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={() => router.push('/profile/contact-support/new')}
-            className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New Ticket
-          </button>
-        </div>
-      </div>
-    ),
-    [activeTab, getTicketCount, handleTabChange, router]
-  );
+  // Reset form
+  const handleReset = useCallback(() => {
+    setFormData((prev) => ({
+      name: prev.name, // Keep user's name
+      email: prev.email, // Keep user's email
+      subject: '',
+      message: '',
+      priority: 'medium',
+    }));
+  }, []);
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="flex">
-          <div className="w-64 bg-white border-r border-gray-200">
-            <div className="animate-pulse p-6">
-              <div className="h-6 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-          <div className="flex-1 p-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white p-4 rounded-lg shadow">
-                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="space-y-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
                   </div>
                 ))}
               </div>
@@ -252,9 +215,11 @@ export default function HelpCenterPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoadingSpinner />
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoadingSpinner />
+          </div>
         </div>
       </div>
     );
@@ -265,128 +230,369 @@ export default function HelpCenterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="flex">
-        {Sidebar}
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Contact Support
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Need help? Send us a message and we'll get back to you within 24
+                hours.
+              </p>
+            </div>
 
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Header */}
-          <div className="bg-white border-b border-gray-200 px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {HELP_CATEGORIES.find((c) => c.id === activeTab)?.label ||
-                    'Help Center'}
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {state.filteredTickets.length} ticket
-                  {state.filteredTickets.length !== 1 ? 's' : ''} found
-                </p>
-              </div>
-
-              <button
-                onClick={() => router.push('/profile')}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            <button
+              onClick={() => router.push('/profile')}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                Back to Profile
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back to Profile
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Contact Information */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Get in Touch
+              </h2>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Email</p>
+                    <p className="text-sm text-gray-600">
+                      support@starbound.com
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Phone</p>
+                    <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Response Time
+                    </p>
+                    <p className="text-sm text-gray-600">Within 24 hours</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Office</p>
+                    <p className="text-sm text-gray-600">
+                      123 Travel Street
+                      <br />
+                      Adventure City, AC 12345
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ Link */}
+            <div className="mt-6 bg-blue-50 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">
+                Need Quick Help?
+              </h3>
+              <p className="text-sm text-blue-700 mb-3">
+                Check our FAQ section for instant answers to common questions.
+              </p>
+              <button
+                onClick={() => router.push('/help/faq')}
+                className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+              >
+                Visit FAQ →
               </button>
             </div>
           </div>
 
-          {/* Tickets List */}
-          <div className="p-8">
-            {state.error && !state.showErrorModal && (
-              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                  Send us a Message
+                </h2>
+
+                {/* Success/Error Messages */}
+                {state.error && !state.showErrorModal && (
+                  <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-red-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">{state.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {state.success && !state.showSuccessModal && (
+                  <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-green-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-green-700">
+                          {state.success}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Name */}
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        disabled={state.submitting}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        required
                       />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{state.error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+                    </div>
 
-            {state.filteredTickets.length > 0 ? (
-              <div className="space-y-4">
-                {state.filteredTickets.map((ticket) => {
-                  const priorityBadge = getPriorityBadge(ticket.priority);
-                  return (
-                    <div
-                      key={ticket.id}
-                      className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() =>
-                        router.push(`/profile/contact-support/${ticket.id}`)
-                      }
+                    {/* Email */}
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        disabled={state.submitting}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label
+                      htmlFor="priority"
+                      className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {ticket.subject}
-                            </h3>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                STATUS_COLORS[ticket.status]
-                              }`}
-                            >
-                              {ticket.status.replace('-', ' ')}
-                            </span>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityBadge.color}`}
-                            >
-                              {priorityBadge.label}
-                            </span>
-                          </div>
+                      Priority Level
+                    </label>
+                    <select
+                      id="priority"
+                      name="priority"
+                      value={formData.priority}
+                      onChange={handleChange}
+                      disabled={state.submitting}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {PRIORITY_LEVELS.map((priority) => (
+                        <option key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                          <p className="text-sm text-gray-600 mb-3">
-                            Category:{' '}
-                            {TICKET_CATEGORIES.find(
-                              (c) => c.value === ticket.category
-                            )?.label || ticket.category}
-                          </p>
+                  {/* Subject */}
+                  <div>
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Subject *
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      disabled={state.submitting}
+                      placeholder="Brief description of your inquiry"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      required
+                    />
+                  </div>
 
-                          <div className="flex items-center text-sm text-gray-500 space-x-4">
-                            <span>
-                              Created: {formatDate(ticket.created_at)}
-                            </span>
-                            <span>•</span>
-                            <span>Ticket ID: {ticket.ticket_id}</span>
-                            <span>•</span>
-                            <span>
-                              Updated: {formatDate(ticket.updated_at)}
-                            </span>
-                          </div>
-                        </div>
+                  {/* Message */}
+                  <div>
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Message *
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows={6}
+                      value={formData.message}
+                      onChange={handleChange}
+                      disabled={state.submitting}
+                      placeholder="Please provide detailed information about your inquiry..."
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors resize-vertical"
+                      required
+                    />
+                  </div>
 
-                        <div className="ml-4">
+                  {/* Form Actions */}
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      disabled={state.submitting}
+                      className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Reset
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        state.submitting ||
+                        !formData.name.trim() ||
+                        !formData.email.trim() ||
+                        !formData.message.trim()
+                      }
+                      className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {state.submitting ? (
+                        <>
+                          <InlineLoaderIcon className="mr-2" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
                           <svg
-                            className="w-5 h-5 text-gray-400"
+                            className="w-4 h-4 mr-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -395,64 +601,46 @@ export default function HelpCenterPage() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M9 5l7 7-7 7"
+                              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                             />
                           </svg>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                          Send Message
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No tickets found
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {activeTab === 'all'
-                    ? "You haven't created any support tickets yet."
-                    : `No ${activeTab.replace('-', ' ')} tickets found.`}
-                </p>
-                <button
-                  onClick={() => router.push('/profile/contact-support/new')}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Create Your First Ticket
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <ModalAlert
+        isOpen={state.showSuccessModal}
+        title="Message Sent!"
+        message={
+          state.success ||
+          'Your support request has been submitted successfully.'
+        }
+        onClose={() =>
+          setState((prev) => ({
+            ...prev,
+            showSuccessModal: false,
+            success: null,
+          }))
+        }
+        onConfirm={() =>
+          setState((prev) => ({
+            ...prev,
+            showSuccessModal: false,
+            success: null,
+          }))
+        }
+        confirmText="OK"
+        cancelText=""
+      />
 
       {/* Error Modal */}
       <ModalAlert

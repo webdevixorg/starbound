@@ -19,9 +19,8 @@ import {
   updateProduct,
 } from '@/services/apiProducts';
 import DOMPurify from 'dompurify';
-import { Category, Image, ImageFile, ProductData, Entity } from '@/types/types';
+import { Category, Image, ImageFile, ProductData } from '@/types/types';
 import GalleryImageUpload from '@/components/Forms/Input/GalleryImageUpload';
-import BrandModelSelector from '@/components/Forms/Input/BrandModelSelector';
 import {
   capitalizeFirstLetter,
   formatDateToISOString,
@@ -29,6 +28,7 @@ import {
 } from '@/helpers/common';
 import {
   createHandleDateChange,
+  toggleCategorySelection,
   useEventListener,
 } from '@/helpers/fromSubmission';
 import LoadingSpinner from '@/components/Common/Loading';
@@ -36,20 +36,18 @@ import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
 
-// Define the upload result type
-interface UploadedImageData {
-  url: string;
-  title: string;
-  contentId: number;
-  originalName: string;
+// Extended ProductData type
+interface Product extends ProductData {
+  original_price?: number;
+  stock_quantity: number;
 }
 
 export default function AddProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const slug = searchParams ? searchParams.get('slug') || undefined : undefined;
-  const { user, role } = useAuth();
 
+  const { user } = useAuth();
   const { contentTypes, loading: contentLoading } = useContent();
 
   // Determine if we're editing or creating
@@ -93,10 +91,6 @@ export default function AddProductPage() {
   const [sku, setSku] = useState<string>('');
   const [stockQuantity, setStockQuantity] = useState<number | null>(null);
   const [originalPrice, setOriginalPrice] = useState<number | null>(null);
-
-  // Brand and Model states
-  const [selectedBrand, setSelectedBrand] = useState<Entity | null>(null);
-  const [selectedModel, setSelectedModel] = useState<Entity | null>(null);
 
   // Form validation
   const [validationErrors, setValidationErrors] = useState<{
@@ -235,8 +229,7 @@ export default function AddProductPage() {
         // Fetch product data if editing
         if (isEditing && slug) {
           const fetchedProduct = (await fetchProductBySlug(
-            slug,
-            role === 'staff' || role === 'admin'
+            slug
           )) as unknown as ExtendedProduct;
 
           setTitle(fetchedProduct.title);
@@ -261,21 +254,9 @@ export default function AddProductPage() {
           setAdditionalInfo(fetchedProduct.additional_info || '');
           setShortDescription(fetchedProduct.short_description || '');
           setPrice(fetchedProduct.price || null);
-          setOriginalPrice(fetchedProduct.original_price || null);
-          setStockQuantity(fetchedProduct.stock_quantity || null);
+          setOriginalPrice((fetchedProduct as any).original_price || null);
+          setStockQuantity((fetchedProduct as any).stock_quantity || null);
           setSku(fetchedProduct.sku || '');
-
-          // Set brand and model if available
-          const productWithEntities = fetchedProduct as ExtendedProduct & {
-            brand_detail?: Entity;
-            model_detail?: Entity;
-          };
-          if (productWithEntities.brand_detail) {
-            setSelectedBrand(productWithEntities.brand_detail);
-          }
-          if (productWithEntities.model_detail) {
-            setSelectedModel(productWithEntities.model_detail);
-          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -291,7 +272,7 @@ export default function AddProductPage() {
     };
 
     loadData();
-  }, [currentPage, pageSize, contentTypeId, isEditing, slug, role, isClient]);
+  }, [currentPage, contentTypeId, isEditing, slug, isClient]);
 
   // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(
@@ -465,8 +446,6 @@ export default function AddProductPage() {
         sku: sku.trim(),
         location: 1,
         sublocation: 1,
-        brand: selectedBrand?.id,
-        model: selectedModel?.id,
       };
 
       if (isEditing && slug) {
@@ -498,32 +477,27 @@ export default function AddProductPage() {
                 );
                 return { ...file, uploadedImageData };
               } catch (err) {
-                return err;
+                return null; // allow others to continue
               }
             })
           );
 
-          const successfulUploads = uploadedResults.filter(
-            (
-              item
-            ): item is ImageFile & { uploadedImageData: UploadedImageData } =>
-              item !== null &&
-              item !== undefined &&
-              typeof item === 'object' &&
-              'uploadedImageData' in item
-          );
+          const successfulUploads = uploadedResults.filter(Boolean);
 
           if (successfulUploads.length > 0) {
             // Save each image URL to Django
             await Promise.all(
               successfulUploads.map((item, idx) => {
-                return saveImageUrlToDB(
-                  item.uploadedImageData.url,
-                  item.uploadedImageData.title,
-                  item.uploadedImageData.contentId,
-                  contentTypeId ?? 0,
-                  idx + 1 // or uploadedImageData.order if available
-                );
+                if (item && item.uploadedImageData) {
+                  return saveImageUrlToDB(
+                    item.uploadedImageData.url,
+                    item.uploadedImageData.title,
+                    item.uploadedImageData.contentId,
+                    contentTypeId ?? 0,
+                    idx + 1 // or uploadedImageData.order if available
+                  );
+                }
+                return Promise.resolve();
               })
             );
           }
@@ -590,7 +564,7 @@ export default function AddProductPage() {
   if (!isClient) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -614,7 +588,7 @@ export default function AddProductPage() {
   if (loading && contentLoading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -625,7 +599,7 @@ export default function AddProductPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -971,20 +945,6 @@ export default function AddProductPage() {
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Brand and Model Selection */}
-              <div className="bg-white rounded-lg border p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                  Brand & Model
-                </h2>
-                <BrandModelSelector
-                  selectedBrandId={selectedBrand?.id}
-                  selectedModelId={selectedModel?.id}
-                  onBrandChange={setSelectedBrand}
-                  onModelChange={setSelectedModel}
-                  disabled={saving}
-                />
               </div>
 
               {/* Description */}

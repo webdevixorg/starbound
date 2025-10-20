@@ -135,7 +135,7 @@ export const updateProfile = async (profileData: FormData): Promise<void> => {
 
 export const fetchAccountSettings = async (): Promise<AccountSettings> => {
   try {
-    const response = await axiosInstance.get('/account');
+    const response = await axiosInstance.get('/account-settings');
     return response.data;
   } catch (error) {
     console.error('Error fetching account settings:', error);
@@ -147,7 +147,10 @@ export const updateAccountSettings = async (
   settingsData: Partial<AccountSettings>
 ): Promise<void> => {
   try {
-    const response = await axiosInstance.put('/account/update/', settingsData);
+    const response = await axiosInstance.put(
+      '/account-settings/update/',
+      settingsData
+    );
     return response.data;
   } catch (error) {
     console.error('Error updating account settings:', error);
@@ -158,6 +161,7 @@ export const updateAccountSettings = async (
 export const fetchPosts = async (
   page: number = 1,
   pageSize: number = 10,
+  status: string,
   filter: string = '',
   modelName: string
 ): Promise<{
@@ -168,14 +172,11 @@ export const fetchPosts = async (
   previous: string | null;
 }> => {
   try {
-    const params: any = {
-      page,
-      pageSize,
-    };
-
     const response: AxiosResponse = await axiosInstanceNoAuth.get(
       `/${modelName}s/f/${filter}`,
-      { params }
+      {
+        params: { page, pageSize, status: status },
+      }
     );
     return response.data;
   } catch (error) {
@@ -184,35 +185,29 @@ export const fetchPosts = async (
   }
 };
 
-export const fetchPostsAuth = async <T = Post>(
+export const fetchPostsAuth = async (
   page: number = 1,
   pageSize: number = 10,
-  status: string = '',
-  modelName: string,
-  search: string = ''
+  status: string,
+  filter: string = '',
+  modelName: string
 ): Promise<{
   page_size: number;
-  results: T[];
+  results: Post[];
   count: number;
   next: string | null;
   previous: string | null;
 }> => {
   try {
-    const params: any = { page, pageSize };
-    if (search) {
-      params.query = search;
-    }
-
-    const response = await axiosInstance.get(
-      `/${modelName}s/p/by_status/?status=${status}`,
+    const response: AxiosResponse = await axiosInstance.get(
+      `/${modelName}s/p/${filter}`,
       {
-        params,
+        params: { page, pageSize, status: status },
       }
     );
-
     return response.data;
   } catch (error) {
-    console.error(`Error fetching ${modelName}:`, error);
+    console.error('Error fetching posts:', error);
     throw error;
   }
 };
@@ -235,22 +230,42 @@ export const fetchPostsByCategory = async (
   }
 };
 
-export const fetchPostBySlug = async (
-  contentType: string,
-  slug: string,
-  isStaff: boolean = false
-): Promise<Post> => {
+export const fetchPostsForSections = async (
+  filter: string,
+  count: number
+): Promise<{
+  results: Post[];
+}> => {
   try {
-    const axiosClient = isStaff ? axiosInstance : axiosInstanceNoAuth;
-    const roleSegment = isStaff ? 'p' : 'f';
+    const response: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/posts/f/${filter}/`,
+      {
+        params: { count },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
 
-    const { data: postData }: AxiosResponse = await axiosClient.get(
-      `/${contentType}s/${roleSegment}/${slug}`
+export const fetchPostBySlug = async (slug: string): Promise<Post> => {
+  try {
+    const { data: postData }: AxiosResponse = await axiosInstanceNoAuth.get(
+      `/posts/f/${slug}`
     );
 
-    // Categories are now returned as full objects from the backend
-    // No need to fetch them separately
-    return postData;
+    // Fetch category details in parallel
+    const categories: Category[] = await Promise.all(
+      postData.categories.map((categoryId: number) =>
+        axiosInstanceNoAuth
+          .get(`/categories/${categoryId}`)
+          .then((res) => res.data)
+      )
+    );
+
+    return { ...postData, categories };
   } catch (error) {
     console.error('Error fetching post:', error);
     throw error;
@@ -348,7 +363,7 @@ export const changePostStatus = async (
 ) => {
   try {
     const response: AxiosResponse = await axiosInstance.patch(
-      `/${contentType}s/${slug}/change-status/`,
+      `/${contentType}s/p/${slug}/change-status/`,
       {
         status: status,
       },
@@ -617,7 +632,7 @@ export const fetchCategories = async (
     if (contentTypeId) {
       params.content_type_id = contentTypeId;
     }
-    const response = await axiosInstanceNoAuth.get('/categories/', { params });
+    const response = await axiosInstance.get('/categories/', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -770,6 +785,11 @@ export const biDirectionalSyncVisits = async (useSessionStorage = true) => {
 
     // 6. Update frontend storage with merged visits
     storage.setItem('visited_products', JSON.stringify(mergedVisits));
+
+    console.log(
+      `Bi-directional sync complete. Backend visits: ${backendVisits.length}, ` +
+        `Frontend visits: ${frontendVisits.length}, New visits saved: ${newFrontendVisits.length}`
+    );
   } catch (error) {
     console.error('Error during bi-directional sync of visits:', error);
   }
@@ -864,254 +884,6 @@ export const testDuplicateVisit = async (itemId = 1) => {
   } catch (error: any) {
     console.error(
       'Duplicate visit test error:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-// ============================================================================
-// USER SETTINGS API FUNCTIONS
-// ============================================================================
-
-/**
- * User Settings interfaces
- */
-export interface SecuritySettings {
-  twoFactorSMS: boolean;
-  twoFactorTOTP: boolean;
-  loginNotifications: boolean;
-}
-
-export interface PreferenceSettings {
-  language: string;
-  theme: 'light' | 'dark';
-  timezone: string;
-  dateFormat: string;
-  currency: string;
-}
-
-export interface NotificationSettings {
-  email: boolean;
-  sms: boolean;
-  push: boolean;
-  marketing_emails: boolean;
-  order_updates: boolean;
-  forum_notifications: boolean;
-}
-
-export interface UserSettings {
-  id: string;
-  security: SecuritySettings;
-  preferences: PreferenceSettings;
-  notifications: NotificationSettings;
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * Fetch all user settings
- */
-export const fetchUserSettings = async (): Promise<UserSettings> => {
-  try {
-    const response = await axiosInstance.get('/settings/');
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error fetching user settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Update all user settings
- */
-export const updateUserSettings = async (
-  settings: Partial<UserSettings>
-): Promise<UserSettings> => {
-  try {
-    const response = await axiosInstance.put('/settings/', settings);
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error updating user settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Fetch security settings
- */
-export const fetchSecuritySettings = async (): Promise<SecuritySettings> => {
-  try {
-    const response = await axiosInstance.get('/settings/security/');
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error fetching security settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Update security settings
- */
-export const updateSecuritySettings = async (
-  settings: Partial<SecuritySettings>
-): Promise<SecuritySettings> => {
-  try {
-    const response = await axiosInstance.put('/settings/security/', settings);
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error updating security settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Fetch preference settings
- */
-export const fetchPreferenceSettings =
-  async (): Promise<PreferenceSettings> => {
-    try {
-      const response = await axiosInstance.get('/settings/preferences/');
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        'Error fetching preference settings:',
-        error.response?.data || error.message
-      );
-      throw error;
-    }
-  };
-
-/**
- * Update preference settings
- */
-export const updatePreferenceSettings = async (
-  settings: Partial<PreferenceSettings>
-): Promise<PreferenceSettings> => {
-  try {
-    const response = await axiosInstance.put(
-      '/settings/preferences/',
-      settings
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error updating preference settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Fetch notification settings
- */
-export const fetchNotificationSettings =
-  async (): Promise<NotificationSettings> => {
-    try {
-      const response = await axiosInstance.get('/settings/notifications/');
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        'Error fetching notification settings:',
-        error.response?.data || error.message
-      );
-      throw error;
-    }
-  };
-
-/**
- * Update notification settings
- */
-export const updateNotificationSettings = async (
-  settings: Partial<NotificationSettings>
-): Promise<NotificationSettings> => {
-  try {
-    const response = await axiosInstance.put(
-      '/settings/notifications/',
-      settings
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error updating notification settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Reset all settings to defaults
- */
-export const resetUserSettings = async (): Promise<UserSettings> => {
-  try {
-    const response = await axiosInstance.post('/settings/reset/');
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error resetting user settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Export user settings
- */
-export const exportUserSettings = async (): Promise<{
-  user: string;
-  exported_at: string;
-  settings: {
-    security: SecuritySettings;
-    preferences: PreferenceSettings;
-    notifications: NotificationSettings;
-  };
-}> => {
-  try {
-    const response = await axiosInstance.get('/settings/export/');
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error exporting user settings:',
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-};
-
-/**
- * Import user settings
- */
-export const importUserSettings = async (settingsData: {
-  settings: {
-    security: Partial<SecuritySettings>;
-    preferences: Partial<PreferenceSettings>;
-    notifications: Partial<NotificationSettings>;
-  };
-}): Promise<UserSettings> => {
-  try {
-    const response = await axiosInstance.post(
-      '/settings/import/',
-      settingsData
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      'Error importing user settings:',
       error.response?.data || error.message
     );
     throw error;

@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 import SafeImage from '@/components/UI/SafeImage';
 
@@ -40,18 +39,18 @@ const TopBar = () => {
           </span>
           <span>
             Mid-Summer Season Sale On Selected Items -{' '}
-            <Link href="/shop" className="underline hover:text-red-600">
+            <a href="/products" className="underline hover:text-red-600">
               Shop Now
-            </Link>
+            </a>
           </span>
         </div>
 
         <div className="flex items-center space-x-6">
           {/* Help & Order Tracking */}
           <div className="flex space-x-4">
-            <Link href="/help-center" className="hover:underline">
+            <a href="/help-center" className="hover:underline">
               Help Center
-            </Link>
+            </a>
             <a href="#" className="hover:underline">
               Order Tracking
             </a>
