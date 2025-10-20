@@ -30,7 +30,7 @@ jobs:
       - name: Copy environment file
         run: |
           # Copy .env file from config to frontend
-          cp /var/www/starbound/frontend/.env frontend/.env
+          cp /var/www/starbound/config/frontend/.env frontend/.env
           echo "Environment file copied successfully"
 
       # Step 3: Set up Node.js environment
