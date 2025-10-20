@@ -1,4 +1,3 @@
-import { ImageFile } from '@/types/types';
 import { supabase } from './supabase';
 import axiosInstance from './AxiosInstance';
 import axios, { AxiosResponse } from 'axios';
@@ -259,7 +258,7 @@ export const getOptimizedImageUrl = (
   contentType: string,
   contentId: number
 ): string => {
-  const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const bucketName = `${contentType}s`;
 
   // Since originalUrl is now stored without extension, just add the suffix and .webp
@@ -280,7 +279,7 @@ export const getResponsiveImageUrls = (
   contentType: string,
   contentId: number
 ) => {
-  const supabaseUrl = NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const bucketName = `${contentType}s`;
   // For original, we'll default to the medium version since we don't store original files
   const originalFullUrl = getOptimizedImageUrl(
