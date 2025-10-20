@@ -5,6 +5,79 @@ import NextImage from 'next/image';
 import { getImageSrc, preloadImage } from '@/utils/imageUtils';
 import { getOptimizedImageUrl } from '@/services/images';
 
+/**
+ * Creates a dynamic shimmer placeholder SVG for any width and height
+ * @param width - The width of the placeholder
+ * @param height - The height of the placeholder
+ * @returns SVG string with continuous shimmer animation
+ */
+export const createShimmerSVG = (
+  width: number = 300,
+  height: number = 300
+): string => {
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shimmer-${width}-${height}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f3f4f6" stop-opacity="0.8"/>
+          <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#f3f4f6" stop-opacity="0.8"/>
+          <animateTransform 
+            attributeName="gradientTransform" 
+            dur="1.5s" 
+            repeatCount="indefinite" 
+            type="translate" 
+            values="-${width} 0; ${width} 0; -${width} 0"
+          />
+        </linearGradient>
+      </defs>
+      <rect width="${width}" height="${height}" fill="#f3f4f6"/>
+      <rect width="${width}" height="${height}" fill="url(#shimmer-${width}-${height})"/>
+    </svg>
+  `.trim();
+};
+
+/**
+ * Encodes SVG string to Base64 for use in data URLs
+ * @param svgString - The SVG string to encode
+ * @returns Base64 encoded data URL
+ */
+export const svgToBase64DataURL = (svgString: string): string => {
+  if (typeof window !== 'undefined') {
+    // Client-side encoding
+    return `data:image/svg+xml;base64,${btoa(svgString)}`;
+  } else {
+    // Server-side encoding (Node.js)
+    return `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+  }
+};
+
+/**
+ * Creates a complete shimmer placeholder data URL for any dimensions
+ * @param width - The width of the placeholder
+ * @param height - The height of the placeholder
+ * @returns Complete data URL ready for use in img src or Next.js blurDataURL
+ */
+export const createShimmerDataURL = (
+  width: number = 300,
+  height: number = 300
+): string => {
+  const svg = createShimmerSVG(width, height);
+  return svgToBase64DataURL(svg);
+};
+
+/**
+ * Pre-built shimmer placeholders for common sizes
+ */
+export const SHIMMER_PLACEHOLDERS = {
+  square: createShimmerDataURL(300, 300),
+  landscape: createShimmerDataURL(400, 300),
+  portrait: createShimmerDataURL(300, 400),
+  wide: createShimmerDataURL(600, 300),
+  thumbnail: createShimmerDataURL(150, 150),
+  hero: createShimmerDataURL(1200, 600),
+} as const;
+
 interface SafeImageProps {
   images?: { image_path: string }[];
   alt: string;
@@ -43,7 +116,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
   height,
   fill = false,
   className = '',
-  fallback = '/images/placeholders/300x300.jpg',
+  fallback,
   baseUrl,
   priority = false,
   sizes,
@@ -52,18 +125,26 @@ const SafeImage: React.FC<SafeImageProps> = ({
   optimizedSize = 'medium',
   useOptimized = true,
 }) => {
-  const [imageSrc, setImageSrc] = useState<string>(fallback);
+  // Create dynamic fallback based on dimensions if not provided
+  const dynamicFallback = useMemo(() => {
+    if (fallback) return fallback;
+
+    const fallbackWidth = width || 300;
+    const fallbackHeight = height || 300;
+    return createShimmerDataURL(fallbackWidth, fallbackHeight);
+  }, [fallback, width, height]);
+  const [imageSrc, setImageSrc] = useState<string>(dynamicFallback);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const resolvedSrc = useMemo(() => {
-    const originalSrc = getImageSrc(images, fallback, baseUrl);
+    const originalSrc = getImageSrc(images, dynamicFallback, baseUrl);
 
     // If optimization is disabled or missing required data, use original
     if (
       !useOptimized ||
       !contentType ||
       !contentId ||
-      originalSrc === fallback
+      originalSrc === dynamicFallback
     ) {
       return originalSrc;
     }
@@ -95,7 +176,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
     }
   }, [
     images,
-    fallback,
+    dynamicFallback,
     baseUrl,
     useOptimized,
     contentType,
@@ -110,7 +191,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
       setIsLoading(true);
 
       // If it's already the fallback, no need to validate
-      if (resolvedSrc === fallback) {
+      if (resolvedSrc === dynamicFallback) {
         if (isMounted) {
           setImageSrc(resolvedSrc);
           setIsLoading(false);
@@ -132,7 +213,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
 
       const isValid = await preloadImage(resolvedSrc);
       if (isMounted) {
-        setImageSrc(isValid ? resolvedSrc : fallback);
+        setImageSrc(isValid ? resolvedSrc : dynamicFallback);
         setIsLoading(false);
       }
     };
@@ -141,18 +222,25 @@ const SafeImage: React.FC<SafeImageProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [resolvedSrc, fallback]);
+  }, [resolvedSrc, dynamicFallback]);
 
   const handleError = () => {
-    if (imageSrc !== fallback) {
-      setImageSrc(fallback);
+    if (imageSrc !== dynamicFallback) {
+      setImageSrc(dynamicFallback);
     }
   };
 
   const imageProps = {
     src: imageSrc,
     alt,
-    className: `${className} ${isLoading ? 'opacity-50' : ''}`,
+    className: `${className} ${isLoading ? 'opacity-50' : ''} ${
+      imageSrc === dynamicFallback ||
+      imageSrc.includes('placeholder') ||
+      imageSrc.includes('/images/placeholders/') ||
+      imageSrc.includes('data:image/svg+xml')
+        ? 'object-cover'
+        : 'object-contain'
+    }`,
     onError: handleError,
     priority:
       priority &&
