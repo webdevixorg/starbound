@@ -1,3 +1,4 @@
+'use client';
 import { createClient } from '@supabase/supabase-js';
 
 // Get environment variables imported by next.config.ts
