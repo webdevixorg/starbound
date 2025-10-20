@@ -1,7 +1,22 @@
+/**
+ * Forum Service Module
+ * Handles all forum-related API interactions including threads, replies, and statistics.
+ * Uses both authenticated and non-authenticated axios instances based on the endpoint requirements.
+ */
+
 import { ForumPostsResponse } from '@/types/types';
 import axiosInstance from './AxiosInstance';
 import axiosInstanceNoAuth from './AxiosInstanceNoAuth';
 
+/**
+ * Creates a new forum thread
+ * @param threadData - Object containing thread information
+ * @param threadData.title - The title of the thread
+ * @param threadData.content - The content/body of the thread
+ * @param threadData.category - The category ID for the thread
+ * @returns The created thread data
+ * @throws Error if creation fails or user is not authenticated
+ */
 export const createThread = async (threadData: {
   title: string;
   content: string;
@@ -38,14 +53,25 @@ export const createThread = async (threadData: {
   }
 };
 
-// Forum API Functions
+/**
+ * Fetches forum threads with optional filtering and pagination
+ * @param params - Optional parameters for filtering and pagination
+ * @param params.page - Page number for pagination (default: 1)
+ * @param params.pageSize - Number of threads per page (default: 20)
+ * @param params.category - Category filter (optional)
+ * @param params.search - Search query string (optional)
+ * @param params.author - Filter by author ID (optional)
+ * @param params.myThreads - Filter to show only current user's threads (optional)
+ * @returns Paginated list of forum threads
+ * @throws Error if the fetch operation fails
+ */
 export const fetchForumThreads = async (params?: {
   page?: number;
   pageSize?: number;
   category?: string;
   search?: string;
-  author?: number; // Add author filter
-  myThreads?: boolean; // Add option to fetch only current user's threads
+  author?: number;
+  myThreads?: boolean;
 }) => {
   try {
     const queryParams: any = {
@@ -82,7 +108,16 @@ export const fetchForumThreads = async (params?: {
   }
 };
 
-// Dedicated function to fetch current user's threads
+/**
+ * Fetches threads created by the currently authenticated user
+ * @param params - Optional parameters for filtering and pagination
+ * @param params.page - Page number for pagination (default: 1)
+ * @param params.pageSize - Number of threads per page (default: 20)
+ * @param params.category - Category filter (optional)
+ * @param params.search - Search query string (optional)
+ * @returns Paginated list of user's forum threads
+ * @throws Error if fetch fails or user is not authenticated
+ */
 export const fetchMyThreads = async (params?: {
   page?: number;
   pageSize?: number;
@@ -114,6 +149,12 @@ export const fetchMyThreads = async (params?: {
   }
 };
 
+/**
+ * Fetches a specific forum thread by its slug
+ * @param slug - The unique slug identifier of the thread
+ * @returns The thread data including title, content, and metadata
+ * @throws Error if thread is not found or fetch fails
+ */
 export const fetchThreadBySlug = async (slug: string) => {
   try {
     const response = await axiosInstanceNoAuth.get(`/forum/${slug}/`);
@@ -124,6 +165,13 @@ export const fetchThreadBySlug = async (slug: string) => {
   }
 };
 
+/**
+ * Fetches replies for a specific forum thread
+ * @param slug - The unique slug identifier of the parent thread
+ * @param page - Page number for pagination (default: 1)
+ * @returns Paginated list of replies for the thread
+ * @throws Error if replies cannot be fetched
+ */
 export const fetchThreadReplies = async (slug: string, page: number = 1) => {
   try {
     const response = await axiosInstanceNoAuth.get(`/forum/${slug}/replies/`, {
@@ -136,6 +184,13 @@ export const fetchThreadReplies = async (slug: string, page: number = 1) => {
   }
 };
 
+/**
+ * Creates a new reply to a forum thread
+ * @param slug - The unique slug identifier of the parent thread
+ * @param content - The content of the reply
+ * @returns The created reply data
+ * @throws Error if creation fails, user is not authenticated, or content is invalid
+ */
 export const createThreadReply = async (slug: string, content: string) => {
   try {
     const response = await axiosInstance.post(`/forum/${slug}/replies/`, {
@@ -157,6 +212,11 @@ export const createThreadReply = async (slug: string, content: string) => {
   }
 };
 
+/**
+ * Fetches forum statistics
+ * @returns Forum statistics including total threads, replies, and active users
+ * @throws Error if stats cannot be fetched
+ */
 export const fetchForumStats = async () => {
   try {
     const response = await axiosInstanceNoAuth.get('/forum/stats/');
@@ -167,6 +227,13 @@ export const fetchForumStats = async () => {
   }
 };
 
+/**
+ * Fetches forum posts for a specific user
+ * @param userId - Optional user ID (defaults to current user if not provided)
+ * @param limit - Maximum number of posts to fetch (default: 5)
+ * @returns Forum posts response containing user's posts and metadata
+ * @throws Error if posts cannot be fetched or response is invalid
+ */
 export const fetchUserForumPosts = async (
   userId?: number,
   limit: number = 5
