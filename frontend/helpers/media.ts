@@ -1,3 +1,4 @@
+// This function generates a public image URL for Supabase storage
 export const getPublicImageUrl = (
   contentType: string,
   postId: number,
