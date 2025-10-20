@@ -7,11 +7,11 @@
     "npm": ">=8.x"
   },
   "scripts": {
-    "dev": "node env-loader.js && next dev --turbopack",
-    "build": "node env-loader.js && next build",
-    "build:export": "node env-loader.js && next build && next export",
-    "export": "node env-loader.js && next export",
-    "start": "node env-loader.js && next start",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "build:export": "next build && next export",
+    "export": "next export",
+    "start": "next start",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
