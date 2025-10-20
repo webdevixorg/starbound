@@ -1,4 +1,10 @@
+/**
+ * This file defines the structure and content of the sidebar navigation menu.
+ * It includes different menu items based on user roles and functionality areas.
+ */
+
 import React, { ReactNode } from 'react';
+// Import icons used in the sidebar menu
 import Heart from '@/components/UI/Icons/Heart';
 import Cart from '@/components/UI/Icons/Cart';
 import User from '@/components/UI/Icons/User';
@@ -7,19 +13,35 @@ import CogWheelIcon from '@/components/UI/Icons/CogWheel';
 import SMSIcon from '@/components/UI/Icons/Sms';
 import UpdateIcon from '@/components/UI/Icons/Update';
 import SupportIcon from '@/components/UI/Icons/Support';
-import HelpIcon from '@/components/UI/Icons/Help';
 import FeedBackIcon from '@/components/UI/Icons/FeedBack';
 import HistoryIcon from '@/components/UI/Icons/History';
 import DashBoardIcon from '@/components/UI/Icons/DashBoard';
 import ArticleIcon from '@/components/UI/Icons/Article';
 import ProductIcon from '@/components/UI/Icons/Product';
 
+/**
+ * Interface defining the structure of submenu items
+ * @interface SubLink
+ * @property {string} href - The URL the submenu item links to
+ * @property {ReactNode} icon - Icon component to display (optional)
+ * @property {string} label - Display text for the submenu item
+ */
 interface SubLink {
   href: string;
   icon: ReactNode;
   label: string;
 }
 
+/**
+ * Interface defining the structure of main menu items
+ * @interface MenuItem
+ * @property {boolean | undefined} alert - Whether to show an alert indicator
+ * @property {string} href - The URL the menu item links to
+ * @property {ReactNode} icon - Icon component to display
+ * @property {string} text - Display text for the menu item
+ * @property {SubLink[]} [subLinks] - Optional array of submenu items
+ * @property {Array<'admin' | 'staff' | 'client' | 'all'>} type - User roles that can see this item
+ */
 export interface MenuItem {
   alert: boolean | undefined;
   href: string;
@@ -29,6 +51,10 @@ export interface MenuItem {
   type: ('admin' | 'staff' | 'client' | 'all')[];
 }
 
+/**
+ * Main navigation menu items
+ * Includes primary functionality like dashboard, wishlist, orders, etc.
+ */
 const menuItems: MenuItem[] = [
   {
     href: '/profile/dashboard',
@@ -128,6 +154,10 @@ const menuItems: MenuItem[] = [
   },
 ];
 
+/**
+ * Personal information related menu items
+ * Contains items for profile management and user settings
+ */
 const personalInfoItems: MenuItem[] = [
   {
     href: '/profile/edit-profile',
@@ -145,6 +175,10 @@ const personalInfoItems: MenuItem[] = [
   },
 ];
 
+/**
+ * Notification related menu items
+ * Handles user communication and system updates
+ */
 const notificationsItems: MenuItem[] = [
   {
     href: '/profile/messages',
@@ -169,6 +203,10 @@ const notificationsItems: MenuItem[] = [
   },
 ];
 
+/**
+ * Support and help related menu items
+ * Provides access to support features and feedback options
+ */
 const supportItems: MenuItem[] = [
   {
     href: '/profile/contact-support',
@@ -186,6 +224,15 @@ const supportItems: MenuItem[] = [
   },
 ];
 
+/**
+ * Combined sidebar menu items array
+ * Merges all menu item categories into a single array for the sidebar
+ * Order:
+ * 1. Main menu items (dashboard, orders, etc.)
+ * 2. Personal information items (profile, settings)
+ * 3. Notification items (messages, alerts)
+ * 4. Support items (help, feedback)
+ */
 const sidebarMenuItems: MenuItem[] = [
   ...menuItems,
   ...personalInfoItems,
