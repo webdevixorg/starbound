@@ -1,156 +1,255 @@
 'use client';
 
-import LoadingSpinner from '@/components/Common/Loading';
-import router from 'next/router';
-import React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import {
+  helpCenterAPI,
+  HelpCategory,
+  HelpArticle,
+} from '@/services/apiSupport';
 import { faqGroups, categoriesData } from '@/lists/helpCenter';
-import { FAQPageState } from '@/types/types';
+import { useDebounce } from '@/hooks/useDebounce';
 
-export default function HelpCenterPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+// Local interface for categories data from lists
+interface LocalCategory {
+  title: string;
+  description: string;
+  link: string;
+}
 
-  const [state, setState] = useState<FAQPageState>({
-    loading: true,
-    faqs: [],
+// Local interface for FAQ items from lists
+interface FAQItemType {
+  question: string;
+  answer: string;
+}
+
+// Lazy load components that aren't immediately visible
+const LoadingSpinner = dynamic(() => import('@/components/Common/Loading'), {
+  ssr: false,
+});
+
+// Memoized components for better performance
+const CategoryCard = memo(
+  ({ category, onClick }: { category: LocalCategory; onClick: () => void }) => (
+    <div
+      onClick={onClick}
+      className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
+    >
+      <h2 className="text-xl font-semibold text-blue-600 mb-2">
+        {category.title}
+      </h2>
+      <p className="text-gray-700">{category.description}</p>
+      <span className="text-blue-600 mt-4 inline-block">Learn More →</span>
+    </div>
+  )
+);
+
+CategoryCard.displayName = 'CategoryCard';
+
+const FAQItem = memo(
+  ({ item }: { item: FAQItemType; groupIdx: number; itemIdx: number }) => (
+    <div className="flex items-start mb-8">
+      <div className="hidden sm:flex items-center justify-center p-3 mr-3 rounded-full bg-blue-500 text-white border-4 border-white text-xl font-semibold">
+        <svg
+          width="24px"
+          height="24px"
+          fill="white"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g data-name="Layer 2">
+            <g data-name="menu-arrow">
+              <rect
+                width="24"
+                height="24"
+                transform="rotate(180 12 12)"
+                opacity="0"
+              />
+              <path d="M17 9A5 5 0 0 0 7 9a1 1 0 0 0 2 0 3 3 0 1 1 3 3 1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-1.1A5 5 0 0 0 17 9z" />
+              <circle cx="12" cy="19" r="1" />
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div className="text-md">
+        <h3 className="text-gray-900 font-semibold mb-2">{item.question}</h3>
+        <p className="text-gray-500 text-sm">{item.answer}</p>
+      </div>
+    </div>
+  )
+);
+
+FAQItem.displayName = 'FAQItem';
+
+const SearchResults = memo(
+  ({
+    results,
+    onArticleClick,
+  }: {
+    results: HelpArticle[];
+    onArticleClick: (id: number) => void;
+  }) => (
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Search Results</h2>
+      {results.length === 0 ? (
+        <p className="text-gray-500">No articles found matching your search.</p>
+      ) : (
+        <div className="space-y-4">
+          {results.map((article) => (
+            <div
+              key={article.id}
+              onClick={() => onArticleClick(article.id)}
+              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {article.title}
+              </h3>
+              <p className="text-gray-600 text-sm mb-2">
+                {article.content && typeof article.content === 'string'
+                  ? `${article.content.substring(0, 200)}...`
+                  : 'No preview available...'}
+              </p>
+              <div className="flex items-center text-sm text-gray-500">
+                <span>Category: {article.category_name}</span>
+                <span className="mx-2">•</span>
+                <span>{article.view_count || 0} views</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+);
+
+SearchResults.displayName = 'SearchResults';
+
+interface OptimizedState {
+  categories: HelpCategory[];
+  featuredArticles: HelpArticle[];
+  searchResults: HelpArticle[];
+  loading: boolean;
+  searching: boolean;
+  error: string | null;
+}
+
+const HelpCenterPage: React.FC = () => {
+  const router = useRouter();
+
+  // Consolidated state for better performance
+  const [state, setState] = useState<OptimizedState>({
     categories: [],
+    featuredArticles: [],
+    searchResults: [],
+    loading: true,
+    searching: false,
     error: null,
-    showErrorModal: false,
-    isClient: false,
-    searchQuery: '',
-    selectedCategory: 'all',
-    expandedFAQ: null,
   });
 
-  // Ensure client-side rendering
-  useEffect(() => {
-    setState((prev: any) => ({ ...prev, isClient: true }));
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Debounced search to prevent excessive API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Memoized filtered categories for local search
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categoriesData;
+
+    return categoriesData.filter((category) =>
+      `${category.title} ${category.description}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
+  // Optimized data fetching
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+
+      // Parallel API calls for better performance
+      const [categoriesResponse, featuredResponse] = await Promise.all([
+        helpCenterAPI.getCategories(),
+        helpCenterAPI.getArticles({ featured: true }),
+      ]);
+
+      setState((prev) => ({
+        ...prev,
+        categories: Array.isArray(categoriesResponse) ? categoriesResponse : [],
+        featuredArticles: featuredResponse.results?.slice(0, 6) || [],
+        loading: false,
+      }));
+    } catch (err) {
+      console.error('Error fetching initial data:', err);
+      setState((prev) => ({
+        ...prev,
+        error: 'Failed to load help center data',
+        loading: false,
+      }));
+    }
   }, []);
 
-  // Load FAQs
-  const loadFAQs = useCallback(async () => {
-    if (!state.isClient) return;
-
-    setState((prev: any) => ({ ...prev, loading: true, error: null }));
+  // Optimized search function
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setState((prev) => ({ ...prev, searchResults: [], searching: false }));
+      return;
+    }
 
     try {
-      const faqs = faqGroups;
+      setState((prev) => ({ ...prev, searching: true }));
 
-      setState((prev: any) => ({
+      const response = await helpCenterAPI.searchArticles(query);
+
+      setState((prev) => ({
         ...prev,
-        faqs,
-        loading: false,
+        searchResults: response.results || [],
+        searching: false,
       }));
-    } catch (error) {
-      console.error('Error loading FAQs:', error);
-      setState((prev: any) => ({
+    } catch (err) {
+      console.error('Error searching articles:', err);
+      setState((prev) => ({
         ...prev,
-        error: 'Failed to load FAQs. Please try again later.',
-        showErrorModal: true,
-        loading: false,
+        searchResults: [],
+        searching: false,
+        error: 'Search failed. Please try again.',
       }));
     }
-  }, [state.isClient]);
+  }, []);
 
-  // Initial load
-  useEffect(() => {
-    if (state.isClient) {
-      loadFAQs();
-    }
-  }, [loadFAQs, state.isClient]);
+  const handleArticleClick = useCallback(
+    (articleId: number) => {
+      router.push(`/support/help/articles/${articleId}`);
+    },
+    [router]
+  );
 
-  // Handle search and filtering
+  const handleContactUs = useCallback(() => {
+    router.push('/contact-us');
+  }, [router]);
+
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setState((prev) => ({ ...prev, searchQuery: e.target.value }));
+      setSearchQuery(e.target.value);
     },
     []
   );
 
-  const handleCategoryChange = useCallback((category: string) => {
-    setState((prev) => ({
-      ...prev,
-      selectedCategory: category,
-      expandedFAQ: null, // Reset expanded FAQ when changing categories
-    }));
-  }, []);
+  // Effects
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
-  const handleFAQToggle = useCallback((faqId: string | number) => {
-    setState((prev) => ({
-      ...prev,
-      expandedFAQ: prev.expandedFAQ === faqId ? null : faqId,
-    }));
-  }, []);
+  useEffect(() => {
+    performSearch(debouncedSearchQuery);
+  }, [debouncedSearchQuery, performSearch]);
 
-  // Filter FAQs based on search and category
-  const filteredFAQs = React.useMemo(() => {
-    let filtered = state.faqs;
-
-    // Filter by category
-    if (state.selectedCategory !== 'all') {
-      filtered = filtered.filter(
-        (faq) => faq.category === state.selectedCategory
-      );
-    }
-
-    // Filter by search query
-    if (state.searchQuery) {
-      filtered = filtered.filter(
-        (faq) =>
-          faq.question
-            .toLowerCase()
-            .includes(state.searchQuery.toLowerCase()) ||
-          faq.answer.toLowerCase().includes(state.searchQuery.toLowerCase())
-      );
-    }
-
-    // Sort by order and featured status
-    return filtered.sort((a, b) => {
-      if (a.is_featured && !b.is_featured) return -1;
-      if (!a.is_featured && b.is_featured) return 1;
-      return (a.order || 999) - (b.order || 999);
-    });
-  }, [state.faqs, state.selectedCategory, state.searchQuery]);
-
-  // Get current category info
-  const currentCategory = state.categories.find(
-    (cat) => cat.id === state.selectedCategory
-  );
-
-  const filteredCategories = categoriesData.filter((category) =>
-    `${category.title} ${category.description}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
-
-  // Loading skeleton for SSR compatibility
-  if (!state.isClient) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/4 mb-8"></div>
-            <div className="h-12 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="border border-gray-200 rounded-lg p-6">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Loading state
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -162,121 +261,247 @@ export default function HelpCenterPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-blue-600 text-white py-6">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Help Center</h1>
-          <button className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition">
-            Contact Support
-          </button>
+      <header className="bg-blue-600 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Help Center</h1>
+            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+              Find answers to your questions and get the help you need
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search for help articles..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full p-4 text-lg text-gray-900 rounded-lg shadow-lg focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                />
+                {state.searching && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search for help..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-4 text-lg border rounded-lg shadow focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Error State */}
+        {state.error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{state.error}</p>
+          </div>
+        )}
+
+        {/* Search Results */}
+        {searchQuery.trim() && (
+          <SearchResults
+            results={state.searchResults}
+            onArticleClick={handleArticleClick}
           />
-        </div>
+        )}
 
-        {/* Categories */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredCategories.map((category, idx) => (
-            <div
-              key={idx}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition category"
-            >
-              <h2 className="text-xl font-semibold text-blue-600 mb-2">
-                {category.title}
-              </h2>
-              <p className="text-gray-700">{category.description}</p>
-              <a
-                href={category.link}
-                className="text-blue-600 mt-4 inline-block"
-              >
-                Learn More →
-              </a>
-            </div>
-          ))}
-          {filteredCategories.length === 0 && (
-            <p className="text-gray-500 col-span-full text-center">
-              No matching help topics found.
-            </p>
-          )}
-        </section>
-
-        {/* FAQs */}
-        <section className="mt-12">
-          <div className="">
-            <div className="mb-16">
-              <p className="mt-4 text-sm leading-7 text-gray-500">F.A.Q</p>
-              <h3 className="text-3xl sm:text-4xl leading-normal font-extrabold tracking-tight text-gray-900">
-                Frequently Asked
-                <span className="text-blue-600 ml-2">Questions</span>
-              </h3>
-            </div>
-
-            {faqGroups.map((group, idx) => (
-              <div key={idx} className="sm:flex items-start mb-10">
-                <h3 className="py-3 font-bold text-lg text-gray-900 w-full sm:w-3/12">
-                  {group.title}
-                </h3>
-                <div className="w-full sm:w-9/12">
-                  {group.items.map((item, index) => (
-                    <div key={index} className="flex items-start mb-8">
-                      <div className="hidden sm:flex items-center justify-center p-3 mr-3 rounded-full bg-blue-500 text-white border-4 border-white text-xl font-semibold">
-                        <svg
-                          width="24px"
-                          height="24px"
-                          fill="white"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <g data-name="Layer 2">
-                            <g data-name="menu-arrow">
-                              <rect
-                                width="24"
-                                height="24"
-                                transform="rotate(180 12 12)"
-                                opacity="0"
-                              />
-                              <path d="M17 9A5 5 0 0 0 7 9a1 1 0 0 0 2 0 3 3 0 1 1 3 3 1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-1.1A5 5 0 0 0 17 9z" />
-                              <circle cx="12" cy="19" r="1" />
-                            </g>
-                          </g>
-                        </svg>
-                      </div>
-                      <div className="text-md">
-                        <h1 className="text-gray-900 font-semibold mb-2">
-                          {item.question}
-                        </h1>
-                        <p className="text-gray-500 text-sm">{item.answer}</p>
+        {/* Show categories and FAQs only when not searching */}
+        {!searchQuery.trim() && (
+          <>
+            {/* Featured Articles */}
+            {state.featuredArticles.length > 0 && (
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Featured Articles
+                </h2>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {state.featuredArticles.map((article) => (
+                    <div
+                      key={article.id}
+                      onClick={() => handleArticleClick(article.id)}
+                      className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {article.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4">
+                        {article.content && typeof article.content === 'string'
+                          ? `${article.content.substring(0, 120)}...`
+                          : 'No preview available...'}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>{article.view_count || 0} views</span>
+                        <span className="text-blue-600">Read more →</span>
                       </div>
                     </div>
                   ))}
                 </div>
+              </section>
+            )}
+
+            {/* Categories */}
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Browse by Category
+              </h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredCategories.map((category, idx) => (
+                  <CategoryCard
+                    key={idx}
+                    category={category}
+                    onClick={() => category.link && router.push(category.link)}
+                  />
+                ))}
               </div>
-            ))}
+
+              {filteredCategories.length === 0 && (
+                <p className="text-gray-500 text-center">
+                  No categories found matching your search.
+                </p>
+              )}
+            </section>
+
+            {/* FAQs */}
+            <section className="mb-12">
+              <div className="mb-8">
+                <p className="text-sm font-medium text-gray-500 mb-2">F.A.Q</p>
+                <h2 className="text-3xl font-bold text-gray-900">
+                  Frequently Asked{' '}
+                  <span className="text-blue-600">Questions</span>
+                </h2>
+              </div>
+
+              <div className="space-y-12">
+                {faqGroups.map((group, groupIdx) => (
+                  <div key={groupIdx} className="sm:flex items-start">
+                    <h3 className="py-3 font-bold text-lg text-gray-900 w-full sm:w-3/12 mb-4 sm:mb-0">
+                      {group.title}
+                    </h3>
+                    <div className="w-full sm:w-9/12">
+                      {group.items.map((item, itemIdx) => (
+                        <FAQItem
+                          key={itemIdx}
+                          item={item}
+                          groupIdx={groupIdx}
+                          itemIdx={itemIdx}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* Quick Links */}
+        <div className="mt-12 bg-gray-100 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Need More Help?
+          </h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <button
+              onClick={() => router.push('/profile/contact-support/new')}
+              className="bg-white p-4 rounded-lg shadow text-left hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">
+                    Contact Support
+                  </h4>
+                  <p className="text-xs text-gray-500">Get personalized help</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push('/profile/feedback')}
+              className="bg-white p-4 rounded-lg shadow text-left hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">
+                    Give Feedback
+                  </h4>
+                  <p className="text-xs text-gray-500">Share your thoughts</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push('/profile/contact-support')}
+              className="bg-white p-4 rounded-lg shadow text-left hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">
+                    My Tickets
+                  </h4>
+                  <p className="text-xs text-gray-500">View your requests</p>
+                </div>
+              </div>
+            </button>
           </div>
-        </section>
+        </div>
 
         {/* Contact Section */}
-        <div className="mt-16 bg-gray-50 rounded-xl p-8 text-center">
+        <section className="bg-white rounded-xl p-8 text-center shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Still have questions?
           </h2>
           <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Our friendly support team is here to help! Get in touch and we'll
-            get back to you as soon as possible.
+            Our friendly support team is here to help! Get in touch and
+            we&apos;ll get back to you as soon as possible.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => router.push('/contact')}
+              onClick={handleContactUs}
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <svg
@@ -289,10 +514,10 @@ export default function HelpCenterPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M3 8l7.89 4.47a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              Contact Support
+              Contact Us
             </button>
             <button
               onClick={() => window.open('tel:1-800-STARBOUND', '_self')}
@@ -314,8 +539,10 @@ export default function HelpCenterPage() {
               Call Us
             </button>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
-}
+};
+
+export default HelpCenterPage;

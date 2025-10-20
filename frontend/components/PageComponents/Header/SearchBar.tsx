@@ -44,11 +44,13 @@ function SearchBarContent({
   const [query, setQuery] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [justCleared, setJustCleared] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,9 +64,11 @@ function SearchBarContent({
 
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category') || '';
+    const urlSubCategory = searchParams.get('subcategory') || '';
 
     setQuery(urlQuery.trim());
     setSelectedCategory(urlCategory.trim());
+    setSelectedSubCategory(urlSubCategory.trim());
   }, [searchParams]);
 
   // Focus input if autoFocus is enabled
@@ -89,7 +93,7 @@ function SearchBarContent({
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        setError(null);
+        setError('');
         const data = await fetchCategories(1, 20); // Fetch more categories
         setCategories(data || []);
       } catch (error) {
@@ -137,13 +141,14 @@ function SearchBarContent({
   }, []);
 
   // Debounced search suggestions
-  const debouncedShowSuggestions = useCallback(
-    debounce((value: string) => {
-      if (value.trim().length > 0) {
-        setShowSuggestions(true);
-      }
-    }, 300),
-    []
+  const debouncedShowSuggestions = useMemo(
+    () =>
+      debounce((value: string) => {
+        if (value.trim().length > 0) {
+          setShowSuggestions(true);
+        }
+      }, 300),
+    [] // No dependencies needed for this debounced function
   );
 
   const handleInputChange = useCallback(
@@ -180,6 +185,7 @@ function SearchBarContent({
 
       const trimmedQuery = query.trim();
       const trimmedCategory = selectedCategory.trim();
+      const trimmedSubCategory = selectedSubCategory.trim();
 
       if (!trimmedQuery) {
         inputRef.current?.focus();
@@ -204,17 +210,38 @@ function SearchBarContent({
       if (trimmedCategory) {
         params.set('category', trimmedCategory);
       }
+      if (trimmedSubCategory) {
+        params.set('subcategory', trimmedSubCategory);
+      }
 
       router.push(`/shop?${params.toString()}`);
     },
-    [query, selectedCategory, onSearch, router, saveToHistory]
+    [
+      query,
+      selectedCategory,
+      selectedSubCategory,
+      onSearch,
+      router,
+      saveToHistory,
+    ]
   );
 
   const handleCategorySelect = useCallback((categorySlug: string) => {
     setSelectedCategory(categorySlug);
+    setSelectedSubCategory(''); // Clear subcategory when main category is selected
     setMenuOpen(false);
     inputRef.current?.focus();
   }, []);
+
+  const handleSubCategorySelect = useCallback(
+    (categorySlug: string, subcategorySlug: string) => {
+      setSelectedCategory(categorySlug); // Keep the main category for URL
+      setSelectedSubCategory(subcategorySlug);
+      setMenuOpen(false);
+      inputRef.current?.focus();
+    },
+    []
+  );
 
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
@@ -223,6 +250,8 @@ function SearchBarContent({
 
       // Trigger search immediately
       const trimmedCategory = selectedCategory.trim();
+      const trimmedSubCategory = selectedSubCategory.trim();
+
       saveToHistory(suggestion);
 
       if (onSearch) {
@@ -235,16 +264,43 @@ function SearchBarContent({
         params.set('category', trimmedCategory);
       }
 
+      if (trimmedSubCategory) {
+        params.set('subcategory', trimmedSubCategory);
+      }
+
       router.push(`/shop?${params.toString()}`);
     },
-    [selectedCategory, onSearch, router, saveToHistory]
+    [selectedCategory, selectedSubCategory, onSearch, router, saveToHistory]
   );
 
   const selectedCategoryName = useMemo(() => {
-    if (!selectedCategory) return 'All Categories';
-    const category = categories.find((c) => c.slug.trim() === selectedCategory);
-    return category?.name || 'Unknown Category';
-  }, [selectedCategory, categories]);
+    // If a subcategory is selected, show the subcategory name
+    if (selectedSubCategory) {
+      // Find the category that contains this subcategory
+      for (const category of categories) {
+        if (category.children) {
+          const subcategory = category.children.find(
+            (sub) => sub.slug.trim() === selectedSubCategory
+          );
+          if (subcategory) {
+            return subcategory.name;
+          }
+        }
+      }
+      return 'Unknown Subcategory';
+    }
+
+    // If a main category is selected, show the category name
+    if (selectedCategory) {
+      const category = categories.find(
+        (c) => c.slug.trim() === selectedCategory
+      );
+      return category?.name || 'Unknown Category';
+    }
+
+    // Default to "All Categories"
+    return 'All Categories';
+  }, [selectedCategory, selectedSubCategory, categories]);
 
   const filteredSuggestions = useMemo(() => {
     if (!query.trim()) return searchHistory;
@@ -325,28 +381,86 @@ function SearchBarContent({
                       <>
                         <button
                           type="button"
-                          onClick={() => handleCategorySelect('')}
+                          onClick={() => {
+                            handleCategorySelect('');
+                            setSelectedSubCategory(''); // Clear subcategory as well
+                          }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                           role="option"
-                          aria-selected={!selectedCategory}
+                          aria-selected={
+                            !selectedCategory && !selectedSubCategory
+                          }
                         >
                           All Categories
                         </button>
                         {categories.map((category) => (
-                          <button
+                          <div
                             key={category.id}
-                            type="button"
-                            onClick={() =>
-                              handleCategorySelect(category.slug.trim())
-                            }
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                            role="option"
-                            aria-selected={
-                              selectedCategory === category.slug.trim()
-                            }
+                            className="border-b border-gray-100 last:border-b-0"
                           >
-                            {category.name}
-                          </button>
+                            {/* Main Category */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCategorySelect(category.slug.trim())
+                              }
+                              className="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between group"
+                              role="option"
+                              aria-selected={
+                                selectedCategory === category.slug.trim() &&
+                                !selectedSubCategory
+                              }
+                            >
+                              <span className="flex items-center">
+                                {category.name}
+                              </span>
+                              {category.children &&
+                                category.children.length > 0 && (
+                                  <div className="flex items-center">
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                      {category.children.length}
+                                    </span>
+                                  </div>
+                                )}
+                            </button>
+
+                            {/* Subcategories */}
+                            {category.children &&
+                              category.children.length > 0 && (
+                                <div className="bg-gradient-to-r from-gray-50 to-gray-25 border-l-2 border-blue-200 ml-4">
+                                  {category.children.map((subcategory) => (
+                                    <button
+                                      key={`${category.id}-${subcategory.id}`}
+                                      type="button"
+                                      onClick={() =>
+                                        handleSubCategorySelect(
+                                          `${category.slug.trim()}`,
+                                          `${subcategory.slug.trim()}`
+                                        )
+                                      }
+                                      className="w-full text-left pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none relative border-b border-gray-100 last:border-b-0 group"
+                                      role="option"
+                                      aria-selected={
+                                        selectedCategory ===
+                                          category.slug.trim() &&
+                                        selectedSubCategory ===
+                                          subcategory.slug.trim()
+                                      }
+                                    >
+                                      <div className="flex items-center">
+                                        <span className="group-hover:text-blue-700">
+                                          {subcategory.name}
+                                        </span>
+                                      </div>
+                                      {/* Connection line */}
+                                      <div className="absolute left-2 top-0 w-4 h-full flex items-center">
+                                        <div className="w-2 h-px bg-gray-300"></div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                          </div>
                         ))}
                       </>
                     )}
@@ -364,12 +478,15 @@ function SearchBarContent({
             <input
               ref={inputRef}
               type="text"
-              className="w-full h-full border-none outline-none bg-transparent text-sm lg:text-base placeholder-gray-500"
+              className="w-full h-full border-none outline-none bg-transparent text-sm lg:text-base placeholder-gray-500 pr-8"
               placeholder={placeholder}
               value={query}
               onChange={handleInputChange}
               onFocus={() => {
-                if (query.trim() || searchHistory.length > 0) {
+                if (
+                  !justCleared &&
+                  (query.trim() || searchHistory.length > 0)
+                ) {
                   setShowSuggestions(true);
                 }
               }}
@@ -378,12 +495,66 @@ function SearchBarContent({
               aria-label="Search input"
             />
 
+            {/* Clear Button */}
+            {query.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  setShowSuggestions(false);
+                  setJustCleared(true);
+
+                  // Trigger search with empty query
+                  const params = new URLSearchParams();
+                  if (selectedCategory.trim()) {
+                    params.set('category', selectedCategory.trim());
+                  }
+                  if (selectedSubCategory.trim()) {
+                    params.set('subcategory', selectedSubCategory.trim());
+                  }
+
+                  if (onSearch) {
+                    onSearch('', selectedCategory.trim() || undefined);
+                  } else {
+                    router.push(
+                      `/shop${params.toString() ? '?' + params.toString() : ''}`
+                    );
+                  }
+
+                  // Focus back to input after a brief delay to prevent onFocus from showing suggestions
+                  setTimeout(() => {
+                    if (inputRef.current) {
+                      inputRef.current.focus();
+                    }
+                    // Reset the flag after focus
+                    setTimeout(() => setJustCleared(false), 50);
+                  }, 100);
+                }}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Clear search"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+
             {/* Search Suggestions */}
             {showSuggestions && (query.trim() || searchHistory.length > 0) && (
               <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                 {query.trim() && (
                   <div className="px-4 py-2 text-xs text-gray-500 border-b">
-                    Search for "{query}"
+                    Search for `&quot;{query}&quot;`
                   </div>
                 )}
 

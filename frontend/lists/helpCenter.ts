@@ -1,3 +1,11 @@
+/**
+ * Help Center Categories
+ * Defines the main navigation categories for the help center.
+ * Each category contains:
+ * @property {string} title - The display name of the category
+ * @property {string} description - A brief explanation of what users can find in this section
+ * @property {string} link - The anchor link to the relevant section (hash-based navigation)
+ */
 export const categoriesData = [
   {
     title: 'Getting Started',
@@ -31,6 +39,28 @@ export const categoriesData = [
   },
 ];
 
+/**
+ * FAQ Groups
+ * Contains the complete FAQ content organized by categories.
+ * Each group represents a major topic area in the help center.
+ *
+ * Structure:
+ * @type {Array<{
+ *   title: string;
+ *   items: Array<{
+ *     question: string;
+ *     answer: string;
+ *   }>
+ * }>}
+ *
+ * Groups are organized in order of common user needs:
+ * 1. Basic onboarding (Getting Started)
+ * 2. Account management
+ * 3. Core functionality (Orders, Shopping)
+ * 4. Technical issues
+ * 5. Feature-specific help
+ * 6. Security and privacy
+ */
 export const faqGroups = [
   {
     title: 'Getting Started',

@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Layout stability optimizations */
+@import './layout-stability.css';
+
 /* width */
 ::-webkit-scrollbar {
   width: 5px;
@@ -22,4 +25,18 @@
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #dc2626;
+}
+
+/* Shimmer animation for skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
 }

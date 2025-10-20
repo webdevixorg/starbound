@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
-import Header from '@/components/PageComponents/Header/Header';
 import Footer from '@/components/PageComponents/Footer';
+import DynamicHeader from '@/components/PageComponents/Header/DynamicHeader';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Header layout="default" />
-      <main>{children}</main>
+      <DynamicHeader layout="default" />
+      <main className="container mx-auto">{children}</main>
       <Footer />
     </>
   );

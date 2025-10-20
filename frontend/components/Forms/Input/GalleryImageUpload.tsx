@@ -61,7 +61,11 @@ const DraggableImage: React.FC<{
         src={
           image.object_id === 0
             ? image.image_path
-            : getPublicImageUrl(contentType, image.object_id, image.image_path)
+            : getPublicImageUrl(
+                contentType,
+                image.object_id,
+                image.image_path + '_medium.webp'
+              )
         }
         alt={image.alt}
         sizes="(max-width: 640px) 100vw, 640px"

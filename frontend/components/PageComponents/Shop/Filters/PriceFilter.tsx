@@ -13,7 +13,7 @@ interface PriceFilterProps {
   onApply: (min: number, max: number) => void;
 }
 
-const PriceFilter: React.FC<PriceFilterProps> = ({
+const PriceFilter = ({
   minPrice,
   maxPrice,
   isOpen,
@@ -21,7 +21,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
   onMinPriceChange,
   onMaxPriceChange,
   onApply,
-}) => {
+}: PriceFilterProps) => {
   return (
     <CollapsibleSection title="Price" open={isOpen} setOpen={onToggle}>
       <div className="p-2">

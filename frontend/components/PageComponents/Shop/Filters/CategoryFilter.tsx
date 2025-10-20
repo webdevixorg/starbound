@@ -9,7 +9,7 @@ interface CategoryFilterProps {
   subCategories: SubCategory[];
   filters: Filter[];
   isOpen: boolean;
-  onToggle: (open: boolean) => void;
+  onToggle: React.Dispatch<React.SetStateAction<boolean>>;
   onFilterChange: (type: string, id: number) => void;
   onBack: (type: 'categories') => void;
 }

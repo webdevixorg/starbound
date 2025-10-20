@@ -8,7 +8,7 @@
 
   &:hover {
     .product-card-actions-list {
-      transform: translateX(0) translateX(-3px);
+      transform: translateX(0) translateX(-8px);
       opacity: 1;
 
       button {
@@ -21,16 +21,15 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 10;
+    z-index: 15;
     overflow: hidden;
     transition: all 0.3s ease-in-out;
   }
 
   .product-card-actions-list {
     position: absolute;
-    top: 40px;
     right: 0;
-    z-index: 10;
+    z-index: 15;
     opacity: 0;
     transition: all 0.3s ease-in-out;
     transform: translateX(100%) translateX(6px);
@@ -66,7 +65,9 @@
       background: transparent;
       border-radius: 50%;
       transform: scale(0);
-      transition: background 0.2s, transform 0.2s;
+      transition:
+        background 0.2s,
+        transform 0.2s;
       z-index: -1;
     }
   }
@@ -103,18 +104,46 @@
       }
 
       svg {
-        fill: none;
         stroke: #000;
-        strokewidth: 16px;
+      }
+    }
+  }
+
+  // Separate hover rule for wishlist icon
+  .add-to-wishlist-icon:hover {
+    &::before {
+      background: #ef4444 !important;
+      box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+      transform: scale(1);
+    }
+
+    svg {
+      stroke: #fff !important;
+      fill: #fff !important;
+    }
+  }
+
+  // Styling for when item is in wishlist
+  .add-to-wishlist-icon.inwishlist {
+    svg {
+      stroke: #ef4444;
+      fill: #fff;
+    }
+
+    &::before {
+      background: #fff;
+      transform: scale(1);
+      box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
+    }
+
+    &:hover {
+      &::before {
+        background: #ef4444 !important;
       }
 
-      &:hover::before {
-        background: #ef4444;
-        box-shadow: 0 5px 10px rgba(18, 18, 18, 0.15);
-      }
-
-      &:hover svg {
-        stroke: #fff;
+      svg {
+        stroke: #fff !important;
+        fill: #fff !important;
       }
     }
   }
@@ -126,7 +155,6 @@
 
     img {
       width: 100%;
-      object-fit: cover;
       border-radius: 0.25rem 0.25rem 0 0;
       transition: transform 0.3s ease-in-out;
     }

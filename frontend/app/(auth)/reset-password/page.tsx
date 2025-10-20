@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image'; // Add this import
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import { resetPassword } from '@/services/api';
 import EyeIcon from '@/components/UI/Icons/Eye';
 import EyeClosedIcon from '@/components/UI/Icons/EyeClosed';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
 
-const ResetPassword: React.FC = () => {
+const ResetPasswordForm: React.FC = () => {
   const searchParams = useSearchParams();
   const navigate = useRouter();
 
@@ -88,12 +90,13 @@ const ResetPassword: React.FC = () => {
       setTimeout(() => {
         navigate.push('/signin');
       }, 3000);
-    } catch (error: any) {
-      if (error.response?.status === 400) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      if (err.response?.status === 400) {
         setError(
           'Invalid or expired reset token. Please request a new password reset.'
         );
-      } else if (error.response?.status >= 500) {
+      } else if (err.response?.status && err.response.status >= 500) {
         setError('Server error. Please try again later.');
       } else {
         setError('Failed to reset password. Please try again.');
@@ -110,9 +113,12 @@ const ResetPassword: React.FC = () => {
           <div className="max-w-md w-full">
             <div className="text-center mb-8">
               <Link href="/" className="flex items-center justify-center mb-6">
-                <img
+                <NextImage
                   src="/logo.png"
                   alt="Logivis Automotive"
+                  width={160}
+                  height={64}
+                  priority
                   className="h-10 sm:h-16 w-auto"
                 />
               </Link>
@@ -169,9 +175,12 @@ const ResetPassword: React.FC = () => {
           <div className="max-w-md w-full">
             <div className="text-center mb-8">
               <Link href="/" className="flex items-center justify-center mb-6">
-                <img
+                <NextImage
                   src="/logo.png"
                   alt="Logivis Automotive"
+                  width={160}
+                  height={64}
+                  priority
                   className="h-10 sm:h-16 w-auto"
                 />
               </Link>
@@ -220,10 +229,12 @@ const ResetPassword: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="flex items-center justify-center mb-6">
-              <img
+              <NextImage
                 src="/logo.png"
                 alt="Logivis Automotive"
                 className="h-10 sm:h-16 w-auto"
+                width={64}
+                height={40}
               />
             </Link>
             <h2 className="text-3xl font-extrabold text-gray-900">
@@ -369,6 +380,14 @@ const ResetPassword: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ResetPassword: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 };
 

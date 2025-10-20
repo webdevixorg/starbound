@@ -11,10 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetchUpdates, markUpdateAsRead } from '@/services/api';
 import { Update } from '@/types/types';
-import ProfileImage from '@/components/UI/ProfileImage/ProfileImage';
+import SafeImage from '@/components/UI/SafeImage';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface UpdatesState {
   updates: Update[];
@@ -277,65 +278,73 @@ export default function UpdatesPage() {
   }, [state.updates]);
 
   // Memoized update item component
-  const UpdateItem = useMemo(
-    () =>
-      React.memo<{ update: Update }>(({ update }) => (
-        <div
-          className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
-            update.is_read
-              ? 'bg-white opacity-75'
-              : 'bg-green-50 border-green-200 shadow-sm'
-          }`}
-          onClick={() => handleUpdateClick(update)}
-        >
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                <ProfileImage
-                  alt="Update profile"
-                  src={
-                    typeof update.profile_image === 'string'
-                      ? update.profile_image
-                      : ''
-                  }
-                />
-              </div>
+  const UpdateItem = useMemo(() => {
+    const Component = React.memo<{ update: Update }>(({ update }) => (
+      <div
+        className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+          update.is_read
+            ? 'bg-white opacity-75'
+            : 'bg-green-50 border-green-200 shadow-sm'
+        }`}
+        onClick={() => handleUpdateClick(update)}
+      >
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden">
+              <SafeImage
+                alt={update.profile_image}
+                className="relative rounded-full h-10 w-10 object-cover"
+                images={[
+                  {
+                    image_path: getPublicImageUrl(
+                      'update',
+                      update.id,
+                      update.profile_image
+                    ),
+                  },
+                ]}
+                width={40}
+                height={40}
+              />
             </div>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <p
-                className={`text-sm ${
-                  update.is_read ? 'text-gray-600' : 'text-gray-900 font-medium'
-                }`}
-              >
-                {update.message}
-              </p>
+          <div className="flex-1 min-w-0">
+            <p
+              className={`text-sm ${
+                update.is_read ? 'text-gray-600' : 'text-gray-900 font-medium'
+              }`}
+            >
+              {update.message}
+            </p>
 
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-gray-500">
-                  {getTimeAgoString(update.timestamp)}
-                </span>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-gray-500">
+                {getTimeAgoString(update.timestamp)}
+              </span>
 
-                {!update.is_read && (
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                )}
+              {!update.is_read && (
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              )}
 
-                {state.markingAsRead[update.id] && (
-                  <InlineLoaderIcon className="w-4 h-4" />
-                )}
-              </div>
+              {state.markingAsRead[update.id] && (
+                <InlineLoaderIcon className="w-4 h-4" />
+              )}
             </div>
           </div>
         </div>
-      )),
-    [handleUpdateClick, getTimeAgoString, state.markingAsRead]
-  );
+      </div>
+    ));
+
+    Component.displayName = 'UpdateItem';
+    return Component;
+  }, [handleUpdateClick, getTimeAgoString, state.markingAsRead]);
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
@@ -359,8 +368,8 @@ export default function UpdatesPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -376,14 +385,29 @@ export default function UpdatesPage() {
   const unreadCount = state.updates.filter((u) => !u.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-10">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 01-7.5-7.5c0-1.104.896-2 2-2s2 .896 2 2c0 2.485 2.015 4.5 4.5 4.5s4.5-2.015 4.5-4.5c0-1.104.896-2 2-2s2 .896 2 2a7.5 7.5 0 01-7.5 7.5V17z"
+                />
+              </svg>
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Travel Updates
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Updates
               </h1>
               <p className="mt-1 text-sm text-gray-600">
                 {unreadCount > 0
@@ -393,45 +417,26 @@ export default function UpdatesPage() {
                   : 'All caught up! No new updates'}
               </p>
             </div>
+          </div>
 
-            <div className="flex items-center space-x-4">
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  disabled={state.markingAsRead.all}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {state.markingAsRead.all ? (
-                    <>
-                      <InlineLoaderIcon className="mr-2" />
-                      Marking all...
-                    </>
-                  ) : (
-                    'Mark all as read'
-                  )}
-                </button>
-              )}
-
+          {/* Action buttons */}
+          <div className="flex items-center space-x-4 mt-6">
+            {unreadCount > 0 && (
               <button
-                onClick={() => router.push('/profile')}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                onClick={handleMarkAllAsRead}
+                disabled={state.markingAsRead.all}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                Back to Profile
+                {state.markingAsRead.all ? (
+                  <>
+                    <InlineLoaderIcon className="mr-2" />
+                    Marking all...
+                  </>
+                ) : (
+                  'Mark all as read'
+                )}
               </button>
-            </div>
+            )}
           </div>
         </div>
 
@@ -474,7 +479,7 @@ export default function UpdatesPage() {
         )}
 
         {/* Updates List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg">
           {state.updates.length > 0 ? (
             <div className="p-6">
               <div className="space-y-4">
@@ -535,10 +540,10 @@ export default function UpdatesPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No travel updates yet
+                No updates yet
               </h3>
               <p className="text-gray-600">
-                When you receive travel updates, they'll appear here.
+                When you receive updates, they&apos;ll appear here.
               </p>
             </div>
           )}

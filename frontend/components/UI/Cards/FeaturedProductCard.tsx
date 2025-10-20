@@ -59,6 +59,7 @@ const FeaturedProductCard: React.FC<FeaturedProductCardProps> = ({
               },
             ]}
             fill
+            priority={true} // Featured products are often above the fold
           />
         </a>
 

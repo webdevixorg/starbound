@@ -21,6 +21,31 @@ import SearchBar from './SearchBar';
 import TopBar from './TopBar';
 import CategoryButton from './CategoryButton';
 
+// Define HeaderMenuItem type for Starbound
+interface HeaderMenuItemBase {
+  label: string;
+  href: string;
+  direct?: boolean;
+}
+
+interface HeaderMenuItemWithSubItems extends HeaderMenuItemBase {
+  subItems?: Array<{ label: string; href: string }>;
+  megaMenu?: undefined;
+  items?: undefined;
+}
+
+interface HeaderMenuItemWithMegaMenu extends HeaderMenuItemBase {
+  megaMenu: boolean;
+  items: Array<{
+    title: string;
+    href: string;
+    items: Array<{ label: string; href: string }>;
+  }>;
+  subItems?: undefined;
+}
+
+type HeaderMenuItem = HeaderMenuItemWithSubItems | HeaderMenuItemWithMegaMenu;
+
 // Fix User type to include name property
 interface User {
   id: string;
@@ -50,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<HeaderMenuItem[]>([]);
 
   // Memoized values
   const cartItemCount = useMemo(
@@ -169,7 +194,6 @@ const Header: React.FC<HeaderProps> = ({
                       width={76}
                       height={32}
                       className="h-12 lg:h-16 w-auto"
-                      style={{ width: 'auto', height: 'auto' }}
                       priority
                     />
                   </div>

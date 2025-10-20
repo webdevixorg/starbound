@@ -1,20 +1,20 @@
 'use client';
 
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import {
+  fetchOrders,
+  updateOrderFulfillment,
+  bulkUpdateOrderStatus,
+} from '@/services/apiProducts';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
-import Image from 'next/image';
+import SafeImage from '@/components/UI/SafeImage';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface OrderItem {
-  id: string | number;
+  id: number;
   image_url?: string;
   name: string;
   price: number;
@@ -52,13 +52,13 @@ interface ShippingData {
 
 interface Order {
   id: number;
-  customer: string;
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
+  customer?: string; // Make optional since it might not always be present
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
   selected_payment_method: string;
-  total: number;
-  delivery: string;
-  items: number;
-  fulfillment:
+  total?: number; // Make optional, can calculate from order_data if needed
+  delivery?: string;
+  items?: number; // Can calculate from order_data length
+  fulfillment?:
     | 'pending'
     | 'confirmed'
     | 'processing'
@@ -75,6 +75,7 @@ interface Order {
   tracking_number?: string;
   estimated_delivery?: string;
   notes?: string;
+  coupon_code?: string | null; // Added based on API response
 }
 
 interface OrdersState {
@@ -86,9 +87,19 @@ interface OrdersState {
   showErrorModal: boolean;
   isClient: boolean;
   sortBy: 'newest' | 'oldest' | 'total-high' | 'total-low' | 'status';
-  filterBy: 'all' | 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  filterBy:
+    | 'all'
+    | 'pending'
+    | 'paid'
+    | 'processing'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled';
   searchQuery: string;
   cancellingOrder: number | null;
+  selectedOrders: number[];
+  showBulkActions: boolean;
+  bulkProcessing: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -119,115 +130,18 @@ const SORT_OPTIONS = [
 
 const FILTER_OPTIONS = [
   { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'pending', label: 'Pending Payment' },
   { value: 'paid', label: 'Paid' },
+  { value: 'processing', label: 'Processing' },
   { value: 'shipped', label: 'Shipped' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'cancelled', label: 'Cancelled' },
 ] as const;
 
-// Mock data for development
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 1001,
-    customer: 'John Doe',
-    payment_status: 'paid',
-    selected_payment_method: 'Credit Card',
-    total: 2847.5,
-    delivery: 'Standard',
-    items: 2,
-    fulfillment: 'confirmed',
-    created_at: '2024-01-15T10:30:00Z',
-    order_number: 'ORD-2024-001001',
-    tracking_number: 'TRK123456789',
-    estimated_delivery: '2024-01-25',
-    ship_to_different_address: false,
-    order_data: [
-      {
-        id: 1,
-        name: 'Santorini Adventure Package',
-        price: 1299.0,
-        quantity: 1,
-        image_url: '/destinations/santorini.jpg',
-        destination: 'Santorini, Greece',
-        date: '2024-02-15',
-        duration: '7 days',
-      },
-      {
-        id: 2,
-        name: 'Bali Cultural Experience',
-        price: 1548.5,
-        quantity: 1,
-        image_url: '/destinations/bali.jpg',
-        destination: 'Bali, Indonesia',
-        date: '2024-03-01',
-        duration: '10 days',
-      },
-    ],
-    billing_data: {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      phone: '+1-555-123-4567',
-      address1: '123 Main Street',
-      address2: 'Apt 4B',
-      city: 'New York',
-      state: 'NY',
-      postalCode: '10001',
-      country: 'United States',
-    },
-  },
-  {
-    id: 1002,
-    customer: 'Jane Smith',
-    payment_status: 'pending',
-    selected_payment_method: 'PayPal',
-    total: 3240.0,
-    delivery: 'Express',
-    items: 1,
-    fulfillment: 'pending',
-    created_at: '2024-01-20T14:15:00Z',
-    order_number: 'ORD-2024-001002',
-    estimated_delivery: '2024-01-28',
-    ship_to_different_address: true,
-    order_data: [
-      {
-        id: 3,
-        name: 'Tokyo Premium Tour',
-        price: 3240.0,
-        quantity: 1,
-        image_url: '/destinations/tokyo.jpg',
-        destination: 'Tokyo, Japan',
-        date: '2024-04-10',
-        duration: '14 days',
-      },
-    ],
-    billing_data: {
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@example.com',
-      phone: '+1-555-987-6543',
-      address1: '456 Oak Avenue',
-      city: 'Los Angeles',
-      state: 'CA',
-      postalCode: '90210',
-      country: 'United States',
-    },
-    shipping_data: {
-      firstName: 'Jane',
-      lastName: 'Smith',
-      address1: '789 Pine Street',
-      city: 'San Francisco',
-      state: 'CA',
-      zipCode: '94102',
-      country: 'United States',
-    },
-  },
-];
-
 export default function OrdersPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isClientRole = role === 'client';
   const contentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [state, setState] = useState<OrdersState>({
@@ -242,6 +156,9 @@ export default function OrdersPage() {
     filterBy: 'all',
     searchQuery: '',
     cancellingOrder: null,
+    selectedOrders: [],
+    showBulkActions: false,
+    bulkProcessing: false,
   });
 
   // Ensure client-side rendering
@@ -252,9 +169,24 @@ export default function OrdersPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (state.isClient && !user) {
-      router.push('/auth/login');
+      router.push('/signin');
     }
   }, [user, router, state.isClient]);
+
+  // Redirect if not authorized (only admin and staff can access)
+  useEffect(() => {
+    if (
+      state.isClient &&
+      user &&
+      role &&
+      role !== 'admin' &&
+      role !== 'staff'
+    ) {
+      router.push(
+        '/signin?message=Access denied. Admin or staff access required.'
+      );
+    }
+  }, [user, role, router, state.isClient]);
 
   // Load orders
   const loadOrders = useCallback(async () => {
@@ -263,24 +195,23 @@ export default function OrdersPage() {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      // TODO: Replace with actual API call
-      // For now, using mock data
-      const orders = MOCK_ORDERS;
+      // ✅ Using real API to fetch orders
+      console.log('🔄 Fetching orders from API...');
+      const response = await fetchOrders();
 
-      // Uncomment when API is ready:
-      // const response = await fetch('/api/orders', {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      // });
+      // Handle paginated response structure
+      const orders = response.results || response || [];
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to fetch orders');
-      // }
-
-      // const data = await response.json();
-      // const orders = data.results || data;
+      console.log('✅ Orders fetched successfully:', {
+        total: response.count || orders.length,
+        ordersReceived: orders.length,
+        response: response,
+        userRole: role,
+        isClientRole: isClientRole,
+        userId: user?.id,
+        hasNextPage: !!response.next,
+        hasPrevPage: !!response.previous,
+      });
 
       setState((prev) => ({
         ...prev,
@@ -288,15 +219,43 @@ export default function OrdersPage() {
         loading: false,
       }));
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error('❌ Error loading orders:', error);
       setState((prev) => ({
         ...prev,
-        error: 'Failed to load your orders. Please try again.',
+        error: 'Failed to load orders. Please try again.',
         showErrorModal: true,
         loading: false,
+        orders: [], // Fallback to empty array
       }));
     }
-  }, [state.isClient, user]);
+  }, [state.isClient, user, role, isClientRole]);
+
+  // ✅ Utility functions to handle optional fields
+  const calculateOrderTotal = (order: Order): number => {
+    if (order.total !== undefined) return order.total;
+    // Calculate from order_data if total is not provided
+    return order.order_data.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+  };
+
+  const getOrderCustomer = (order: Order): string => {
+    if (order.customer) return order.customer;
+    // Fallback to billing data if customer field is not provided
+    return (
+      `${order.billing_data?.firstName || ''} ${order.billing_data?.lastName || ''}`.trim() ||
+      'Unknown Customer'
+    );
+  };
+
+  const getPaymentStatus = (order: Order): string => {
+    return order.payment_status || 'pending';
+  };
+
+  const getFulfillmentStatus = (order: Order): string => {
+    return order.fulfillment || 'pending';
+  };
 
   // Initial load
   useEffect(() => {
@@ -317,7 +276,7 @@ export default function OrdersPage() {
             ?.toLowerCase()
             .includes(state.searchQuery.toLowerCase()) ||
           order.id.toString().includes(state.searchQuery) ||
-          order.customer
+          getOrderCustomer(order)
             .toLowerCase()
             .includes(state.searchQuery.toLowerCase()) ||
           order.order_data.some((item) =>
@@ -329,22 +288,25 @@ export default function OrdersPage() {
     // Apply status filter
     if (state.filterBy !== 'all') {
       filtered = filtered.filter((order) => {
+        const paymentStatus = getPaymentStatus(order);
+        const fulfillmentStatus = getFulfillmentStatus(order);
+
         switch (state.filterBy) {
           case 'pending':
             return (
-              order.payment_status === 'pending' ||
-              order.fulfillment === 'pending'
+              paymentStatus === 'pending' || fulfillmentStatus === 'pending'
             );
           case 'paid':
-            return order.payment_status === 'paid';
+            return paymentStatus === 'paid';
+          case 'processing':
+            return fulfillmentStatus === 'processing';
           case 'shipped':
-            return order.fulfillment === 'shipped';
+            return fulfillmentStatus === 'shipped';
           case 'delivered':
-            return order.fulfillment === 'delivered';
+            return fulfillmentStatus === 'delivered';
           case 'cancelled':
             return (
-              order.payment_status === 'cancelled' ||
-              order.fulfillment === 'cancelled'
+              paymentStatus === 'cancelled' || fulfillmentStatus === 'cancelled'
             );
           default:
             return true;
@@ -360,11 +322,11 @@ export default function OrdersPage() {
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         case 'total-high':
-          return b.total - a.total;
+          return calculateOrderTotal(b) - calculateOrderTotal(a);
         case 'total-low':
-          return a.total - b.total;
+          return calculateOrderTotal(a) - calculateOrderTotal(b);
         case 'status':
-          return a.fulfillment.localeCompare(b.fulfillment);
+          return getFulfillmentStatus(a).localeCompare(getFulfillmentStatus(b));
         case 'newest':
         default:
           return (
@@ -399,14 +361,32 @@ export default function OrdersPage() {
 
   const handleSortChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, sortBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        sortBy: e.target.value as
+          | 'newest'
+          | 'oldest'
+          | 'total-high'
+          | 'total-low'
+          | 'status',
+      }));
     },
     []
   );
 
   const handleFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, filterBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        filterBy: e.target.value as
+          | 'all'
+          | 'pending'
+          | 'paid'
+          | 'processing'
+          | 'shipped'
+          | 'delivered'
+          | 'cancelled',
+      }));
     },
     []
   );
@@ -422,8 +402,8 @@ export default function OrdersPage() {
     setState((prev) => ({ ...prev, cancellingOrder: orderId }));
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      // Update fulfillment status to cancelled via API
+      await updateOrderFulfillment(orderId, 'cancelled');
 
       setState((prev) => ({
         ...prev,
@@ -449,12 +429,282 @@ export default function OrdersPage() {
     }
   }, []);
 
+  // Handle fulfillment status update (for admin/staff)
+  const handleUpdateFulfillment = useCallback(
+    async (orderId: number, newStatus: string) => {
+      if (isClientRole) {
+        console.warn('Only admin and staff can update fulfillment status');
+        return;
+      }
+
+      try {
+        console.log(
+          `🔄 Updating order ${orderId} fulfillment to: ${newStatus}`
+        );
+
+        // Update via API
+        await updateOrderFulfillment(orderId, newStatus);
+
+        // Update local state
+        setState((prev) => ({
+          ...prev,
+          orders: prev.orders.map((order) =>
+            order.id === orderId
+              ? {
+                  ...order,
+                  fulfillment: newStatus as
+                    | 'pending'
+                    | 'confirmed'
+                    | 'processing'
+                    | 'shipped'
+                    | 'delivered'
+                    | 'cancelled',
+                }
+              : order
+          ),
+        }));
+
+        console.log(`✅ Order ${orderId} fulfillment updated successfully`);
+      } catch (error) {
+        console.error('❌ Error updating fulfillment:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to update order status. Please try again.',
+          showErrorModal: true,
+        }));
+      }
+    },
+    [isClientRole]
+  );
+
+  // Handle order reordering (for clients)
+  const handleReorder = useCallback(
+    async (orderId: number) => {
+      try {
+        const order = state.orders.find((o) => o.id === orderId);
+        if (!order) {
+          console.error('Order not found');
+          return;
+        }
+
+        console.log(`🔄 Reordering items from order ${orderId}`);
+
+        // TODO: Implement reorder functionality
+        // This could add items back to cart or create a new order
+        alert('Reorder functionality will be implemented soon!');
+      } catch (error) {
+        console.error('❌ Error reordering:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to reorder items. Please try again.',
+          showErrorModal: true,
+        }));
+      }
+    },
+    [state.orders]
+  );
+
+  // Handle invoice printing/downloading
+  const handlePrintInvoice = useCallback(
+    async (orderId: number) => {
+      try {
+        console.log(`🖨️ Generating invoice for order ${orderId}`);
+
+        const order = state.orders.find((o) => o.id === orderId);
+        if (!order) {
+          console.error('Order not found');
+          return;
+        }
+
+        // Create printable invoice content
+        const invoiceContent = generateInvoiceHTML(order);
+
+        // Open print dialog
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+          printWindow.document.write(invoiceContent);
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.print();
+        }
+      } catch (error) {
+        console.error('❌ Error generating invoice:', error);
+        setState((prev) => ({
+          ...prev,
+          error: 'Failed to generate invoice. Please try again.',
+          showErrorModal: true,
+        }));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.orders]
+  );
+
+  // Generate HTML content for invoice
+  const generateInvoiceHTML = useCallback((order: Order) => {
+    const total = calculateOrderTotal(order);
+    const date = new Date(order.created_at).toLocaleDateString();
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - Order #${order.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .order-info { margin-bottom: 20px; }
+          .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .items-table th, .items-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+          .items-table th { background-color: #f5f5f5; }
+          .total { text-align: right; font-weight: bold; font-size: 18px; }
+          .billing-info { margin-top: 30px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>INVOICE</h1>
+          <h2>Order #${order.id}</h2>
+        </div>
+        
+        <div class="order-info">
+          <p><strong>Order Date:</strong> ${date}</p>
+          <p><strong>Payment Method:</strong> ${order.selected_payment_method}</p>
+          <p><strong>Status:</strong> ${getFulfillmentStatus(order)}</p>
+        </div>
+        
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.order_data
+              .map(
+                (item) => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.price.toFixed(2)}</td>
+                <td>$${(item.price * item.quantity).toFixed(2)}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+        
+        <div class="total">
+          <p>Total: $${total.toFixed(2)}</p>
+        </div>
+        
+        <div class="billing-info">
+          <h3>Billing Information</h3>
+          <p>${order.billing_data.firstName} ${order.billing_data.lastName}</p>
+          <p>${order.billing_data.address1}</p>
+          ${order.billing_data.address2 ? `<p>${order.billing_data.address2}</p>` : ''}
+          <p>${order.billing_data.city}, ${order.billing_data.state} ${order.billing_data.postalCode}</p>
+          <p>${order.billing_data.country}</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 1000);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+  }, []);
+
   // Utility functions
   const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  }, []);
+
+  // Bulk processing handlers
+  const handleBulkUpdate = useCallback(
+    async (status: string) => {
+      if (state.selectedOrders.length === 0) {
+        alert('Please select at least one order to update.');
+        return;
+      }
+
+      setState((prev: OrdersState) => ({ ...prev, bulkProcessing: true }));
+
+      try {
+        await bulkUpdateOrderStatus(state.selectedOrders, status);
+
+        setState((prevState: OrdersState) => ({
+          ...prevState,
+          orders: prevState.orders.map((order: Order) =>
+            state.selectedOrders.includes(order.id)
+              ? { ...order, status }
+              : order
+          ),
+          filteredOrders: prevState.filteredOrders.map((order: Order) =>
+            state.selectedOrders.includes(order.id)
+              ? { ...order, status }
+              : order
+          ),
+          selectedOrders: [],
+          showBulkActions: false,
+          bulkProcessing: false,
+        }));
+
+        alert(
+          `Successfully updated ${state.selectedOrders.length} orders to ${status}`
+        );
+      } catch (error) {
+        console.error('Error updating orders:', error);
+        alert('Failed to update orders. Please try again.');
+        setState((prev: OrdersState) => ({ ...prev, bulkProcessing: false }));
+      }
+    },
+    [state.selectedOrders]
+  );
+
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        setState((prev: OrdersState) => ({
+          ...prev,
+          selectedOrders: state.filteredOrders.map((order: Order) => order.id),
+          showBulkActions: true,
+        }));
+      } else {
+        setState((prev: OrdersState) => ({
+          ...prev,
+          selectedOrders: [],
+          showBulkActions: false,
+        }));
+      }
+    },
+    [state.filteredOrders]
+  );
+
+  const handleSelectOrder = useCallback((orderId: number, checked: boolean) => {
+    setState((prev: OrdersState) => {
+      const newSelected = checked
+        ? [...prev.selectedOrders, orderId]
+        : prev.selectedOrders.filter((id: number) => id !== orderId);
+
+      return {
+        ...prev,
+        selectedOrders: newSelected,
+        showBulkActions: newSelected.length > 0,
+      };
+    });
   }, []);
 
   const formatDate = useCallback((dateString: string) => {
@@ -479,11 +729,11 @@ export default function OrdersPage() {
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg">
               <div className="p-4 border-b border-gray-200">
                 <div className="h-4 bg-gray-200 rounded w-full"></div>
               </div>
@@ -506,8 +756,8 @@ export default function OrdersPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -520,17 +770,42 @@ export default function OrdersPage() {
     return null; // Will redirect in useEffect
   }
 
+  // Check if user is authorized (admin or staff only)
+  if (user && role && role !== 'admin' && role !== 'staff') {
+    return null; // Will redirect in useEffect
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-              <p className="mt-1 text-sm text-gray-600">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                  {isClientRole ? 'My Orders' : 'All Orders'}
+                </h1>
+              </div>
+              <p className="text-lg text-gray-600 ml-11">
                 {state.filteredOrders.length} order
                 {state.filteredOrders.length !== 1 ? 's' : ''} found
+                {isClientRole ? '' : ' across all customers'}
               </p>
             </div>
 
@@ -670,10 +945,73 @@ export default function OrdersPage() {
         ) : (
           /* Orders Table */
           <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* Bulk Actions Toolbar */}
+            {!isClientRole && state.showBulkActions && (
+              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-700">
+                      {state.selectedOrders.length} order
+                      {state.selectedOrders.length !== 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleBulkUpdate('confirmed')}
+                      disabled={state.bulkProcessing}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                    >
+                      Confirm Selected
+                    </button>
+                    <button
+                      onClick={() => handleBulkUpdate('processing')}
+                      disabled={state.bulkProcessing}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      Process Selected
+                    </button>
+                    <button
+                      onClick={() => handleBulkUpdate('shipped')}
+                      disabled={state.bulkProcessing}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                    >
+                      Ship Selected
+                    </button>
+                    <button
+                      onClick={() =>
+                        setState((prev) => ({
+                          ...prev,
+                          selectedOrders: [],
+                          showBulkActions: false,
+                        }))
+                      }
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    {!isClientRole && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          checked={
+                            state.selectedOrders.length ===
+                              state.filteredOrders.length &&
+                            state.filteredOrders.length > 0
+                          }
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                        />
+                      </th>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Order
                     </th>
@@ -704,6 +1042,21 @@ export default function OrdersPage() {
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => toggleExpanded(order.id)}
                       >
+                        {!isClientRole && (
+                          <td
+                            className="px-6 py-4 whitespace-nowrap"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                              checked={state.selectedOrders.includes(order.id)}
+                              onChange={(e) =>
+                                handleSelectOrder(order.id, e.target.checked)
+                              }
+                            />
+                          </td>
+                        )}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div>
@@ -740,41 +1093,34 @@ export default function OrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {order.customer}
+                            {getOrderCustomer(order)}
                           </div>
                           <div className="text-sm text-gray-500">
                             {order.billing_data.email}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              getStatusConfig('payment', order.payment_status)
-                                .color
-                            }`}
-                          >
-                            {
-                              getStatusConfig('payment', order.payment_status)
-                                .label
-                            }
-                          </span>
                           <div className="text-xs text-gray-500 mt-1">
-                            {order.selected_payment_method}
+                            {order.selected_payment_method.toUpperCase()}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {formatCurrency(order.total)}
+                          {formatCurrency(calculateOrderTotal(order))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              getStatusConfig('fulfillment', order.fulfillment)
-                                .color
+                              getStatusConfig(
+                                'fulfillment',
+                                getFulfillmentStatus(order)
+                              ).color
                             }`}
                           >
                             {
-                              getStatusConfig('fulfillment', order.fulfillment)
-                                .label
+                              getStatusConfig(
+                                'fulfillment',
+                                getFulfillmentStatus(order)
+                              ).label
                             }
                           </span>
                           {order.tracking_number && (
@@ -784,21 +1130,135 @@ export default function OrdersPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {(order.fulfillment === 'pending' ||
-                            order.fulfillment === 'confirmed') && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCancelOrder(order.id);
-                              }}
-                              disabled={state.cancellingOrder === order.id}
-                              className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                            >
-                              {state.cancellingOrder === order.id
-                                ? 'Cancelling...'
-                                : 'Cancel'}
-                            </button>
-                          )}
+                          <div className="flex items-center justify-end space-x-2">
+                            {/* Order Processing Options */}
+                            {!isClientRole ? (
+                              // Admin/Staff Processing Options
+                              <div className="flex items-center space-x-1">
+                                {/* Quick Action Buttons */}
+                                {order.fulfillment === 'pending' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateFulfillment(
+                                        order.id,
+                                        'confirmed'
+                                      );
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    title="Confirm Order"
+                                  >
+                                    ✓ Confirm
+                                  </button>
+                                )}
+
+                                {order.fulfillment === 'confirmed' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateFulfillment(
+                                        order.id,
+                                        'processing'
+                                      );
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 border border-purple-200 rounded-md hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    title="Start Processing"
+                                  >
+                                    ⚙️ Process
+                                  </button>
+                                )}
+
+                                {order.fulfillment === 'processing' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateFulfillment(
+                                        order.id,
+                                        'shipped'
+                                      );
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    title="Mark as Shipped"
+                                  >
+                                    🚚 Ship
+                                  </button>
+                                )}
+
+                                {order.fulfillment === 'shipped' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateFulfillment(
+                                        order.id,
+                                        'delivered'
+                                      );
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 border border-green-200 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    title="Mark as Delivered"
+                                  >
+                                    ✅ Deliver
+                                  </button>
+                                )}
+
+                                {/* Print/Export Options */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrintInvoice(order.id);
+                                  }}
+                                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                  title="Print Invoice"
+                                >
+                                  🖨️ Print
+                                </button>
+                              </div>
+                            ) : (
+                              // Client Options
+                              <div className="flex items-center space-x-1">
+                                {order.fulfillment === 'delivered' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleReorder(order.id);
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    title="Reorder Items"
+                                  >
+                                    🔄 Reorder
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrintInvoice(order.id);
+                                  }}
+                                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                  title="Download Invoice"
+                                >
+                                  📄 Invoice
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Cancel Button (for eligible orders) */}
+                            {(order.fulfillment === 'pending' ||
+                              order.fulfillment === 'confirmed') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelOrder(order.id);
+                                }}
+                                disabled={state.cancellingOrder === order.id}
+                                className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-200 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                                title="Cancel Order"
+                              >
+                                {state.cancellingOrder === order.id
+                                  ? '⏳ Cancelling...'
+                                  : '❌ Cancel'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
 
@@ -833,12 +1293,20 @@ export default function OrdersPage() {
                                     >
                                       <div className="flex-shrink-0">
                                         {item.image_url ? (
-                                          <Image
-                                            src={item.image_url}
+                                          <SafeImage
                                             alt={item.name}
+                                            className="w-20 h-15 object-cover rounded-lg"
+                                            images={[
+                                              {
+                                                image_path: getPublicImageUrl(
+                                                  'products',
+                                                  item.id,
+                                                  item.image_url
+                                                ),
+                                              },
+                                            ]}
                                             width={80}
                                             height={60}
-                                            className="w-20 h-15 object-cover rounded-lg"
                                           />
                                         ) : (
                                           <div className="w-20 h-15 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -877,7 +1345,7 @@ export default function OrdersPage() {
                                         )}
                                         <div className="flex items-center justify-between mt-2">
                                           <span className="text-sm text-gray-500">
-                                            Quantity: {item.quantity} ×{' '}
+                                            Quantity: {item.quantity} ×
                                             {formatCurrency(item.price)}
                                           </span>
                                           <span className="text-sm font-medium text-gray-900">
@@ -900,7 +1368,7 @@ export default function OrdersPage() {
                                   </h4>
                                   <div className="space-y-2 text-sm">
                                     <p className="font-medium">
-                                      {order.billing_data.firstName}{' '}
+                                      {order.billing_data.firstName}
                                       {order.billing_data.lastName}
                                     </p>
                                     <p className="text-gray-600">
@@ -919,8 +1387,8 @@ export default function OrdersPage() {
                                         </p>
                                       )}
                                       <p className="text-gray-600">
-                                        {order.billing_data.city},{' '}
-                                        {order.billing_data.state}{' '}
+                                        {order.billing_data.city},
+                                        {order.billing_data.state}
                                         {order.billing_data.postalCode}
                                       </p>
                                       <p className="text-gray-600">
@@ -939,7 +1407,7 @@ export default function OrdersPage() {
                                     </h4>
                                     <div className="space-y-2 text-sm">
                                       <p className="font-medium">
-                                        {order.shipping_data.firstName}{' '}
+                                        {order.shipping_data.firstName}
                                         {order.shipping_data.lastName}
                                       </p>
                                       {order.shipping_data.email && (
@@ -962,8 +1430,8 @@ export default function OrdersPage() {
                                           </p>
                                         )}
                                         <p className="text-gray-600">
-                                          {order.shipping_data.city},{' '}
-                                          {order.shipping_data.state}{' '}
+                                          {order.shipping_data.city},
+                                          {order.shipping_data.state}
                                           {order.shipping_data.zipCode}
                                         </p>
                                         <p className="text-gray-600">
@@ -981,14 +1449,14 @@ export default function OrdersPage() {
                                       <p className="text-gray-600">
                                         <span className="font-medium">
                                           Delivery Method:
-                                        </span>{' '}
+                                        </span>
                                         {order.delivery}
                                       </p>
                                       {order.estimated_delivery && (
                                         <p className="text-gray-600">
                                           <span className="font-medium">
                                             Estimated Delivery:
-                                          </span>{' '}
+                                          </span>
                                           {formatDate(order.estimated_delivery)}
                                         </p>
                                       )}
@@ -996,7 +1464,7 @@ export default function OrdersPage() {
                                         <p className="text-gray-600">
                                           <span className="font-medium">
                                             Tracking Number:
-                                          </span>{' '}
+                                          </span>
                                           {order.tracking_number}
                                         </p>
                                       )}

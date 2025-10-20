@@ -6,8 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Visit } from '@/types/types';
 import { fetchVisitHistory } from '@/services/api';
-import { formatCurrency, formatDate, getTimeAgo } from '@/helpers/common';
-import LoadingSpinner from '@/components/Common/Loading';
+import { formatDate, getTimeAgo } from '@/helpers/common';
 import { useRouter } from 'next/navigation';
 export default function HistoryPage() {
   const router = useRouter();
@@ -41,7 +40,7 @@ export default function HistoryPage() {
 
   // Filter and sort visits
   useEffect(() => {
-    let filtered = visits.filter((visit) => {
+    const filtered = visits.filter((visit) => {
       const searchLower = searchQuery.toLowerCase();
       return (
         visit.product?.title?.toLowerCase().includes(searchLower) ||
@@ -77,8 +76,8 @@ export default function HistoryPage() {
   }, [visits, searchQuery, sortBy, sortOrder]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -564,7 +563,7 @@ export default function HistoryPage() {
                   Showing {filteredVisits.length} of {visits.length} visits
                   {searchQuery && (
                     <span className="ml-2 text-blue-600">
-                      for "{searchQuery}"
+                      for &apos;{searchQuery}&apos;
                     </span>
                   )}
                 </div>

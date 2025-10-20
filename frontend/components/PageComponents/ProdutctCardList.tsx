@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import NextImage from 'next/image';
 import { Product } from '@/types/types';
 import { formatCurrency } from '@/helpers/common';
 import AddToCartButton from '@/components/UI/Buttons/AddToCartButton';
+import AddToWishlistButton from '../UI/Buttons/AddToWishlistButton';
+
 import QuickViewIcon from '@/components/UI/Icons/QuickView';
 import QuickViewModal from '@/components/Modals/QuickView';
 import { getPublicImageUrl } from '@/helpers/media';
@@ -23,7 +24,9 @@ const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
       >
         <QuickViewIcon />
       </button>
-
+      <div className="product-card-actions-list top-14">
+        <AddToWishlistButton product={product} />
+      </div>
       {/* Product Image */}
       <Link
         href={`/shop/${product.slug}`}

@@ -92,7 +92,7 @@ const ShopSidebar: React.FC<ShopSidebarProps> = ({
         />
       </div>
 
-      <div className="product-sidebar-items mt-5 p-5">
+      <div className="product-sidebar-items mt-5">
         <ProductListSidebar filter="latest" count={4} />
       </div>
     </aside>

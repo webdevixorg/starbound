@@ -26,7 +26,6 @@ import {
 } from '@/helpers/common';
 import {
   createHandleDateChange,
-  toggleCategorySelection,
   useEventListener,
 } from '@/helpers/fromSubmission';
 import StarBoundTextEditor from '@/modules/StarboundEditor/src/App';
@@ -39,7 +38,7 @@ const AddPostPage: React.FC = () => {
   const searchParams = useSearchParams();
   const slug = searchParams?.get('slug') || undefined;
 
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { contentTypes, loading: contentLoading } = useContent();
 
   // State declarations
@@ -165,7 +164,7 @@ const AddPostPage: React.FC = () => {
     };
 
     loadCategories();
-  }, [currentPage, contentTypeId, isClient]);
+  }, [currentPage, contentTypeId, isClient, pageSize]);
 
   // Load post data when editing
   useEffect(() => {
@@ -174,7 +173,11 @@ const AddPostPage: React.FC = () => {
     const loadPostData = async () => {
       try {
         setLoading(true);
-        const fetchedPost = await fetchPostBySlug(slug);
+        const fetchedPost = await fetchPostBySlug(
+          'post',
+          slug,
+          role === 'staff' || role === 'admin'
+        );
         setTitle(fetchedPost.title);
         setDescription(fetchedPost.description);
         setPostSlug(fetchedPost.slug);
@@ -202,7 +205,7 @@ const AddPostPage: React.FC = () => {
     };
 
     loadPostData();
-  }, [slug, isClient]);
+  }, [slug, role, isClient]);
 
   // Enhanced handleCategoryChange with hierarchy logic
   const handleCategoryChange = useCallback(
@@ -347,6 +350,7 @@ const AddPostPage: React.FC = () => {
                 );
                 return { file, uploadedImageData };
               } catch (err) {
+                console.error('Error uploading image:', err);
                 return null; // allow others to continue
               }
             })
@@ -408,7 +412,11 @@ const AddPostPage: React.FC = () => {
           )} ID is not set. Navigation will not occur.`
         );
       }
-    } catch (error) {
+    } catch (err) {
+      console.error(
+        `Error ${slug ? 'updating' : 'creating'} ${contentType}:`,
+        err
+      );
       setError(`Error ${slug ? 'updating' : 'creating'} ${contentType}`);
       setShowErrorModal(true);
     } finally {
@@ -422,18 +430,20 @@ const AddPostPage: React.FC = () => {
   if (!isClient) {
     return (
       <div className="p-6 bg-white">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="flex space-x-6">
-            <div className="w-3/4 space-y-4">
-              <div className="h-10 bg-gray-200 rounded"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </div>
-            <div className="w-1/4 space-y-4">
-              <div className="h-32 bg-gray-200 rounded"></div>
-              <div className="h-48 bg-gray-200 rounded"></div>
-              <div className="h-48 bg-gray-200 rounded"></div>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="flex space-x-6">
+              <div className="w-3/4 space-y-4">
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-64 bg-gray-200 rounded"></div>
+              </div>
+              <div className="w-1/4 space-y-4">
+                <div className="h-32 bg-gray-200 rounded"></div>
+                <div className="h-48 bg-gray-200 rounded"></div>
+                <div className="h-48 bg-gray-200 rounded"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -443,15 +453,19 @@ const AddPostPage: React.FC = () => {
 
   if (loading && contentLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoadingSpinner />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      <div className="container mx-auto">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-6">
           {/* Main Content */}
           <div className="w-3/4">

@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+// Import MenuItem type
+import type { MenuItem } from '@/lists/sidebarMenuItems';
+
 interface ProfileLayoutProps {
   children: React.ReactNode;
 }
@@ -26,56 +29,76 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
 
 // Separate client component
 const ProfileLayoutClient: React.FC<ProfileLayoutProps> = ({ children }) => {
-  const { role, loading, user, isAuthenticated } = useAuth();
+  const { role, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [sidebarMenuItems, setSidebarMenuItems] = useState<any[]>([]);
+  const [sidebarMenuItems, setSidebarMenuItems] = useState<MenuItem[]>([]);
 
-  // Import sidebar menu items dynamically
+  // Import sidebar menu items dynamically with error handling
   useEffect(() => {
-    import('@/lists/sidebarMenuItems').then((module) => {
-      setSidebarMenuItems(module.default || []);
-    });
+    import('@/lists/sidebarMenuItems')
+      .then((module) => {
+        setSidebarMenuItems(module.default || []);
+        setError(null); // Clear any previous errors
+      })
+      .catch((err) => {
+        console.error('Failed to load sidebar menu items:', err);
+        setError('Failed to load navigation menu. Please refresh the page.');
+      });
   }, []);
 
-  // Check authentication status
+  // Check authentication status with error handling
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/signin');
+    try {
+      if (!loading && !isAuthenticated) {
+        router.push('/signin');
+      }
+    } catch (err) {
+      console.error('Navigation error:', err);
+      setError('Navigation error occurred. Please try again.');
     }
   }, [loading, isAuthenticated, router]);
 
   // Filter sidebar items based on user role and ensure valid hrefs
   const filteredMenuItems = React.useMemo(() => {
-    return sidebarMenuItems
-      .filter((item) => {
-        if (
-          (Array.isArray(item.type) && item.type.includes('all')) ||
-          item.type === 'all'
-        ) {
-          return true;
-        }
-        return Array.isArray(item.type)
-          ? item.type.includes(role)
-          : item.type === role;
-      })
-      .filter((item) => {
-        // Filter out items with invalid hrefs
-        const href = item.to || item.href;
-        return href && typeof href === 'string' && href.length > 0;
-      })
-      .map((item) => ({
-        ...item,
-        // Normalize href property
-        href: item.to || item.href || '#',
-      }));
+    try {
+      return sidebarMenuItems
+        .filter((item) => {
+          if (
+            (Array.isArray(item.type) && item.type.includes('all')) ||
+            (!Array.isArray(item.type) && item.type === 'all')
+          ) {
+            return true;
+          }
+          return Array.isArray(item.type)
+            ? role !== null && item.type.includes(role)
+            : item.type === role;
+        })
+        .filter((item) => {
+          // Filter out items with invalid hrefs
+          const href = item.href || item.href;
+          return href && typeof href === 'string' && href.length > 0;
+        })
+        .map((item) => ({
+          ...item,
+          // Normalize href property
+          href: item.href || item.href || '#',
+        }));
+    } catch (err) {
+      console.error('Error filtering menu items:', err);
+      setError('Error loading menu items. Some features may not be available.');
+      return [];
+    }
   }, [role, sidebarMenuItems]);
 
   // Show loading while authentication is being checked
   if (loading || sidebarMenuItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -83,9 +106,35 @@ const ProfileLayoutClient: React.FC<ProfileLayoutProps> = ({ children }) => {
   // Redirect if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Redirecting to sign in...</p>
+          <div className="mb-4">
+            <svg
+              className="w-12 h-12 text-gray-400 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Please sign in to access your dashboard.
+          </p>
+          <Link
+            href="/signin"
+            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </Link>
         </div>
       </div>
     );
@@ -93,56 +142,124 @@ const ProfileLayoutClient: React.FC<ProfileLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">System Error</h3>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    setError(null);
+                    window.location.reload();
+                  }}
+                  className="text-sm text-red-800 underline hover:text-red-900"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Lazy load components */}
-      <LazyDashboardHeader />
+      <LazyDashboardHeader onError={setError} />
       <div className="profile-content">
         <div className="flex min-h-[calc(100vh-64px)]">
           {/* Sidebar */}
           <div className="hidden lg:block w-64 bg-white border-r border-gray-200">
-            <LazySidebar filteredMenuItems={filteredMenuItems} />
+            <LazySidebar
+              filteredMenuItems={filteredMenuItems}
+              onError={setError}
+            />
           </div>
 
           {/* Main content */}
           <div className="flex-1 flex flex-col">
-            <main className="flex-1 bg-white">
-              {error ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="text-red-800 font-medium">Error</h3>
-                  <p className="text-red-600 text-sm mt-1">{error}</p>
-                </div>
-              ) : (
-                children
-              )}
-            </main>
+            <main className="flex-1 bg-white">{children}</main>
           </div>
         </div>
       </div>
-      <LazyFooter />
+      <LazyFooter onError={setError} />
       <MobileMenu filteredMenuItems={filteredMenuItems} />
     </div>
   );
 };
 
-// Lazy load header
-const LazyDashboardHeader = () => {
+// Lazy load header with error handling
+const LazyDashboardHeader = ({
+  onError,
+}: {
+  onError: (error: string) => void;
+}) => {
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    import('@/components/PageComponents/Header/DashboardHeader').then((mod) => {
-      setComponent(() => mod.default);
-    });
-  }, []);
+    import('@/components/PageComponents/Header/DashboardHeader')
+      .then((mod) => {
+        setComponent(() => mod.default);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load dashboard header:', err);
+        onError('Failed to load header component.');
+        setLoading(false);
+      });
+  }, [onError]);
 
-  if (!Component)
-    return <div className="h-16 bg-white border-b border-gray-200"></div>;
+  if (loading) {
+    return (
+      <div className="h-16 bg-white border-b border-gray-200 animate-pulse"></div>
+    );
+  }
+
+  if (!Component) {
+    return (
+      <div className="h-16 bg-red-50 border-b border-red-200 flex items-center px-4">
+        <p className="text-red-600 text-sm">Failed to load header</p>
+      </div>
+    );
+  }
+
   return <Component />;
 };
 
-// Lazy load sidebar
-const LazySidebar = ({ filteredMenuItems }: { filteredMenuItems: any[] }) => {
-  const [Sidebar, setSidebar] = useState<React.ComponentType<any> | null>(null);
-  const [SidebarItem, setSidebarItem] =
-    useState<React.ComponentType<any> | null>(null);
+// Lazy load sidebar with error handling
+const LazySidebar = ({
+  filteredMenuItems,
+  onError,
+}: {
+  filteredMenuItems: MenuItem[];
+  onError: (error: string) => void;
+}) => {
+  const [Sidebar, setSidebar] = useState<React.ComponentType<{
+    children: React.ReactNode;
+  }> | null>(null);
+  const [SidebarItem, setSidebarItem] = useState<React.ComponentType<{
+    icon: React.ReactNode;
+    text: string;
+    href: string;
+    alert?: boolean;
+    subLinks?: { href: string; label: string }[];
+  }> | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -150,18 +267,33 @@ const LazySidebar = ({ filteredMenuItems }: { filteredMenuItems: any[] }) => {
         '@/components/PageComponents/Sidebar/ProfileSidebar/ProfileSidebar'
       ),
       import('@/components/PageComponents/Sidebar/ProfileSidebar/SidebarItem'),
-    ]).then(([sidebarMod, itemMod]) => {
-      setSidebar(() => sidebarMod.default);
-      setSidebarItem(() => itemMod.SidebarItem);
-    });
-  }, []);
+    ])
+      .then(([sidebarMod, itemMod]) => {
+        setSidebar(() => sidebarMod.default);
+        setSidebarItem(() => itemMod.SidebarItem);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load sidebar components:', err);
+        onError('Failed to load navigation sidebar.');
+        setLoading(false);
+      });
+  }, [onError]);
 
-  if (!Sidebar || !SidebarItem) {
+  if (loading) {
     return (
       <div className="p-4 space-y-4">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="h-10 bg-gray-200 rounded animate-pulse"></div>
         ))}
+      </div>
+    );
+  }
+
+  if (!Sidebar || !SidebarItem) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-red-600 text-sm">Failed to load sidebar</p>
       </div>
     );
   }
@@ -182,22 +314,41 @@ const LazySidebar = ({ filteredMenuItems }: { filteredMenuItems: any[] }) => {
   );
 };
 
-// Lazy load footer
-const LazyFooter = () => {
+// Lazy load footer with error handling
+const LazyFooter = ({ onError }: { onError: (error: string) => void }) => {
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    import('@/components/PageComponents/Footer').then((mod) => {
-      setComponent(() => mod.default);
-    });
-  }, []);
+    import('@/components/PageComponents/Footer')
+      .then((mod) => {
+        setComponent(() => mod.default);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load footer:', err);
+        onError('Failed to load footer component.');
+        setLoading(false);
+      });
+  }, [onError]);
 
-  if (!Component) return <div className="h-20 bg-gray-800"></div>;
+  if (loading) {
+    return <div className="h-20 bg-gray-800 animate-pulse"></div>;
+  }
+
+  if (!Component) {
+    return (
+      <div className="h-20 bg-red-50 flex items-center justify-center">
+        <p className="text-red-600 text-sm">Failed to load footer</p>
+      </div>
+    );
+  }
+
   return <Component />;
 };
 
-// Mobile menu component
-const MobileMenu: React.FC<{ filteredMenuItems: any[] }> = ({
+// Mobile menu component (unchanged)
+const MobileMenu: React.FC<{ filteredMenuItems: MenuItem[] }> = ({
   filteredMenuItems,
 }) => {
   const [isOpen, setIsOpen] = useState(false);

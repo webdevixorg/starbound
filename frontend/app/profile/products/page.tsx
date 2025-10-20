@@ -4,9 +4,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useContent } from '@/context/ContentContext';
-import { changePostStatus, deletePost, fetchPosts } from '@/services/api';
-import { Post } from '@/types/types';
-import { CategoryName } from '@/helpers/fetching';
+import { changePostStatus, deletePost } from '@/services/api';
+import { fetchPostsAuth } from '@/services/api';
+import { Product } from '@/types/types';
 import LoadingSpinner from '@/components/Common/Loading';
 import SafeImage from '@/components/UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
@@ -17,22 +17,44 @@ const ProductsListPage: React.FC = () => {
 
   const [contentTypeId, setContentTypeId] = useState<number>(0);
   const [contentType, setContentType] = useState<string>('');
-  const [nonTrashedPosts, setNonTrashedPosts] = useState<Post[]>([]);
-  const [trashedPosts, setTrashedPosts] = useState<Post[]>([]);
+  const [products, setProducts] = useState<{ [key: string]: Product[] }>({
+    draft: [],
+    published: [],
+    archived: [],
+    deleted: [],
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [nonDeletedCurrentPage, setNonDeletedCurrentPage] = useState<number>(1);
-  const [deletedCurrentPage, setDeletedCurrentPage] = useState<number>(1);
-  const [nontrashedTotalPages, setNontrashedTotalPages] = useState<number>(1);
-  const [trashedTotalPages, setTrashedTotalPages] = useState<number>(1);
+  const [currentPages, setCurrentPages] = useState<{ [key: string]: number }>({
+    draft: 1,
+    published: 1,
+    archived: 1,
+    deleted: 1,
+  });
+  const [totalPages, setTotalPages] = useState<{ [key: string]: number }>({
+    draft: 1,
+    published: 1,
+    archived: 1,
+    deleted: 1,
+  });
   const [pageSize] = useState<number>(10);
-  const [activeTab, setActiveTab] = useState<string>('active');
-  const [status] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('published');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [productCounts, setProductCounts] = useState<{ [key: string]: number }>(
+    {
+      draft: 0,
+      published: 0,
+      archived: 0,
+      deleted: 0,
+    }
+  );
 
   const matchedContentType = useMemo(() => {
     if (Array.isArray(contentTypes)) {
       return contentTypes.find(
-        (contentType: any) => contentType.id === contentTypeId
+        (contentType: { id: number }) => contentType.id === contentTypeId
       );
     }
     return null;
@@ -65,95 +87,168 @@ const ProductsListPage: React.FC = () => {
     }
   }, [contentTypes, contentLoading, pathname]);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setIsSearching(false);
+    }, 500); // Wait 500ms after user stops typing
+
+    if (searchInput !== searchQuery) {
+      setIsSearching(true);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput, searchQuery]);
+
   useEffect(() => {
     if (contentLoading || !matchedContentType) return;
 
-    const loadPosts = async (page: number, isDeleted: boolean) => {
+    const loadProductsByStatus = async (
+      status: string,
+      page: number,
+      search: string = ''
+    ) => {
       try {
         setLoading(true);
+        const response = await fetchPostsAuth<Product>(
+          page,
+          pageSize,
+          status,
+          matchedContentType.model,
+          search
+        );
 
-        if (isDeleted) {
-          const status = 'Deleted';
-          const deletedResponse = await fetchPosts(
-            page,
-            pageSize,
-            status,
-            '',
-            matchedContentType.model
-          );
-          setTrashedPosts(deletedResponse.results);
-          setTrashedTotalPages(Math.ceil(deletedResponse.count / pageSize));
-        } else {
-          const nonDeletedResponse = await fetchPosts(
-            page,
-            pageSize,
-            status,
-            '',
-            matchedContentType.model
-          );
-          setNonTrashedPosts(nonDeletedResponse.results);
-          setNontrashedTotalPages(
-            Math.ceil(nonDeletedResponse.count / pageSize)
-          );
-        }
+        setProducts((prev) => ({
+          ...prev,
+          [status]: response.results,
+        }));
+
+        setTotalPages((prev) => ({
+          ...prev,
+          [status]: Math.ceil(response.count / pageSize),
+        }));
+
+        setProductCounts((prev) => ({
+          ...prev,
+          [status]: response.count,
+        }));
       } catch (error) {
-        console.error('Error fetching posts:', error);
-        setError('Error fetching posts');
+        console.error(`Error fetching ${status} products:`, error);
+        setError(`Error fetching ${status} products`);
       } finally {
         setLoading(false);
       }
     };
 
-    if (contentTypeId) {
-      if (activeTab === 'trashed') {
-        loadPosts(deletedCurrentPage, true);
-      } else {
-        loadPosts(nonDeletedCurrentPage, false);
+    const loadAllCounts = async (search: string = '') => {
+      try {
+        const statuses = ['draft', 'published', 'archived', 'deleted'];
+        const countPromises = statuses.map(async (status) => {
+          const response = await fetchPostsAuth<Product>(
+            1,
+            1, // Only fetch 1 item to get the count
+            status,
+            matchedContentType.model,
+            search
+          );
+          return { status, count: response.count };
+        });
+
+        const results = await Promise.all(countPromises);
+
+        const newCounts: { [key: string]: number } = {};
+        results.forEach(({ status, count }) => {
+          newCounts[status] = count;
+        });
+
+        setProductCounts(newCounts);
+      } catch (error) {
+        console.error('Error fetching product counts:', error);
       }
+    };
+
+    if (contentTypeId) {
+      // Load counts for all tabs
+      loadAllCounts(searchQuery);
+      // Load products for active tab
+      loadProductsByStatus(activeTab, currentPages[activeTab], searchQuery);
     }
   }, [
     contentTypeId,
     activeTab,
-    nonDeletedCurrentPage,
-    deletedCurrentPage,
+    currentPages,
     matchedContentType,
     pageSize,
-    status,
+    contentLoading,
+    searchQuery, // Add searchQuery to dependencies
   ]);
 
-  const handleTrash = async (slug: string) => {
+  const handleStatusChange = async (slug: string, newStatus: string) => {
     try {
-      await changePostStatus(slug, contentType, 'Deleted');
-      setNonTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
+      await changePostStatus(slug, contentType, newStatus);
+
+      // Remove from current tab
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter((post) => post.slug !== slug),
+      }));
+
+      // Determine destination tab based on status
+      const destinationTab = newStatus.toLowerCase();
+
+      // Update counts - decrease current tab, increase destination tab
+      setProductCounts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+        [destinationTab]: prev[destinationTab] + 1,
+      }));
+
+      // Reload current tab to update pagination
+      const response = await fetchPostsAuth<Product>(
+        currentPages[activeTab],
+        pageSize,
+        activeTab,
+        contentType,
+        searchQuery
       );
-      setNontrashedTotalPages(
-        Math.ceil((nonTrashedPosts.length - 1) / pageSize)
-      );
+
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: response.results,
+      }));
+
+      setTotalPages((prev) => ({
+        ...prev,
+        [activeTab]: Math.ceil(response.count / pageSize),
+      }));
     } catch (error) {
-      console.error('Error trashing post:', error);
-      setError('Error trashing post');
+      console.error('Error changing product status:', error);
+      setError('Error changing product status');
     }
   };
 
+  const handleTrash = async (slug: string) => {
+    await handleStatusChange(slug, 'deleted');
+  };
+
   const handleRestore = async (slug: string) => {
-    try {
-      await changePostStatus(slug, contentType, 'Published');
-      setTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
-      );
-    } catch (error) {
-      console.error('Error restoring post:', error);
-      setError('Error restoring post');
-    }
+    await handleStatusChange(slug, 'published');
   };
 
   const handleDelete = async (slug: string) => {
     try {
       await deletePost(slug, contentType);
-      setTrashedPosts((prevPosts) =>
-        prevPosts.filter((post) => post.slug !== slug)
-      );
+      setProducts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter((post) => post.slug !== slug),
+      }));
+      setProductCounts((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+      }));
     } catch (error) {
       console.error('Error deleting post:', error);
       setError('Error deleting post');
@@ -161,39 +256,46 @@ const ProductsListPage: React.FC = () => {
   };
 
   const handlePreviousPage = () => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage > 1) {
-        setDeletedCurrentPage(deletedCurrentPage - 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage > 1) {
-        setNonDeletedCurrentPage(nonDeletedCurrentPage - 1);
-      }
+    if (currentPages[activeTab] > 1) {
+      setCurrentPages((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] - 1,
+      }));
     }
   };
 
   const handleNextPage = () => {
-    if (activeTab === 'trashed') {
-      if (deletedCurrentPage < trashedTotalPages) {
-        setDeletedCurrentPage(deletedCurrentPage + 1);
-      }
-    } else {
-      if (nonDeletedCurrentPage < nontrashedTotalPages) {
-        setNonDeletedCurrentPage(nonDeletedCurrentPage + 1);
-      }
+    if (currentPages[activeTab] < totalPages[activeTab]) {
+      setCurrentPages((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab] + 1,
+      }));
     }
   };
 
-  const posts = activeTab === 'active' ? nonTrashedPosts : trashedPosts;
-  const currentPage =
-    activeTab === 'active' ? nonDeletedCurrentPage : deletedCurrentPage;
-  const totalPages =
-    activeTab === 'active' ? nontrashedTotalPages : trashedTotalPages;
+  const handleFirstPage = () => {
+    setCurrentPages((prev) => ({
+      ...prev,
+      [activeTab]: 1,
+    }));
+  };
+
+  const handleLastPage = () => {
+    setCurrentPages((prev) => ({
+      ...prev,
+      [activeTab]: totalPages[activeTab],
+    }));
+  };
+
+  const posts = products[activeTab] || [];
+  const currentPage = currentPages[activeTab];
+  const currentTotalPages = totalPages[activeTab];
+  const viewType = contentType === 'product' ? 'shop' : contentType + 's';
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <LoadingSpinner />
         </div>
       </div>
@@ -203,7 +305,7 @@ const ProductsListPage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -234,13 +336,32 @@ const ProductsListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Products</h1>
-              <p className="mt-1 text-sm text-gray-600">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8H7"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                  My Products
+                </h1>
+              </div>
+              <p className="text-lg text-gray-600 ml-11">
                 Manage your product listings and inventory
               </p>
             </div>
@@ -253,29 +374,116 @@ const ProductsListPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="border-b border-gray-200">
-            <nav className="flex">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-lg">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className={`h-5 w-5 transition-colors duration-200 ${
+                  isSearching ? 'text-blue-500' : 'text-gray-400'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-12 pr-12 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+              placeholder="Search products by title, description, or category..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            {isSearching && (
+              <div className="absolute inset-y-0 right-12 flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+              </div>
+            )}
+            {searchInput && (
               <button
-                onClick={() => setActiveTab('active')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'active'
+                onClick={() => {
+                  setSearchInput('');
+                  setSearchQuery('');
+                }}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center group"
+                aria-label="Clear search"
+              >
+                <svg
+                  className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-sm text-gray-600">
+              Searching for:{' '}
+              <span className="font-medium text-gray-900">
+                &ldquo;{searchQuery}&rdquo;
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg">
+          <div className="border-b border-gray-200">
+            <nav className="flex overflow-x-auto scrollbar-hide scroll-smooth">
+              <button
+                onClick={() => setActiveTab('published')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'published'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Active Products ({nonTrashedPosts.length})
+                Published ({productCounts.published})
               </button>
               <button
-                onClick={() => setActiveTab('trashed')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'trashed'
+                onClick={() => setActiveTab('draft')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'draft'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Trash ({trashedPosts.length})
+                Draft ({productCounts.draft})
+              </button>
+              <button
+                onClick={() => setActiveTab('archived')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'archived'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Archived ({productCounts.archived})
+              </button>
+              <button
+                onClick={() => setActiveTab('deleted')}
+                className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'deleted'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Trash ({productCounts.deleted})
               </button>
             </nav>
           </div>
@@ -298,14 +506,22 @@ const ProductsListPage: React.FC = () => {
                   />
                 </svg>
                 <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No {activeTab === 'active' ? 'active' : 'trashed'} products
+                  No{' '}
+                  {activeTab === 'published'
+                    ? 'published'
+                    : activeTab === 'deleted'
+                      ? 'trashed'
+                      : activeTab}{' '}
+                  products
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  {activeTab === 'active'
+                  {activeTab === 'published'
                     ? 'Get started by creating a new product.'
-                    : 'No products in trash.'}
+                    : activeTab === 'deleted'
+                      ? 'No products in trash.'
+                      : `No ${activeTab} products.`}
                 </p>
-                {activeTab === 'active' && (
+                {activeTab === 'published' && (
                   <div className="mt-6">
                     <Link
                       href="/profile/products/add-product"
@@ -319,7 +535,7 @@ const ProductsListPage: React.FC = () => {
             ) : (
               <>
                 {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto scrollbar-thin scroll-smooth">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -357,7 +573,8 @@ const ProductsListPage: React.FC = () => {
                                       image_path: getPublicImageUrl(
                                         'products',
                                         post.id,
-                                        post.images[0]?.image_path
+                                        post.images[0]?.image_path +
+                                          '_thumb.webp'
                                       ),
                                     },
                                   ]}
@@ -377,10 +594,8 @@ const ProductsListPage: React.FC = () => {
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {/* Fix 1: Safe property access with optional chaining */}
-                                  {(post as any).short_description?.substring(
-                                    0,
-                                    50
-                                  ) || 'No description'}
+                                  {post.short_description?.substring(0, 50) ||
+                                    'No description'}
                                   ...
                                 </div>
                               </div>
@@ -389,7 +604,7 @@ const ProductsListPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
                               {/* Fix 2: Proper key handling for categories */}
-                              {post.categories.map((category, index) => (
+                              {post.categories.map((category) => (
                                 <span
                                   key={
                                     typeof category === 'object'
@@ -398,15 +613,17 @@ const ProductsListPage: React.FC = () => {
                                   }
                                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                                 >
-                                  <CategoryName categoryId={category} />
+                                  {typeof category === 'object'
+                                    ? category.name
+                                    : category}
                                 </span>
                               ))}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {/* Fix 3: Safe property access for price */}
-                            {(post as any).price
-                              ? `$${(post as any).price}`
+                            {post.price
+                              ? `$${post.price}`
                               : 'Contact for Price'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -427,7 +644,7 @@ const ProductsListPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                             <Link
-                              href={`/${contentType}s/${post.slug}`}
+                              href={`/${viewType}/${post.slug}`}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View
@@ -438,7 +655,7 @@ const ProductsListPage: React.FC = () => {
                             >
                               Edit
                             </Link>
-                            {activeTab === 'active' && (
+                            {activeTab === 'published' && (
                               <button
                                 onClick={() => handleTrash(post.slug)}
                                 className="text-red-600 hover:text-red-900"
@@ -446,7 +663,7 @@ const ProductsListPage: React.FC = () => {
                                 Trash
                               </button>
                             )}
-                            {activeTab === 'trashed' && (
+                            {activeTab === 'deleted' && (
                               <>
                                 <button
                                   onClick={() => handleRestore(post.slug)}
@@ -469,44 +686,71 @@ const ProductsListPage: React.FC = () => {
                   </table>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-4">
-                  {posts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                    >
-                      <div className="flex items-start space-x-3">
-                        <img
-                          className="h-16 w-16 rounded-lg object-cover"
-                          src={
-                            post.featured_image ||
-                            '/images/placeholder-product.png'
-                          }
-                          alt={post.title}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <Link
-                            href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
-                            className="text-sm font-medium text-gray-900 hover:text-blue-600"
-                          >
-                            {post.title}
-                          </Link>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {/* Fix 4: Safe property access for mobile view */}
-                            {(post as any).short_description?.substring(
-                              0,
-                              80
-                            ) || 'No description'}
-                            ...
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-sm font-medium text-gray-900">
-                              {/* Fix 5: Safe property access for mobile price */}
-                              {(post as any).price
-                                ? `$${(post as any).price}`
-                                : 'Contact for Price'}
-                            </span>
+                {/* Tablet Table - Responsive */}
+                <div className="hidden md:block lg:hidden overflow-x-auto scrollbar-thin scroll-smooth">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Price
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {posts.map((post) => (
+                        <tr key={post.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-8 w-8">
+                                <SafeImage
+                                  alt={post.title}
+                                  className="h-8 w-8 rounded object-cover"
+                                  images={[
+                                    {
+                                      image_path: getPublicImageUrl(
+                                        'products',
+                                        post.id,
+                                        post.images[0]?.image_path
+                                      ),
+                                    },
+                                  ]}
+                                  fallback="/images/placeholders/612x612.png"
+                                  width={32}
+                                  height={32}
+                                />
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                                  <Link
+                                    href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                    className="hover:text-blue-600"
+                                  >
+                                    {post.title}
+                                  </Link>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(
+                                    post.created_at
+                                  ).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {post.price
+                              ? `$${post.price}`
+                              : 'Contact for Price'}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 post.status === 'Published'
@@ -518,14 +762,11 @@ const ProductsListPage: React.FC = () => {
                             >
                               {post.status}
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="text-xs text-gray-500">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </span>
-                            <div className="flex space-x-2">
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex flex-col space-y-1">
                               <Link
-                                href={`/${contentType}s/${post.slug}`}
+                                href={`/${viewType}/${post.slug}`}
                                 className="text-blue-600 hover:text-blue-900 text-xs"
                               >
                                 View
@@ -536,25 +777,140 @@ const ProductsListPage: React.FC = () => {
                               >
                                 Edit
                               </Link>
-                              {activeTab === 'active' && (
+                              {activeTab === 'published' && (
                                 <button
                                   onClick={() => handleTrash(post.slug)}
-                                  className="text-red-600 hover:text-red-900 text-xs"
+                                  className="text-red-600 hover:text-red-900 text-xs text-left"
                                 >
                                   Trash
                                 </button>
                               )}
-                              {activeTab === 'trashed' && (
+                              {activeTab === 'deleted' && (
                                 <>
                                   <button
                                     onClick={() => handleRestore(post.slug)}
-                                    className="text-green-600 hover:text-green-900 text-xs"
+                                    className="text-green-600 hover:text-green-900 text-xs text-left"
                                   >
                                     Restore
                                   </button>
                                   <button
                                     onClick={() => handleDelete(post.slug)}
-                                    className="text-red-600 hover:text-red-900 text-xs"
+                                    className="text-red-600 hover:text-red-900 text-xs text-left"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {posts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          <SafeImage
+                            alt={post.title}
+                            className="h-16 w-16 rounded object-cover"
+                            images={[
+                              {
+                                image_path: getPublicImageUrl(
+                                  'products',
+                                  post.id,
+                                  post.images?.[0]?.image_path
+                                ),
+                              },
+                            ]}
+                            fallback="/images/placeholders/612x612.png"
+                            width={64}
+                            height={64}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <Link
+                                href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                className="text-sm font-medium text-gray-900 hover:text-blue-600 block truncate"
+                              >
+                                {post.title}
+                              </Link>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                {post.short_description?.substring(0, 60) ||
+                                  'No description'}
+                                {post.short_description &&
+                                  post.short_description.length > 60 &&
+                                  '...'}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 flex-shrink-0 ${
+                                post.status === 'Published'
+                                  ? 'bg-green-100 text-green-800'
+                                  : post.status === 'Draft'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {post.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {post.price
+                                ? `$${post.price}`
+                                : 'Contact for Price'}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                            <div className="flex space-x-3">
+                              <Link
+                                href={`/${viewType}/${post.slug}`}
+                                className="text-blue-600 hover:text-blue-900 text-xs font-medium"
+                              >
+                                View
+                              </Link>
+                              <Link
+                                href={`/profile/${contentType}s/add-product?slug=${post.slug}`}
+                                className="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+                              >
+                                Edit
+                              </Link>
+                            </div>
+                            <div className="flex space-x-2">
+                              {activeTab === 'published' && (
+                                <button
+                                  onClick={() => handleTrash(post.slug)}
+                                  className="text-red-600 hover:text-red-900 text-xs font-medium"
+                                >
+                                  Trash
+                                </button>
+                              )}
+                              {activeTab === 'deleted' && (
+                                <>
+                                  <button
+                                    onClick={() => handleRestore(post.slug)}
+                                    className="text-green-600 hover:text-green-900 text-xs font-medium"
+                                  >
+                                    Restore
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(post.slug)}
+                                    className="text-red-600 hover:text-red-900 text-xs font-medium"
                                   >
                                     Delete
                                   </button>
@@ -569,30 +925,50 @@ const ProductsListPage: React.FC = () => {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {currentTotalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">
                     <div className="flex flex-1 justify-between sm:hidden">
-                      <button
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 1}
-                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages}
-                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleFirstPage}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          First
+                        </button>
+                        <button
+                          onClick={handlePreviousPage}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleNextPage}
+                          disabled={currentPage === currentTotalPages}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                        <button
+                          onClick={handleLastPage}
+                          disabled={currentPage === currentTotalPages}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Last
+                        </button>
+                      </div>
                     </div>
                     <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm text-gray-700">
                           Showing page{' '}
                           <span className="font-medium">{currentPage}</span> of{' '}
-                          <span className="font-medium">{totalPages}</span>
+                          <span className="font-medium">
+                            {currentTotalPages}
+                          </span>
                         </p>
                       </div>
                       <div>
@@ -601,9 +977,30 @@ const ProductsListPage: React.FC = () => {
                           aria-label="Pagination"
                         >
                           <button
-                            onClick={handlePreviousPage}
+                            onClick={handleFirstPage}
                             disabled={currentPage === 1}
                             className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="First page"
+                          >
+                            <span className="sr-only">First</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M15.79 14.77a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L11.832 10l3.938 3.71a.75.75 0 01.02 1.06zm-6 0a.75.75 0 01-1.06.02l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 111.04 1.08L5.832 10l3.938 3.71a.75.75 0 01.02 1.06z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1}
+                            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Previous page"
                           >
                             <span className="sr-only">Previous</span>
                             <svg
@@ -620,13 +1017,14 @@ const ProductsListPage: React.FC = () => {
                           </button>
 
                           <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
-                            {currentPage}
+                            {currentPage} of {currentTotalPages}
                           </span>
 
                           <button
                             onClick={handleNextPage}
-                            disabled={currentPage === totalPages}
-                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={currentPage === currentTotalPages}
+                            className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Next page"
                           >
                             <span className="sr-only">Next</span>
                             <svg
@@ -637,6 +1035,26 @@ const ProductsListPage: React.FC = () => {
                               <path
                                 fillRule="evenodd"
                                 d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            onClick={handleLastPage}
+                            disabled={currentPage === currentTotalPages}
+                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Last page"
+                          >
+                            <span className="sr-only">Last</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M4.21 5.23a.75.75 0 011.06-.02l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08L8.168 10 4.23 6.29a.75.75 0 01-.02-1.06zm6 0a.75.75 0 011.06-.02l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 11-1.04-1.08L14.168 10 10.23 6.29a.75.75 0 01-.02-1.06z"
                                 clipRule="evenodd"
                               />
                             </svg>

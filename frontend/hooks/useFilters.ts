@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchSubCategories } from '@/services/api';
 import { fetchSubLocations } from '@/services/apiProducts';
 import {
@@ -27,12 +28,71 @@ const useFilters = ({
   setSubLocations,
 }: UseFiltersProps) => {
   const [filters, setFilters] = useState<Filter[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Use refs to store current values and avoid stale closures
   const categoriesRef = useRef(categories);
   const locationsRef = useRef(locations);
   const subCategoriesRef = useRef(subCategories);
   const subLocationsRef = useRef(subLocations);
+
+  // Helper function to update URL with current filters
+  const updateURL = useCallback(
+    (updatedFilters: Filter[]) => {
+      const params = new URLSearchParams(searchParams?.toString() || '');
+
+      // Clear existing category and location params
+      params.delete('category');
+      params.delete('subcategory');
+      params.delete('location');
+      params.delete('sublocation');
+
+      // Add current filters to URL
+      updatedFilters.forEach((filter) => {
+        if (filter.type === 'categories') {
+          const category = categoriesRef.current.find(
+            (cat) => cat.id === filter.id
+          );
+          if (category?.slug) {
+            params.set('category', category.slug);
+          }
+        } else if (filter.type === 'subcategories') {
+          const subcategory = subCategoriesRef.current.find(
+            (sub) => sub.id === filter.id
+          );
+          if (subcategory?.name) {
+            // Convert name to slug format since SubCategory doesn't have slug
+            const slug = subcategory.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('subcategory', slug);
+          }
+        } else if (filter.type === 'locations') {
+          const location = locationsRef.current.find(
+            (loc) => loc.id === filter.id
+          );
+          if (location?.name) {
+            // Convert name to slug format since Location doesn't have slug
+            const slug = location.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('location', slug);
+          }
+        } else if (filter.type === 'sublocations') {
+          const sublocation = subLocationsRef.current.find(
+            (sub) => sub.id === filter.id
+          );
+          if (sublocation?.name) {
+            // Convert name to slug format since SubLocation doesn't have slug
+            const slug = sublocation.name.toLowerCase().replace(/\s+/g, '-');
+            params.set('sublocation', slug);
+          }
+        }
+      });
+
+      // Update URL
+      const newUrl = `/shop${params.toString() ? '?' + params.toString() : ''}`;
+      router.push(newUrl);
+    },
+    [router, searchParams]
+  );
 
   useEffect(() => {
     categoriesRef.current = categories;
@@ -86,7 +146,8 @@ const useFilters = ({
       type: 'locations' | 'sublocations' | 'categories' | 'subcategories',
       id: number
     ) => {
-      setFilters((prevFilters: Filter[]) => {
+      // Calculate updated filters first
+      const calculateUpdatedFilters = (prevFilters: Filter[]): Filter[] => {
         const isFilterSelected = prevFilters.some(
           (filter) => filter.id === id && filter.type === type
         );
@@ -168,7 +229,21 @@ const useFilters = ({
         }
 
         return updatedFilters;
+      };
+
+      // Update state and get the new filters
+      let newFilters: Filter[];
+      setFilters((prevFilters: Filter[]) => {
+        newFilters = calculateUpdatedFilters(prevFilters);
+        return newFilters;
       });
+
+      // Update URL with the new filters
+      setTimeout(() => {
+        if (newFilters) {
+          updateURL(newFilters);
+        }
+      }, 0);
 
       // Fetch subcategories if category is selected
       if (type === 'categories') {
@@ -196,7 +271,7 @@ const useFilters = ({
         }
       }
     },
-    [getFilterName, setSubCategories, setSubLocations]
+    [getFilterName, setSubCategories, setSubLocations, updateURL]
   );
 
   const handleBack = useCallback(

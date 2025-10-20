@@ -80,11 +80,14 @@ export default function ReviewsPage() {
 
     try {
       const reviewsData = await reviewService.getUserReviews();
-      let rawReviews: any[] = [];
+      let rawReviews: Review[] = [];
       if (Array.isArray(reviewsData)) {
         rawReviews = reviewsData;
-      } else if (reviewsData && Array.isArray((reviewsData as any).results)) {
-        rawReviews = (reviewsData as any).results;
+      } else if (
+        reviewsData &&
+        Array.isArray((reviewsData as { results: Review[] }).results)
+      ) {
+        rawReviews = (reviewsData as { results: Review[] }).results;
       }
 
       // Transform backend data to frontend format
@@ -97,19 +100,24 @@ export default function ReviewsPage() {
         reviews: transformedReviews,
         loading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading reviews:', error);
 
       let errorMessage = 'Failed to load your reviews. Please try again.';
 
-      if (error.response?.status === 401) {
-        errorMessage = 'Your session has expired. Please log in again.';
-        // Optionally redirect to login
-        // router.push('/auth/login');
-      } else if (error.response?.status === 404) {
-        errorMessage = 'No reviews found.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { message?: string } };
+        };
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+          // Optionally redirect to login
+          // router.push('/auth/login');
+        } else if (axiosError.response?.status === 404) {
+          errorMessage = 'No reviews found.';
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
       }
 
       setState((prev) => ({
@@ -120,7 +128,7 @@ export default function ReviewsPage() {
         reviews: [], // Set empty array on error
       }));
     }
-  }, [state.isClient, user, router]);
+  }, [state.isClient, user]);
 
   // Initial load
   useEffect(() => {
@@ -205,17 +213,22 @@ export default function ReviewsPage() {
           'Review moved to trash successfully. You can restore it later if needed.',
         showSuccessModal: true,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting review:', error);
 
       let errorMessage = 'Failed to move review to trash. Please try again.';
 
-      if (error.response?.status === 401) {
-        errorMessage = 'Your session has expired. Please log in again.';
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Review not found.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { message?: string } };
+        };
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+        } else if (axiosError.response?.status === 404) {
+          errorMessage = 'Review not found.';
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
       }
 
       setState((prev) => ({
@@ -306,17 +319,22 @@ export default function ReviewsPage() {
           success: 'Review updated successfully.',
           showSuccessModal: true,
         }));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error updating review:', error);
 
         let errorMessage = 'Failed to update review. Please try again.';
 
-        if (error.response?.status === 401) {
-          errorMessage = 'Your session has expired. Please log in again.';
-        } else if (error.response?.status === 404) {
-          errorMessage = 'Review not found.';
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as {
+            response?: { status?: number; data?: { message?: string } };
+          };
+          if (axiosError.response?.status === 401) {
+            errorMessage = 'Your session has expired. Please log in again.';
+          } else if (axiosError.response?.status === 404) {
+            errorMessage = 'Review not found.';
+          } else if (axiosError.response?.data?.message) {
+            errorMessage = axiosError.response.data.message;
+          }
         }
 
         setState((prev) => ({
@@ -349,14 +367,25 @@ export default function ReviewsPage() {
 
   const handleSortChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, sortBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        sortBy: e.target.value as
+          | 'newest'
+          | 'oldest'
+          | 'rating-high'
+          | 'rating-low'
+          | 'helpful',
+      }));
     },
     []
   );
 
   const handleFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setState((prev) => ({ ...prev, filterBy: e.target.value as any }));
+      setState((prev) => ({
+        ...prev,
+        filterBy: e.target.value as 'all' | '5' | '4' | '3' | '2' | '1',
+      }));
     },
     []
   );
@@ -402,8 +431,8 @@ export default function ReviewsPage() {
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="space-y-6">
@@ -423,8 +452,8 @@ export default function ReviewsPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -438,8 +467,8 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

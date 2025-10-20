@@ -47,9 +47,9 @@ export default function CareerPage() {
                   Why Join Our Team?
                 </h2>
                 <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                  We're always looking for talented individuals to join our
-                  growing team. If you're passionate about technology and
-                  innovation, we'd love to hear from you.
+                  We&apos;re always looking for talented individuals to join our
+                  growing team. If you&apos;re passionate about technology and
+                  innovation, we&apos;d love to hear from you.
                 </p>
               </div>
 

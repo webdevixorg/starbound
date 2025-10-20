@@ -48,7 +48,10 @@ const AddToWishlistButton: React.FC<AddToWishlistButtonProps> = ({
     transition duration-300
   `}
     >
-      <HeartIcon className={` transition duration-300`} />
+      <HeartIcon
+        className="transition duration-300 hover:fill-white"
+        stroke={isInWishlist ? '#ef4444' : '#000'}
+      />
     </button>
   );
 };

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   fetchCategories,
   deleteCategory,
@@ -16,10 +16,9 @@ import ModalAlert from '@/components/Modals/ModalAlert';
 
 const CategoriesPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
 
   // Get content type from URL params or default to 'post'
-  const contentTypeParam = searchParams.get('type') || 'post';
+  const contentTypeParam = searchParams?.get('type') || 'post';
 
   const { contentTypes, loading: contentLoading } = useContent();
 
@@ -56,9 +55,11 @@ const CategoriesPage: React.FC = () => {
     if (contentLoading || !contentTypes) return;
 
     const matched = Array.isArray(contentTypes)
-      ? contentTypes.find((ct: any) => ct.model === contentTypeParam)
+      ? contentTypes.find(
+          (ct: { model: string }) => ct.model === contentTypeParam
+        )
       : Object.values(contentTypes).find(
-          (ct: any) => ct.model === contentTypeParam
+          (ct: { model: string }) => ct.model === contentTypeParam
         );
 
     if (matched) {
@@ -95,7 +96,7 @@ const CategoriesPage: React.FC = () => {
     };
 
     loadCategories();
-  }, [currentPage, contentTypeId]);
+  }, [currentPage, pageSize, contentTypeId]);
 
   // Reset page when content type changes
   useEffect(() => {
@@ -247,7 +248,7 @@ const CategoriesPage: React.FC = () => {
   // Show loading spinner during initial load
   if (loading && contentLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
@@ -258,8 +259,8 @@ const CategoriesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

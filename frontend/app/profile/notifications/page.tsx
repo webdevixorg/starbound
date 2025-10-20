@@ -11,10 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetchNotifications, markNotificationAsRead } from '@/services/api';
 import { Notification } from '@/types/types';
-import ProfileImage from '@/components/UI/ProfileImage/ProfileImage';
+import SafeImage from '@/components/UI/SafeImage';
 import LoadingSpinner from '@/components/Common/Loading';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import InlineLoaderIcon from '@/components/UI/Icons/InlineLoader';
+import { getPublicImageUrl } from '@/helpers/media';
 
 interface NotificationsState {
   notifications: Notification[];
@@ -282,9 +283,9 @@ export default function NotificationsPage() {
   }, [state.notifications]);
 
   // Memoized notification item component
-  const NotificationItem = useMemo(
-    () =>
-      React.memo<{ notification: Notification }>(({ notification }) => (
+  const NotificationItem = useMemo(() => {
+    const Component = React.memo<{ notification: Notification }>(
+      ({ notification }) => (
         <div
           className={`p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
             notification.is_read
@@ -296,13 +297,20 @@ export default function NotificationsPage() {
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden">
-                <ProfileImage
-                  alt="Notification profile"
-                  src={
-                    typeof notification.profile_image === 'string'
-                      ? notification.profile_image
-                      : ''
-                  }
+                <SafeImage
+                  alt={notification.profile_image}
+                  className="relative rounded-full h-10 w-10 object-cover"
+                  images={[
+                    {
+                      image_path: getPublicImageUrl(
+                        'notification',
+                        notification.id,
+                        notification.profile_image
+                      ),
+                    },
+                  ]}
+                  width={40}
+                  height={40}
                 />
               </div>
             </div>
@@ -334,15 +342,18 @@ export default function NotificationsPage() {
             </div>
           </div>
         </div>
-      )),
-    [handleNotificationClick, getTimeAgoString, state.markingAsRead]
-  );
+      )
+    );
+
+    Component.displayName = 'NotificationItem';
+    return Component;
+  }, [handleNotificationClick, getTimeAgoString, state.markingAsRead]);
 
   // Loading skeleton for SSR compatibility
   if (!state.isClient) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
@@ -366,8 +377,8 @@ export default function NotificationsPage() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <LoadingSpinner />
           </div>
@@ -383,8 +394,8 @@ export default function NotificationsPage() {
   const unreadCount = state.notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -481,7 +492,7 @@ export default function NotificationsPage() {
         )}
 
         {/* Notifications List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg">
           {state.notifications.length > 0 ? (
             <div className="p-6">
               <div className="space-y-4">
@@ -548,7 +559,7 @@ export default function NotificationsPage() {
                 No notifications yet
               </h3>
               <p className="text-gray-600">
-                When you receive notifications, they'll appear here.
+                When you receive notifications, they&apos;ll appear here.
               </p>
             </div>
           )}
