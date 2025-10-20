@@ -14,15 +14,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history and tags
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
+      - name: List repository contents
+        run: |
+          pwd
+          ls -la
+          ls -la config/frontend/
+
       - name: Install dependencies and build frontend
         run: |
+          echo "Current directory structure:"
+          ls -R
           cd frontend
+          echo "Frontend directory contents:"
+          ls -la
+          echo "Config directory contents:"
+          ls -la ../config/frontend/
           npm ci
           npm run build
 
