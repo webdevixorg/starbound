@@ -1,58 +1,86 @@
+# GitHub Actions workflow for deploying the frontend application to a VPS
 name: Deploy Frontend to VPS
 
+# Workflow trigger configuration
 on:
   push:
+    # Only run when changes are pushed to the main branch
     branches:
       - main
+    # Only trigger when files in the frontend directory are modified
     paths:
       - 'frontend/**'
 
+# Define the jobs to run
 jobs:
+  # Main deployment job
   deploy-frontend:
+    # Use Ubuntu as the build environment
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Clone the repository
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Fetch all history and tags
+          # Fetch complete git history for better versioning and changelog generation
+          fetch-depth: 0
 
+      # Step 2: Set up Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '20' # Using Node.js LTS version
 
+      # Step 3: Debug step - List repository contents
+      # This helps verify the correct file structure and env files
       - name: List repository contents
         run: |
-          pwd
-          ls -la
-          ls -la config/frontend/
+          pwd  # Show current working directory
+          ls -la  # List all files including hidden ones
+          ls -la config/frontend/  # Verify config directory contents
 
+      # Step 4: Install dependencies and build the application
       - name: Install dependencies and build frontend
         run: |
+          # Display complete directory structure for debugging
           echo "Current directory structure:"
           ls -R
           cd frontend
+          # Show frontend directory contents
           echo "Frontend directory contents:"
           ls -la
+          # Verify config files are accessible
           echo "Config directory contents:"
           ls -la ../config/frontend/
+          # Clean install of dependencies
           npm ci
+          # Build the Next.js application
           npm run build
 
+      # Step 5: Configure SSH for VPS access
       - name: Setup SSH
         run: |
+          # Create SSH directory
           mkdir -p ~/.ssh
+          # Add private key from GitHub secrets
           echo "${{ secrets.VPS_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          # Set correct permissions for SSH key
           chmod 600 ~/.ssh/id_ed25519
+          # Add VPS host to known hosts
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
+      # Step 6: Prepare deployment directory on VPS
       - name: Create directories on VPS
         run: |
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/starbound/frontend"
 
+      # Step 7: Deploy built application to VPS
       - name: Deploy frontend to VPS
         run: |
+          # Sync files to VPS using rsync
+          # --delete: Remove files on destination that don't exist in source
+          # --exclude: Skip node_modules directory
           rsync -avz --delete \
             --exclude node_modules \
             frontend/ \
