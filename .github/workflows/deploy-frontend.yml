@@ -20,14 +20,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Create .env file
-        run: |
-          mkdir -p /config/frontend
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> config/frontend/.env
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> config/frontend/.env
-          # Add other variables as needed
-
       - name: Install dependencies and build frontend
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           cd frontend
           npm ci
