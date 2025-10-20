@@ -1,5 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Custom Installation Services | Starbound',
+  description:
+    'Professional custom installation services for your home or business. Expert installation solutions tailored to your needs.',
+};
 
 export default function CustomInstallationPage() {
   return (
