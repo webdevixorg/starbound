@@ -1,47 +1,6 @@
 /** @type {import('next').NextConfig} */
 import type { NextConfig } from 'next';
 
-const pathModule = require('path');
-const fs = require('fs');
-
-// Function to load environment variables
-function loadEnvConfig() {
-  const envPath = pathModule.resolve(__dirname, '../config/frontend/.env');
-
-  if (!fs.existsSync(envPath)) {
-    console.error(`Environment file not found at ${envPath}`);
-    throw new Error(`Environment file not found at ${envPath}`);
-  }
-
-  const envConfig = require('dotenv').config({
-    path: envPath,
-  });
-
-  if (envConfig.error) {
-    console.error('Error loading .env file:', envConfig.error);
-    throw envConfig.error;
-  }
-
-  // Verify required environment variables
-  const requiredEnvVars = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-  ];
-
-  const missingVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
-
-  if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missingVars.join(', ')}`
-    );
-  }
-
-  return envConfig;
-}
-
-// Load environment configuration
-loadEnvConfig();
-
 const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
@@ -140,26 +99,6 @@ const nextConfig: NextConfig = {
   },
 
   reactStrictMode: true,
-
-  // Environment variables
-  env: {
-    // API
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    // Supabase
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    // Third-party services
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
-      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET:
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    // Analytics
-    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-  },
 
   // Redirect www to non-www
   redirects: async () => {
