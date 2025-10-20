@@ -1,3 +1,5 @@
+// Global type declarations for the frontend project
+// Add custom type definitions or module declarations below
 declare module '@splidejs/react-splide' {
     import React from 'react';
     import { SplideOptions } from '@splidejs/splide';
