@@ -2,7 +2,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Performance optimizations.
+  // Performance optimizations
   experimental: {
     optimizeCss: true,
   },
