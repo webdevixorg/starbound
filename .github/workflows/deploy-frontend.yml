@@ -26,13 +26,20 @@ jobs:
           # Fetch complete git history for better versioning and changelog generation
           fetch-depth: 0
 
-      # Step 2: Set up Node.js environment
+      # Step 2: Copy environment file
+      - name: Copy environment file
+        run: |
+          # Copy .env file from config to frontend
+          cp config/frontend/.env frontend/.env
+          echo "Environment file copied successfully"
+
+      # Step 3: Set up Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20' # Using Node.js LTS version
 
-      # Step 3: Debug step - List repository contents
+      # Step 4: Debug step - List repository contents
       # This helps verify the correct file structure and env files
       - name: List repository contents
         run: |
