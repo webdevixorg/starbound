@@ -98,6 +98,26 @@ export default function AddProductPage() {
   const [selectedBrand, setSelectedBrand] = useState<Entity | null>(null);
   const [selectedModel, setSelectedModel] = useState<Entity | null>(null);
 
+  // Add this state and ref to your component's state declarations
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const statusMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        statusMenuRef.current &&
+        !statusMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsStatusMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
+
   // Form validation
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
@@ -651,10 +671,10 @@ export default function AddProductPage() {
                 </div>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleCancel}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl font-medium transition-all inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md focus:ring-2 focus:ring-gray-400 focus:outline-none"
               >
                 <svg
                   className="w-4 h-4"
@@ -671,12 +691,13 @@ export default function AddProductPage() {
                 </svg>
                 {isEditing ? 'Cancel' : 'Back to Products'}
               </button>
+
               {isEditing && (
                 <Link
                   href={`/shop/${slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium transition-all inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 >
                   <svg
                     className="w-4 h-4"
@@ -1029,17 +1050,16 @@ export default function AddProductPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {/* Publish */}
-            <div className="bg-white rounded-lg border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Publish
-              </h3>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
+              <h3 className="text-lg font-semibold text-gray-900">Publish</h3>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {/* Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
                     {isEditing ? 'Last Modified' : 'Posted On'}
                   </label>
+
                   {isEditingDate ? (
                     <input
                       id="date"
@@ -1049,61 +1069,113 @@ export default function AddProductPage() {
                       onChange={handleDateChange}
                       onBlur={() => setIsEditingDate(false)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setIsEditingDate(false);
-                        }
+                        if (e.key === 'Enter') setIsEditingDate(false);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lgborder focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (
-                    <div
+                    <button
+                      type="button"
                       onClick={() => setIsEditingDate(true)}
-                      className="cursor-pointer px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm hover:bg-gray-100 transition-colors"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm text-left hover:bg-gray-100 transition"
                     >
                       {date
                         ? new Date(date).toLocaleString()
                         : new Date().toLocaleString()}
-                    </div>
+                    </button>
                   )}
                 </div>
 
                 {/* Status */}
-                <div>
+                <div className="space-y-2">
                   <label
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                    htmlFor="status"
+                    htmlFor="status-button"
+                    className="text-sm font-medium text-gray-700"
                   >
                     Status
                   </label>
-                  <select
-                    id="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lgborder focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                  </select>
+                  <div ref={statusMenuRef} className="relative">
+                    <button
+                      type="button"
+                      id="status-button"
+                      onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                      className="relative w-full cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-left shadow-sm transition-all duration-300 ease-in-out hover:border-gray-400 hover:shadow-md focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+                    >
+                      <span className="block truncate capitalize">
+                        {status}
+                      </span>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <svg
+                          className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isStatusMenuOpen ? 'rotate-180' : ''}`}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+
+                    <div
+                      className={`absolute z-10 mt-1 w-full origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition ease-out duration-100 ${isStatusMenuOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="status-button"
+                    >
+                      <div className="py-1" role="none">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStatus('draft');
+                            setIsStatusMenuOpen(false);
+                          }}
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          role="menuitem"
+                        >
+                          Draft
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStatus('published');
+                            setIsStatusMenuOpen(false);
+                          }}
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          role="menuitem"
+                        >
+                          Published
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col gap-3 mt-6">
+              <div className="flex flex-col gap-4 pt-4 mt-2">
+                {/* Primary Button */}
                 <button
                   type="submit"
                   onClick={handleSubmit}
                   disabled={saving || loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-2 rounded-lg transition-colors flex items-center justify-center"
+                  className={`w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 
+              text-white font-medium text-[12px] xs:text-base 
+              py-2 md:py-3 rounded-xl flex items-center justify-center 
+              transition shadow-sm hover:shadow-md`}
                 >
                   {saving ? (
                     <>
-                      <InlineLoaderIcon className="mr-2" />
+                      <InlineLoaderIcon className="mr-2 w-4 h-4 md:w-5 md:h-5" />
                       {isEditing ? 'Updating...' : 'Saving...'}
                     </>
                   ) : (
                     <>
                       <svg
-                        className="w-4 h-4 mr-2"
+                        className="mr-2 w-3 h-3 md:w-4 md:h-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1120,13 +1192,13 @@ export default function AddProductPage() {
                   )}
                 </button>
 
-                {/* Secondary Actions */}
-                <div className="flex gap-2">
+                {/* Secondary Buttons */}
+                <div className="flex gap-3 flex-wrap w-full">
                   <button
                     type="button"
                     onClick={handleCancel}
                     disabled={saving}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium text-[12px] xs:text-base py-2.5 md:py-3 rounded-xl flex items-center justify-center transition shadow-sm hover:shadow-md"
                   >
                     Cancel
                   </button>
@@ -1135,11 +1207,10 @@ export default function AddProductPage() {
                     <Link
                       href={`/shop/${slug}`}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center flex items-center justify-center"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium text-[12px] xs:text-base py-2.5 md:py-3 rounded-xl flex items-center justify-center transition shadow-sm hover:shadow-md"
                     >
                       <svg
-                        className="w-4 h-4 mr-1"
+                        className="w-3 h-3 md:w-3 md:h-3 mr-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
