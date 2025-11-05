@@ -22,7 +22,7 @@ class EntityViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         
-        # Debug logging
+        # Debug logging.
         logger.info(f"Query params: {dict(self.request.query_params)}")
         
         # Filter by entity type
