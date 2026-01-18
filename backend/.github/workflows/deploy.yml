@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          ssh -o StrictHostKeyChecking=no root@159.198.66.181 << 'EOF'
+          ssh -o StrictHostKeyChecking=no webdevix@195.35.22.10 << 'EOF'
             set -e  # Exit on error
 
             echo "Updating packages and installing dependencies..."

@@ -18,10 +18,12 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Define the system log path
+LOG_DIR = '/var/log/logivis'
+
 # Load environment variables with fallback
 env_files = [
     os.path.join(BASE_DIR, '.env'),  # Local development
-    os.path.join(BASE_DIR.parent, "config/backend/.env"),      # Production
 ]
 
 for env_file in env_files:
@@ -280,7 +282,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'django.log'),
+            'filename': os.path.join(LOG_DIR, 'django.log'),
             'formatter': 'verbose',
         },
         'console': {

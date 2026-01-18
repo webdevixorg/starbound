@@ -1,0 +1,14 @@
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib python3.12-venv 
+
+
+# Create the folder
+sudo mkdir -p /var/log/gunicorn
+
+# Create the empty files
+sudo touch /var/log/gunicorn/error.log
+sudo touch /var/log/gunicorn/access.log
+
+# Give full ownership to your user
+sudo chown -R webdevix:www-data /var/log/gunicorn
+sudo chmod -R 775 /var/log/gunicorn

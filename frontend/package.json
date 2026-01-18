@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:deploy": "next build && node deploy-after-build.js",
     "build:export": "next build && next export",
     "export": "next export",
     "start": "next start",
@@ -59,7 +60,8 @@
     "react-phone-input-2": "^2.15.1",
     "react-toastify": "^11.0.3",
     "sanitize-html": "^2.17.0",
-    "web-vitals": "^4.2.4"
+    "web-vitals": "^4.2.4",
+    "typescript": "~5.6.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -88,7 +90,6 @@
     "sass": "^1.89.2",
     "sass-embedded": "^1.82.0",
     "tailwindcss": "^3.4.16",
-    "typescript": "~5.6.2",
     "typescript-eslint": "^8.23.0"
   }
 }

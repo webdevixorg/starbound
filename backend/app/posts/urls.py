@@ -4,21 +4,15 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import PostDetailView, FrontendPostView, ProfilePostView
 
-# Frontend router for public access (no authentication required)
-frontend_router = DefaultRouter()
-frontend_router.register(r'f', FrontendPostView, basename='frontend-post')
-
-# Profile router for authenticated users
-profile_router = DefaultRouter()
-profile_router.register(r'p', ProfilePostView, basename='profile-post')
+# Main router
+router = DefaultRouter()
+router.register(r'f', FrontendPostView, basename='frontend-post')
+router.register(r'p', ProfilePostView, basename='profile-post')
 
 
 urlpatterns = [
-    # Frontend public API routes (no auth required)
-    path('', include(frontend_router.urls)),
-    
-    # Profile authenticated API routes
-    path('', include(profile_router.urls)),
+    # API routes
+    path('', include(router.urls)),
 
     path('popular/', FrontendPostView.as_view({'get': 'popular'}), name='post-popular'),
     path('trending/', FrontendPostView.as_view({'get': 'trending'}), name='post-trending'),

@@ -1,17 +1,15 @@
 /** @type {import('next').NextConfig} */
 import type { NextConfig } from 'next';
-
-const pathModule = require('path');
-require('dotenv').config({
-  path: pathModule.resolve(__dirname, '../config/frontend/.env'),
-});
-
-// Also load .env from the frontend folder
-require('dotenv').config({
-  path: pathModule.resolve(__dirname, './.env'),
-});
+import {
+  NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY,
+} from './utils/env';
 
 const nextConfig: NextConfig = {
+  // Use server-side rendering with Node.js (requires 'npm start' or PM2 on production)
+  // output: 'export', // Uncomment only for static HTML export
+
   // Performance optimizations
   experimental: {
     optimizeCss: true,
@@ -19,6 +17,7 @@ const nextConfig: NextConfig = {
 
   // Image optimization
   images: {
+    unoptimized: true,
     domains: ['localhost', 'logivis.com'],
     remotePatterns: [
       {
@@ -113,21 +112,10 @@ const nextConfig: NextConfig = {
   // Environment variables
   env: {
     // API
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_API_URL,
     // Supabase
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    // Third-party services
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
-      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET:
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    // Analytics
-    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+    NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
   // Redirect www to non-www
