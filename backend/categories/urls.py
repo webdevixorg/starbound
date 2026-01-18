@@ -1,9 +1,9 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import CategoryView, ContentTypeList, CategoryListByParent
 
 # Create a DefaultRouter instance to automatically generate URL patterns for viewsets
-router = DefaultRouter()
+router = SimpleRouter()
 
 # Register the CategoryView viewset with the router under the 'categories' prefix
 # 'basename' is used to name the URLs related to this viewset

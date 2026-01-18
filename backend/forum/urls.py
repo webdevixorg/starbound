@@ -1,9 +1,9 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import ThreadViewSet
 
 # Create a DefaultRouter instance to automatically generate URL patterns for viewsets
-router = DefaultRouter()
+router = SimpleRouter()
 
 # Register the ThreadViewSet viewset with the router under the 'forum' prefix
 router.register(r'forum', ThreadViewSet, basename='forum')

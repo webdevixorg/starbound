@@ -1,10 +1,10 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import ImageViewSet, UserImageViewSet
 
 # Create a router and register our viewsets with it
 # Set trailing_slash=True to ensure URLs end with '/'
-router = DefaultRouter(trailing_slash=True)
+router = SimpleRouter(trailing_slash=True)
 router.register(r'images', ImageViewSet, basename='image')
 router.register(r'user-images', UserImageViewSet, basename='user-image')
 

@@ -1,11 +1,11 @@
 # urls.py
 
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import PostDetailView, FrontendPostView, ProfilePostView
 
 # Main router
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'f', FrontendPostView, basename='frontend-post')
 router.register(r'p', ProfilePostView, basename='profile-post')
 

@@ -1,9 +1,9 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import OrderViewSet
 
 # Create a router instance to automatically generate URL patterns for viewsets
-router = DefaultRouter()
+router = SimpleRouter()
 
 # Register the OrderViewSet with the router
 # This will create CRUD endpoints for 'product-orders' (e.g., /product-orders/, /product-orders/<id>/)

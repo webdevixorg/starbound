@@ -1,9 +1,9 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import LocationViewSet, SubLocationListByLocation
 
 # Create a router instance to automatically generate URLs for viewsets
-router = DefaultRouter()
+router = SimpleRouter()
 
 # Register LocationViewSet with the router under the prefix 'locations'
 # This generates standard RESTful endpoints for locations (list, retrieve, create, etc.)

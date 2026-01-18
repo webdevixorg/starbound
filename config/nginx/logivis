@@ -1,0 +1,61 @@
+# Main server block for redirecting HTTP traffic to HTTPS
+
+server {
+listen 80;
+server_name logivis.com www.logivis.com; # Redirect all HTTP requests to HTTPS with a 301 Moved Permanently response.
+return 301 https://$host$request_uri;
+}
+
+# Main HTTPS server block
+
+server {
+listen 443 ssl http2;
+server_name logivis.com www.logivis.com;
+
+    # SSL certificate configuration (ensure these paths are correct on your server)
+    ssl_certificate /etc/ssl/logivis.com/logivis_com.crt;
+    ssl_certificate_key /etc/ssl/logivis.com/logivis_com.key;
+    ssl_trusted_certificate /etc/ssl/logivis.com/logivis_com.ca-bundle;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Root path for static and media files.
+    # Note: Specific location blocks below use 'alias' for better path handling.
+    root TARGET_PATH/backend;
+
+    # Location block for the Frontend (Next.js application)
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Location block for the Backend API (Gunicorn)
+    location /api/ {
+        include proxy_params;
+        # Correctly points to the Gunicorn socket created by systemd
+        proxy_pass http://unix:/run/APP_NAME.sock;
+    }
+
+    # Location block for Django's static files
+    location /static/ {
+        # Using 'alias' is generally safer as it maps the URL path directly to this directory.
+        alias TARGET_PATH/backend/static/;
+    }
+
+    # Location block for user-uploaded media files
+    location /media/ {
+        alias TARGET_PATH/backend/media/;
+    }
+
+    # GZIP compression settings
+    gzip on;
+    gzip_types text/plain application/javascript application/x-javascript text/javascript text/xml text/css application/json;
+
+}

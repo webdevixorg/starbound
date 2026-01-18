@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 
 # Import JWT authentication views from SimpleJWT
 from rest_framework_simplejwt.views import (
@@ -13,26 +14,17 @@ from rest_framework_simplejwt.views import (
 # Import your custom token view
 from authentication.views import StarBoundTokenObtainPairView
 
+def api_root(request):
+    return JsonResponse({"status": "ok", "message": "Starbound API is running"})
+
 # Define URL patterns for your project
 urlpatterns = [
+    path('', api_root, name='api-root'), # Add root view
     # Admin site URL
     path('admin/', admin.site.urls),
 
     # Main application API endpoints
-    path('api/', include('app.urls')),  # Core app endpoints
-    path('api/', include('authentication.urls')),  # Authentication endpoints (login, register, etc.)
-    path('api/', include('profiles.urls')),  # User profile management
-    path('api/', include('chat.urls')),  # Chat/message system
-    path('api/', include('categories.urls')),  # Category management
-    path('api/', include('locations.urls')),  # Location-related endpoints
-    path('api/', include('uploads.urls')),  # File upload endpoints
-    path('api/', include('orders.urls')),  # Order processing
-    path('api/', include('reviews.urls')),  # Review system
-    path('api/', include('visits.urls')),  # Visit tracking or analytics
-    path('api/', include('forum.urls')),  # Forum system
-    path('api/', include('entities.urls')),  # Entity management
-    path('api/', include('support.urls')),  # Support system
-    path('api/settings/', include('user_settings.urls')),  # User settings
+    path('api/', include('system.api_urls')),  # Consolidated API endpoints
 
     # JWT Authentication endpoints
     # Default JWT token obtain view (commented out, using custom view instead)
@@ -47,3 +39,4 @@ urlpatterns = [
 # Serve media files during development (when DEBUG=True)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
