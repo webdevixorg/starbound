@@ -40,8 +40,13 @@ echo -e "${BLUE}=== Starting Production Deployment to $TARGET_IP ===${NC}\n"
 
 # 1. Build Frontend Locally
 echo -e "${BLUE}Building frontend locally to save server resources...${NC}"
+# Copy production config to .env.local so it takes precedence during build
+cp config/frontend/.env.local frontend/.env.local
 (cd frontend && npm install && npm run build)
+# Remove the production .env.local after build to prevent accidental usage in local dev
+rm frontend/.env.local
 echo -e "${GREEN}✓ Frontend built successfully.${NC}\n"
+
 
 # 2. Sync Files to VPS
 echo -e "${BLUE}Syncing files and environment configs to VPS...${NC}"
@@ -58,9 +63,10 @@ scp ${SSH_OPTS} config/backend/.env ${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}/b
 scp ${SSH_OPTS} config/frontend/.env.local ${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}/frontend/.env.local
 
 # Prepare and upload systemd files
-echo -e "${BLUE}Preparing systemd configuration...${NC}"
+echo -e "${BLUE}Preparing configuration files...${NC}"
 cp config/systemd/gunicorn.socket .app.socket
 cp config/systemd/gunicorn.service .app.service
+cp config/nginx/logivis .app.nginx
 
 # Replace variables in the local copies
 sed -i "s|APP_NAME|${APP_NAME}|g" .app.socket
@@ -70,12 +76,16 @@ sed -i "s|APP_NAME|${APP_NAME}|g" .app.service
 sed -i "s|TARGET_USER|${TARGET_USER}|g" .app.service
 sed -i "s|TARGET_PATH|${TARGET_PATH}|g" .app.service
 
+sed -i "s|APP_NAME|${APP_NAME}|g" .app.nginx
+sed -i "s|TARGET_PATH|${TARGET_PATH}|g" .app.nginx
+
 # Upload them
 scp ${SSH_OPTS} .app.socket ${TARGET_USER}@${TARGET_IP}:~/${APP_NAME}.socket
 scp ${SSH_OPTS} .app.service ${TARGET_USER}@${TARGET_IP}:~/${APP_NAME}.service
+scp ${SSH_OPTS} .app.nginx ${TARGET_USER}@${TARGET_IP}:~/${APP_NAME}.nginx
 
 # Clean up local temps
-rm .app.socket .app.service
+rm .app.socket .app.service .app.nginx
 
 echo -e "${GREEN}✓ Sync complete.${NC}\n"
 
@@ -98,7 +108,22 @@ cat > .remote_script.sh << 'EOF_SCRIPT'
     sudo mv ~/APP_NAME.service /etc/systemd/system/APP_NAME.service
     sudo chown root:root /etc/systemd/system/APP_NAME.service
 
+    # Install Nginx Config
+    echo "Installing Nginx configuration..."
+    if ! command -v nginx &> /dev/null; then
+        echo "Nginx not found. Installing..."
+        sudo apt-get update
+        sudo apt-get install -y nginx
+    fi
+    
+    sudo mv ~/APP_NAME.nginx /etc/nginx/sites-available/APP_NAME
+    sudo chown root:root /etc/nginx/sites-available/APP_NAME
+    sudo ln -sf /etc/nginx/sites-available/APP_NAME /etc/nginx/sites-enabled/APP_NAME
+    # Remove default site if it exists to avoid conflicts
+    # sudo rm -f /etc/nginx/sites-enabled/default 
+    
     sudo systemctl daemon-reload
+    sudo systemctl reload nginx
 
     # Create Log Directory
     echo "Setting up log directory /var/log/APP_NAME..."
