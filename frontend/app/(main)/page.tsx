@@ -6,37 +6,25 @@ import PostSlider from '@/components/PageComponents/PostSlider';
 import PostGrid_1 from '@/components/PageComponents/PostGrid_1';
 import PostGrid_2 from '@/components/PageComponents/PostGrid_2';
 import ProductGridSection from '@/components/PageComponents/ProductGridSection';
-import NextImage from 'next/image';
+import AdSection from '@/components/PageComponents/AdSection';
 
 const HomePage: React.FC = () => {
   return (
-    <div>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <BigHero filter="latest" count={5} />
-        <ProductGridSection filter="latest" count={4} />
-        <PostGrid_1 categoryId={91} count={4} title="Automotive Tech" />
-        <div className="post-add mt-30">
-          <div className="bg-white-50 py-6">
-            <div className="container mx-auto">
-              <div className="flex flex-row flex-wrap">
-                <a href="#">
-                  <div className="relative w-full h-[100%] mb-10">
-                    <NextImage
-                      src="/images/ads/ad-1.png"
-                      alt="ad"
-                      width={1200}
-                      height={600}
-                    />
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <PostGrid_2 categoryId={89} count={4} title="How-To Guides" />
-        <PostGrid_1 categoryId={94} count={4} title="Motorsports & Culture" />
-        <PostSlider categoryId={90} count={4} title="News & Updates" />
-      </div>
+    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <BigHero filter="latest" count={5} />
+      <ProductGridSection filter="latest" count={4} />
+      <PostGrid_1 categoryId={91} count={4} title="Automotive Tech" />
+      {/* Ad Section */}
+      <AdSection
+        imageUrl="/images/ads/ad-1.png"
+        altText="Promotional Ad"
+        linkHref="#"
+        title="Experience the Future of Automotive"
+        description="Discover cutting-edge technology and exclusive offers."
+      />
+      <PostGrid_2 categoryId={89} count={4} title="How-To Guides" />
+      <PostGrid_1 categoryId={94} count={4} title="Motorsports & Culture" />
+      <PostSlider categoryId={90} count={4} title="News & Updates" />
     </div>
   );
 };
