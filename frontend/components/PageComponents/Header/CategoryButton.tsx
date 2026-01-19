@@ -63,7 +63,7 @@ export default function CategoryButton() {
   }, [menuOpen]);
 
   return (
-    <div className="relative mr-4 w-[250px]" ref={menuRef}>
+    <div className="mr-4 w-[250px]" ref={menuRef}>
       <button
         className="w-full text-left font-semibold text-sm flex items-center justify-between bg-white text-black py-3 pr-4 rounded-t-md"
         onClick={() => setMenuOpen(!menuOpen)}
