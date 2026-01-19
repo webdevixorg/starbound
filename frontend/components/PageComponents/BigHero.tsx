@@ -51,7 +51,7 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
         <div className="md:col-span-8 relative group overflow-hidden rounded-3xl shadow-2xl min-h-[400px]">
           <img
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-            src="//ap-autosoe.myshopify.com/cdn/shop/files/au_banner_2.jpg?v=1732326940&width=1200"
+            src="/images/banner/au_slide_3.jpg"
             alt="Hero Banner"
           />
           <div className="absolute inset-0 bg-black/40 flex flex-col items-start justify-center p-8 md:p-16 text-white z-10">

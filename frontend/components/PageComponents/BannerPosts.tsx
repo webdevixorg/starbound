@@ -52,7 +52,7 @@ const BannerPosts: React.FC<BannerPostsProps> = ({
           {/* Large Banner Section */}
           <div className="lg:col-span-8 relative group overflow-hidden rounded-3xl shadow-2xl min-h-[500px]">
             <img
-              src={bannerImage}
+              src="/images/banner/hot-3.png"
               alt="Promotion"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
             />
