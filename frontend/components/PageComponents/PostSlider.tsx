@@ -9,6 +9,8 @@ import SafeImage from '../UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
 import { Post } from '@/types/types';
 import { fetchPostsByCategory } from '@/services/api';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 interface SliderNewsProps {
   categoryId: number;
@@ -139,9 +141,22 @@ const SliderNews: React.FC<SliderNewsProps> = ({
 
   if (loading) {
     return (
-      <div className="relative bg-gray-900 py-16">
-        <div className="container mx-auto px-5">
-          <LoadingSpinner />
+      <div className="relative mb-10">
+        {/* Title Skeleton */}
+        <div className="my-8">
+          <Skeleton height={32} width={200} />
+        </div>
+        {/* Slider Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(count)].map((_, index) => (
+            <div key={index} className="rounded-lg overflow-hidden">
+              <Skeleton height={224} />
+              <div className="p-4 space-y-2">
+                <Skeleton count={2} />
+                <Skeleton width="60%" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

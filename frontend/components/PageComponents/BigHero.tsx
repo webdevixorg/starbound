@@ -5,6 +5,8 @@ import SafeImage from '../UI/SafeImage';
 import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
 import { getOptimizedImageUrl } from '@/services/images';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -36,10 +38,22 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
   // Loading State
   if (loadingPosts) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-          <span className="text-gray-600">Loading featured posts...</span>
+      <div className="grid gap-5 md:grid-cols-2 lg:gap-5 mb-10">
+        {/* Left Big Skeleton */}
+        <div className="relative block overflow-hidden rounded-lg">
+          <Skeleton height={500} />
+        </div>
+
+        {/* Right Grid of Smaller Skeletons */}
+        <div className="relative h-[500px] grid grid-cols-2 gap-3 lg:gap-4">
+          {[...Array(count - 1)].map((_, index) => (
+            <div
+              key={index}
+              className="flex flex-col overflow-hidden rounded-lg"
+            >
+              <Skeleton height="100%" />
+            </div>
+          ))}
         </div>
       </div>
     );

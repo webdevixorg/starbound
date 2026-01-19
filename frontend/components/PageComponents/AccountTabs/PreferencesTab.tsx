@@ -4,6 +4,8 @@ import {
   fetchPreferenceSettings,
   updatePreferenceSettings,
 } from '@/services/api';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 interface Props {
   onSettingsChange?: (hasChanges: boolean) => void;
@@ -81,13 +83,13 @@ const PreferencesTab: React.FC<Props> = ({ onSettingsChange }) => {
 
   if (loading) {
     return (
-      <div className="animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+      <div>
+        <Skeleton height={32} width="33%" className="mb-6" />
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i}>
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
+              <Skeleton height={16} width="25%" className="mb-2" />
+              <Skeleton height={40} />
             </div>
           ))}
         </div>

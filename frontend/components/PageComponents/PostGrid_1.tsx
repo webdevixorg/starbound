@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { fetchPostsByCategory } from '@/services/api';
 import { Post } from '@/types/types';
 import BlogPostCardDefault from '../UI/Cards/BlogPostCardDefault';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const PostGrid_1: React.FC<{
   categoryId: number;
@@ -49,10 +51,23 @@ const PostGrid_1: React.FC<{
 
       {/* Loading State */}
       {loadingPosts && (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-            <span className="text-gray-600">Loading posts...</span>
+        <div>
+          {/* Header Skeleton */}
+          <div className="border-b flex justify-between items-end mb-10 pb-6">
+            <Skeleton height={32} width={200} />
+            <Skeleton height={16} width={100} />
+          </div>
+          {/* Grid Skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(count)].map((_, index) => (
+              <div key={index}>
+                <Skeleton height={200} />
+                <div className="p-4 space-y-2">
+                  <Skeleton count={2} />
+                  <Skeleton width="70%" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

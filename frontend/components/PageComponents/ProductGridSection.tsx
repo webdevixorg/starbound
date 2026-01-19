@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { fetchProductsForSections } from '@/services/apiProducts'; // Ensure this path is correct
 import { Product } from '@/types/types';
-import ProductCardGrid from './ProdutctCardGrid';
+import ProductCardGrid, { ProductCardGridSkeleton } from './ProdutctCardGrid';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const ProductGridSection: React.FC<{ filter: string; count: number }> = ({
   filter,
@@ -40,10 +42,14 @@ const ProductGridSection: React.FC<{ filter: string; count: number }> = ({
 
       {/* Loading State */}
       {loadingProducts && (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-            <span className="text-gray-600">Loading products...</span>
+        <div>
+          {/* Header Skeleton */}
+          <Skeleton height={32} width={250} className="mb-8" />
+          {/* Products Grid Skeleton */}
+          <div className="col-span-12 md:col-span-8 lg:col-span-8 xl:col-span-9">
+            <div className="grid grid-cols-12 gap-5">
+              <ProductCardGridSkeleton count={count} />
+            </div>
           </div>
         </div>
       )}

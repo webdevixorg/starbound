@@ -12,6 +12,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SearchIcon from '@/components/UI/Icons/Search';
 import { fetchCategories } from '@/services/api';
 import { Category } from '@/types/types';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 // Custom debounce function to replace lodash
 function debounce<T extends unknown[]>(
@@ -611,11 +613,7 @@ function SearchBarContent({
 // Main component with Suspense wrapper
 const SearchBar: React.FC<SearchBarProps> = (props) => {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full h-11 lg:h-12 bg-gray-100 rounded-lg animate-pulse" />
-      }
-    >
+    <Suspense fallback={<Skeleton height="100%" />}>
       <SearchBarContent {...props} />
     </Suspense>
   );

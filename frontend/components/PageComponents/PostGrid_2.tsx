@@ -9,6 +9,8 @@ import { getPublicImageUrl } from '@/helpers/media';
 
 import { Post } from '@/types/types';
 import { fetchPostsByCategory } from '@/services/api';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const LatestNews: React.FC<{
   categoryId: number;
@@ -68,10 +70,31 @@ const LatestNews: React.FC<{
 
         {/* Loading State */}
         {loadingPosts && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-              <span className="text-gray-600">Loading posts...</span>
+          <div>
+            {/* Header Skeleton */}
+            <div className="border-b flex justify-between items-end mb-8 pb-6">
+              <Skeleton height={32} width={200} />
+              <Skeleton height={16} width={80} />
+            </div>
+            {/* Posts Grid Skeletons */}
+            <div className="flex flex-row flex-wrap">
+              {[...Array(count)].map((_, index) => (
+                <div key={index} className="group w-full px-3 mb-8">
+                  <div className="flex flex-col sm:flex-row max-w-full w-full pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100">
+                    <div
+                      className="relative overflow-hidden flex-shrink-0"
+                      style={{ height: '250px', width: '300px' }}
+                    >
+                      <Skeleton height="100%" width="100%" />
+                    </div>
+                    <div className="flex-grow sm:pl-6 sm:mt-0 space-y-2">
+                      <Skeleton width="60%" height={16} />
+                      <Skeleton count={2} height={24} />
+                      <Skeleton width="80%" height={16} />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
