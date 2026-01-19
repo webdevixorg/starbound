@@ -74,7 +74,7 @@ export default function CategoryButton() {
       </button>
 
       {menuOpen && (
-        <ul className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-md shadow-lg max-h-[80vh] overflow-visible">
+        <ul className="absolute top-full w-auto bg-white border border-gray-200 rounded-b-md shadow-lg max-h-[80vh] overflow-visible">
           {categories.slice(0, 10).map((category) => (
             <li
               key={category.id}
