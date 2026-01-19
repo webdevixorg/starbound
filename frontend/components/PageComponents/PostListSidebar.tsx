@@ -5,6 +5,8 @@ import { Post } from '@/types/types';
 import { formatDate } from '@/helpers/common';
 import SafeImage from '../UI/SafeImage';
 import { getPublicImageUrl } from '@/helpers/media';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 interface PostListSidebarProps {
   filter: string;
@@ -45,17 +47,17 @@ const PostListSidebar: React.FC<PostListSidebarProps> = ({
       >
         <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-b border-gray-200/50">
           <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
-            {title}
+            <Skeleton width={150} />
           </h3>
         </div>
         <div className="p-6">
           <div className="space-y-4">
             {Array.from({ length: count }).map((_, index) => (
-              <div key={index} className="flex gap-4 animate-pulse">
-                <div className="w-16 h-16 bg-gray-200 rounded-xl flex-shrink-0"></div>
+              <div key={index} className="flex gap-4">
+                <Skeleton width={64} height={64} className="rounded-xl" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <Skeleton height={16} />
+                  <Skeleton height={12} width="50%" />
                 </div>
               </div>
             ))}
