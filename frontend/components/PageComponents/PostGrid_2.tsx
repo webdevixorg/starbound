@@ -265,44 +265,61 @@ const LatestNews: React.FC<{
           <div className="text-sm sticky top-24">
             <div
               id="block-banner_grid_sidebar"
-              className="relative group rounded-3xl overflow-hidden shadow-xl min-h-[450px]"
+              className="relative group rounded-[2.5rem] overflow-hidden shadow-2xl min-h-[500px] border border-gray-100 bg-black"
             >
-              <div className="banner-content has-overlay h-full relative">
-                <div className="banner-image h-full absolute inset-0">
+              <div className="banner-content has-overlay h-full absolute inset-0">
+                <div className="banner-image h-full w-full">
                   <img
-                    className="banner-list-image w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    className="banner-list-image w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 opacity-80"
                     loading="lazy"
                     alt="Promotion"
-                    src="/images/banner/hot-3.png"
+                    src="/images/banner/au_collec_img_3.jpg"
                   />
                 </div>
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-start justify-center p-8 text-white z-10">
-                  <div className="text-left">
-                    <h2 className="text-3xl font-black uppercase leading-tight mb-4 tracking-tighter">
-                      Save up <br />
-                      <span className="text-red-500 font-bold">50%</span> off
+                {/* Advanced Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
+
+                {/* Decorative Elements */}
+                <div className="absolute top-8 left-8 z-20">
+                  <span className="px-4 py-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-[0.25em] rounded-full shadow-2xl animate-pulse">
+                    Flash Deal
+                  </span>
+                </div>
+
+                <div className="absolute inset-0 flex flex-col items-start justify-end p-10 text-white z-20">
+                  <div className="text-left w-full transform transition-all duration-700 group-hover:-translate-y-3">
+                    <h2 className="text-5xl font-black uppercase leading-[0.85] mb-6 tracking-tighter">
+                      Save <br />
+                      <span className="text-red-500 block mt-2 text-6xl">
+                        50%
+                      </span>
+                      <span className="text-xl font-light lowercase italic tracking-normal opacity-70 block mt-1 ml-1">
+                        Limited time discount
+                      </span>
                     </h2>
-                    <p className="text-sm text-gray-100 mb-8 font-medium">
-                      The right tools for the job!
+                    <p className="text-xs text-gray-300 mb-10 font-semibold max-w-[180px] leading-relaxed border-l-2 border-red-600 pl-4 uppercase tracking-widest">
+                      Quality Gear <br /> Pure Performance
                     </p>
                     <Link
                       href="/shop"
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black font-bold uppercase text-[10px] rounded shadow-lg transition-all duration-300 hover:bg-black hover:text-white group/btn"
+                      className="inline-flex items-center gap-4 px-10 py-5 bg-white text-black font-black uppercase text-[11px] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-500 hover:bg-red-600 hover:text-white group/btn hover:scale-105"
                     >
-                      shop now
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="8"
-                        height="13"
-                        viewBox="0 0 8 13"
-                        fill="none"
-                        className="transition-transform group-hover/btn:translate-x-1"
-                      >
-                        <path
-                          d="M7.46484 6.28516C7.72005 6.59505 7.72005 6.90495 7.46484 7.21484L2.21484 12.4648C1.90495 12.7201 1.59505 12.7201 1.28516 12.4648C1.02995 12.1549 1.02995 11.8451 1.28516 11.5352L6.07031 6.75L1.28516 1.96484C1.02995 1.65495 1.02995 1.34505 1.28516 1.03516C1.59505 0.779948 1.90495 0.779948 2.21484 1.03516L7.46484 6.28516Z"
-                          fill="#EC2324"
-                        ></path>
-                      </svg>
+                      <span>Explore Shop</span>
+                      <div className="p-1.5 rounded-full bg-black/5 group-hover/btn:bg-white/20 transition-colors">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 8 13"
+                          fill="none"
+                          className="transition-transform group-hover/btn:translate-x-1"
+                        >
+                          <path
+                            d="M7.46484 6.28516C7.72005 6.59505 7.72005 6.90495 7.46484 7.21484L2.21484 12.4648C1.90495 12.7201 1.59505 12.7201 1.28516 12.4648C1.02995 12.1549 1.02995 11.8451 1.28516 11.5352L6.07031 6.75L1.28516 1.96484C1.02995 1.65495 1.02995 1.34505 1.28516 1.03516C1.59505 0.779948 1.90495 0.779948 2.21484 1.03516L7.46484 6.28516Z"
+                            fill="currentColor"
+                          ></path>
+                        </svg>
+                      </div>
                     </Link>
                   </div>
                 </div>
