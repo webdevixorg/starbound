@@ -31,7 +31,7 @@ import { createVisit } from '@/services/api';
 // Skeleton component for product detail page loading
 const ProductDetailSkeleton: React.FC = () => {
   return (
-    <div className="product-page mb-20">
+    <div className="product-page mx-auto mb-20 px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section Skeleton */}
       <section
         role="banner"
@@ -319,7 +319,7 @@ const ProductSingle: React.FC = () => {
       {isLoading ? (
         <ProductDetailSkeleton />
       ) : (
-        <div className="product-page mb-20">
+        <div className="product-page mx-auto mb-20 px-4 sm:px-6 lg:px-8 py-8">
           <section
             role="banner"
             className="entry-hero product-hero-section entry-hero-layout-standard"
