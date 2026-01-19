@@ -202,3 +202,5 @@ deploy.sh
 dev.ps1
 rsync-exclude.txt
 
+# Exclude configuration directory
+config/
