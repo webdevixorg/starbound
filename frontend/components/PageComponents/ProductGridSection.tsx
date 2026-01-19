@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { fetchProductsForSections } from '@/services/apiProducts'; // Ensure this path is correct
 import { Product } from '@/types/types';
 import ProductCardGrid, { ProductCardGridSkeleton } from './ProdutctCardGrid';
@@ -35,10 +36,38 @@ const ProductGridSection: React.FC<{ filter: string; count: number }> = ({
   }, [filter, count]);
 
   return (
-    <section className="py-12 bg-white-50 mb-10">
-      <h2 className="text-3xl text-left text-gray-800 mb-8">
-        <span className="font-bold">Popular</span> Products
-      </h2>
+    <section className="py-16 bg-white-50 mb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div>
+          <h2 className="text-3xl md:text-4xl text-gray-900 tracking-tight">
+            <span className="font-light">Featured</span>{' '}
+            <span className="font-bold">Products</span>
+          </h2>
+          <p className="text-gray-500 mt-2 max-w-2xl">
+            Explore our latest arrivals and top-rated automotive essentials,
+            handpicked for quality and performance.
+          </p>
+        </div>
+        <Link
+          href="/shop"
+          className="text-blue-600 font-semibold flex items-center gap-2 hover:text-blue-800 transition-colors group"
+        >
+          View All Collection
+          <svg
+            className="w-4 h-4 transition-transform group-hover:translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </Link>
+      </div>
 
       {/* Loading State */}
       {loadingProducts && (

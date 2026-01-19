@@ -131,9 +131,9 @@ const ProductCardGrid: React.FC<{
   return (
     <div
       key={product.id}
-      className="product-card product-card-grid col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3"
+      className="product-card product-card-grid col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3 h-full"
     >
-      <div className="product-card border border-gray-200">
+      <div className="product-card border border-gray-200 h-full flex flex-col bg-white overflow-hidden hover:shadow-xl transition-shadow duration-300">
         <button
           type="button"
           className="product-card-quickview-btn"
@@ -146,12 +146,12 @@ const ProductCardGrid: React.FC<{
           <AddToWishlistButton product={product} />
         </div>
         <Link href={`/shop/${product.slug}`}>
-          <div className="relative w-full aspect-[4/3] sm:aspect-[3/2] md:aspect-[16/9] lg:aspect-[4/3] overflow-hidden group rounded-lg shadow-sm">
-            {/* Second image: hidden by default, visible on hover (render first so it's behind) */}
+          <div className="relative w-full aspect-[4/3] overflow-hidden group">
+            {/* Second image: hidden by default, visible on hover */}
             {hasSecondImage && (
               <SafeImage
                 alt={`${product.title} - View 2`}
-                className="absolute inset-0 rounded-lg transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100"
+                className="absolute inset-0 transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100"
                 images={[
                   {
                     image_path: getPublicImageUrl(
@@ -165,10 +165,10 @@ const ProductCardGrid: React.FC<{
               />
             )}
 
-            {/* First image: visible by default, fades out on hover (render last so it's on top) */}
+            {/* First image */}
             <SafeImage
               alt={product.title}
-              className={`absolute inset-0 rounded-lg transition-opacity duration-500 ease-in-out ${
+              className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
                 hasSecondImage
                   ? 'opacity-100 group-hover:opacity-0'
                   : 'opacity-100'
@@ -185,22 +185,125 @@ const ProductCardGrid: React.FC<{
                 },
               ]}
               fill={true}
-              priority={index < 4} // Add priority for first 4 products (above the fold)
+              priority={index < 4}
             />
           </div>
         </Link>
 
-        <div className="product-inner p-4">
-          <Link href={`/shop/${product.slug}`}>
-            <h2 className="font-sm capitalize text-gray-900 dark:text-white mb-3">
-              {product.title}
-            </h2>
-          </Link>
-          <div className="mt-auto flex justify-between items-center">
-            <span className="text-xl text-gay-500">
-              {formatCurrency(product.price)}
-            </span>
-            <AddToCartButton product={product} />
+        <div className="product-inner p-4 flex flex-col flex-grow">
+          <div className="product-item-meta flex-grow">
+            {/* Product Tags */}
+            <div className="product-tags mb-2 flex flex-wrap gap-1">
+              {product.categories && product.categories.length > 0 ? (
+                product.categories.slice(0, 2).map((category, idx) => (
+                  <Link
+                    key={idx}
+                    href={`/shop?category=${category.slug}`}
+                    className="text-[10px] uppercase tracking-wider text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {category.name}
+                    {idx < Math.min(product.categories.length, 2) - 1 && ','}
+                  </Link>
+                ))
+              ) : (
+                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">
+                  Uncategorized
+                </span>
+              )}
+            </div>
+
+            {/* Product Title */}
+            <Link href={`/shop/${product.slug}`}>
+              <h2 className="product-item-meta__title text-base font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                {product.title}
+              </h2>
+            </Link>
+
+            {/* Rating and Inventory */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className={`w-3 h-3 ${
+                      i < (product.rating || 5)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+                <span className="text-[10px] text-gray-500 ml-1">
+                  ({product.reviews_count || 1})
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span
+                  className={`text-[10px] font-medium ${
+                    product.stock_quantity > 0
+                      ? 'text-green-600'
+                      : 'text-red-600'
+                  }`}
+                >
+                  {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                </span>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="product-price mb-4">
+              <div className="product-item-meta__price-list-container">
+                <div className="price-list price-sale flex items-baseline gap-2">
+                  <span className="price text-xl font-bold text-blue-700">
+                    <span className="sr-only">Sale price</span>
+                    {formatCurrency(product.price)}
+                  </span>
+                  {product.compare_price && (
+                    <span className="price price--compare text-sm text-gray-400 line-through">
+                      <span className="sr-only">Regular price</span>
+                      {formatCurrency(product.compare_price)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Policies */}
+            <div className="product-caption-bottom space-y-1.5 mb-5">
+              {[
+                '5 Years Guarantee',
+                'Free 90 days return',
+                'Installment options',
+              ].map((policy, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex-shrink-0">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M6.66647 10.1139L12.7947 3.98568L13.7375 4.92849L6.66647 11.9995L2.42383 7.75693L3.36664 6.81413L6.66647 10.1139Z"
+                        fill="#33CB79"
+                      ></path>
+                    </svg>
+                  </div>
+                  <span className="text-[12px] font-medium text-gray-700 leading-none">
+                    {policy}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Add to Cart */}
+          <div className="mt-auto pt-2">
+            <AddToCartButton product={product} variant="full" />
           </div>
         </div>
       </div>
