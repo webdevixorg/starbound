@@ -2,7 +2,7 @@
 
 # --- Configuration ---
 TARGET_USER="webdevix"
-TARGET_IP="195.35.22.10"
+TARGET_IP="145.223.21.26"
 TARGET_PATH="/var/www/starbound"
 APP_NAME="logivis"  # Matches your logivis.service name
 DB_NAME="logivis"
