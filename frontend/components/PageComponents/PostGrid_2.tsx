@@ -262,18 +262,51 @@ const LatestNews: React.FC<{
               )}
             </ul>
           </div>
-          <div className="text-sm sticky">
-            <div className="w-full text-center">
-              <Link href="#" className="block">
-                <NextImage
-                  className="mx-auto w-full"
-                  src="/images/ads/250.jpg"
-                  alt="advertisement area"
-                  width={250}
-                  height={300}
-                  style={{ width: '100%', height: 'auto' }}
-                />
-              </Link>
+          <div className="text-sm sticky top-24">
+            <div
+              id="block-banner_grid_sidebar"
+              className="relative group rounded-3xl overflow-hidden shadow-xl min-h-[450px]"
+            >
+              <div className="banner-content has-overlay h-full relative">
+                <div className="banner-image h-full absolute inset-0">
+                  <img
+                    className="banner-list-image w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    loading="lazy"
+                    alt="Promotion"
+                    src="/images/banner/hot-3.png"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-start justify-center p-8 text-white z-10">
+                  <div className="text-left">
+                    <h2 className="text-3xl font-black uppercase leading-tight mb-4 tracking-tighter">
+                      Save up <br />
+                      <span className="text-red-500 font-bold">50%</span> off
+                    </h2>
+                    <p className="text-sm text-gray-100 mb-8 font-medium">
+                      The right tools for the job!
+                    </p>
+                    <Link
+                      href="/shop"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black font-bold uppercase text-[10px] rounded shadow-lg transition-all duration-300 hover:bg-black hover:text-white group/btn"
+                    >
+                      shop now
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="8"
+                        height="13"
+                        viewBox="0 0 8 13"
+                        fill="none"
+                        className="transition-transform group-hover/btn:translate-x-1"
+                      >
+                        <path
+                          d="M7.46484 6.28516C7.72005 6.59505 7.72005 6.90495 7.46484 7.21484L2.21484 12.4648C1.90495 12.7201 1.59505 12.7201 1.28516 12.4648C1.02995 12.1549 1.02995 11.8451 1.28516 11.5352L6.07031 6.75L1.28516 1.96484C1.02995 1.65495 1.02995 1.34505 1.28516 1.03516C1.59505 0.779948 1.90495 0.779948 2.21484 1.03516L7.46484 6.28516Z"
+                          fill="#EC2324"
+                        ></path>
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
