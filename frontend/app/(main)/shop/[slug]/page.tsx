@@ -27,6 +27,8 @@ import ReviewsSystem from '@/components/PageComponents/Review';
 import ProductGallery from '@/components/PageComponents/ProductGallery';
 import ShareSection from '@/components/PageComponents/Share/ShareSection';
 import { createVisit } from '@/services/api';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 // Skeleton component for product detail page loading
 const ProductDetailSkeleton: React.FC = () => {
@@ -42,17 +44,11 @@ const ProductDetailSkeleton: React.FC = () => {
             <header className="text-left">
               {/* Breadcrumbs Skeleton */}
               <div className="flex items-center space-x-2">
-                <div className="h-4 bg-gray-200 rounded w-16 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={64} height={16} />
                 <span className="text-gray-400">/</span>
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={80} height={16} />
                 <span className="text-gray-400">/</span>
-                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={128} height={16} />
               </div>
             </header>
           </div>
@@ -65,18 +61,15 @@ const ProductDetailSkeleton: React.FC = () => {
             {/* Product Gallery Skeleton */}
             <div>
               {/* Main Image Skeleton */}
-              <div className="main-image relative w-full h-[485px] bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
+              <div className="main-image relative w-full h-[485px] mb-4">
+                <Skeleton height="100%" />
               </div>
 
               {/* Thumbnail Gallery Skeleton */}
               <div className="thumbnail-gallery flex space-x-2 overflow-x-auto">
                 {Array.from({ length: 4 }, (_, index) => (
-                  <div
-                    key={index}
-                    className="relative w-20 h-20 bg-gray-200 rounded border flex-shrink-0 overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
+                  <div key={index} className="w-20 h-20 flex-shrink-0">
+                    <Skeleton height="100%" />
                   </div>
                 ))}
               </div>
@@ -86,103 +79,64 @@ const ProductDetailSkeleton: React.FC = () => {
             <div className="px-4 space-y-4">
               {/* Title and Edit Link */}
               <div className="flex justify-between items-center mb-2">
-                <div className="h-7 bg-gray-200 rounded w-3/4 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-5 bg-gray-200 rounded w-12 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width="75%" height={28} />
+                <Skeleton width={48} height={20} />
               </div>
 
               {/* Rating Skeleton */}
               <div className="flex items-center space-x-2 mb-4">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <div
-                    key={index}
-                    className="h-4 w-4 bg-gray-200 rounded animate-pulse"
-                  ></div>
-                ))}
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton circle width={16} height={16} count={5} />
+                <Skeleton width={80} height={16} />
               </div>
 
               {/* Price Skeleton */}
               <div className="mb-4">
-                <div className="h-6 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden border-b pb-2">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={128} height={24} />
               </div>
 
               {/* Description Skeleton */}
               <div className="space-y-2 mb-8">
-                <div className="h-4 bg-gray-200 rounded w-full animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-4/5 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-3/5 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton count={3} />
               </div>
 
               {/* Quantity and Cart Skeleton */}
               <div className="cart flex items-center mb-4">
                 <div className="quantity flex items-center border border-gray-300 mr-4">
-                  <div className="h-8 w-8 bg-gray-200 animate-pulse"></div>
-                  <div className="h-8 w-10 bg-gray-200 animate-pulse"></div>
-                  <div className="h-8 w-8 bg-gray-200 animate-pulse"></div>
+                  <Skeleton width={32} height={32} />
+                  <Skeleton width={40} height={32} />
+                  <Skeleton width={32} height={32} />
                 </div>
-                <div className="h-10 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={128} height={40} />
               </div>
 
               {/* Action Buttons Skeleton */}
               <div className="flex space-x-4 py-2 mb-4 border-b">
-                <div className="h-8 bg-gray-200 rounded w-24 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-8 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={96} height={32} />
+                <Skeleton width={128} height={32} />
               </div>
 
               {/* Features List Skeleton */}
               <div className="space-y-2 mb-4">
                 {Array.from({ length: 2 }, (_, index) => (
                   <div key={index} className="flex items-center">
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse mr-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-64 animate-pulse relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                    </div>
+                    <Skeleton circle width={16} height={16} className="mr-2" />
+                    <Skeleton width={256} height={16} />
                   </div>
                 ))}
               </div>
 
               {/* Payment Methods Skeleton */}
-              <div className="h-8 bg-gray-200 rounded w-48 animate-pulse relative overflow-hidden mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-              </div>
+              <Skeleton width={192} height={32} className="mb-4" />
 
               {/* Product Meta Skeleton */}
               <div className="space-y-2 text-sm">
-                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-48 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded w-40 animate-pulse relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                </div>
+                <Skeleton width={128} height={16} />
+                <Skeleton width={192} height={16} />
+                <Skeleton width={160} height={16} />
               </div>
 
               {/* Share Section Skeleton */}
-              <div className="h-8 bg-gray-200 rounded w-36 animate-pulse relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-              </div>
+              <Skeleton width={144} height={32} />
             </div>
           </div>
 
@@ -190,11 +144,8 @@ const ProductDetailSkeleton: React.FC = () => {
           <div className="border-b border-gray-200 mt-4">
             <nav className="flex space-x-8">
               {Array.from({ length: 3 }, (_, index) => (
-                <div
-                  key={index}
-                  className="h-6 bg-gray-200 rounded w-32 animate-pulse relative overflow-hidden py-4"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
+                <div key={index} className="py-4">
+                  <Skeleton width={128} height={24} />
                 </div>
               ))}
             </nav>
@@ -202,44 +153,27 @@ const ProductDetailSkeleton: React.FC = () => {
 
           {/* Tab Content Skeleton */}
           <div className="mt-4 space-y-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div
-                key={index}
-                className="h-4 bg-gray-200 rounded w-full animate-pulse relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-              </div>
-            ))}
+            <Skeleton count={4} />
           </div>
         </div>
 
         {/* Related Products Skeleton */}
-        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse relative overflow-hidden my-4">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-        </div>
+        <Skeleton width={192} height={32} className="my-4" />
         <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {Array.from({ length: 4 }, (_, index) => (
             <div key={index} className="col-span-1">
               <div className="border border-gray-200 rounded overflow-hidden">
                 {/* Product Image Skeleton */}
-                <div className="relative w-full aspect-square bg-gray-200 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
+                <div className="relative w-full aspect-square">
+                  <Skeleton height="100%" />
                 </div>
                 {/* Product Details Skeleton */}
                 <div className="p-4 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                  </div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                  </div>
+                  <Skeleton width="75%" height={16} />
+                  <Skeleton width="50%" height={16} />
                   <div className="flex justify-between items-center">
-                    <div className="h-5 bg-gray-200 rounded w-16 animate-pulse relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                    </div>
-                    <div className="h-8 bg-gray-200 rounded w-20 animate-pulse relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer bg-[length:200%_100%]"></div>
-                    </div>
+                    <Skeleton width={64} height={20} />
+                    <Skeleton width={80} height={32} />
                   </div>
                 </div>
               </div>
