@@ -5,6 +5,7 @@ import { Post } from '@/types/types';
 import BlogPostCardDefault from '../UI/Cards/BlogPostCardDefault';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import Link from 'next/link';
 
 const PostGrid_1: React.FC<{
   categoryId: number;
@@ -35,18 +36,38 @@ const PostGrid_1: React.FC<{
   }, [categoryId, count]);
 
   return (
-    <div className="mb-10">
+    <div className="mb-16">
       {/* Header */}
-      <div className="border-b flex justify-between items-end mb-10 pb-6">
-        <h2 className="text-gray-800 text-4xl">
-          <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
-          {title}
-        </h2>
-        {!loadingPosts && posts.length > 0 && (
-          <span className="text-gray-500 text-sm">
-            Showing {posts.length} post{posts.length !== 1 ? 's' : ''}
-          </span>
-        )}
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div>
+          <h2 className="text-3xl md:text-4xl text-gray-900 tracking-tight">
+            <span className="font-light">Explore</span>{' '}
+            <span className="font-bold">{title}</span>
+          </h2>
+          <p className="text-gray-500 mt-2 max-w-2xl">
+            Stay updated with the latest trends and expert insights from the
+            world of automotive technology.
+          </p>
+        </div>
+        <Link
+          href="/posts"
+          className="text-red-600 font-bold uppercase text-xs tracking-widest flex items-center gap-2 hover:text-black transition-colors group"
+        >
+          View All Stories
+          <svg
+            className="w-4 h-4 transition-transform group-hover:translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </Link>
       </div>
 
       {/* Loading State */}

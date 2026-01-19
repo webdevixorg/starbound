@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import SafeImage from '../UI/SafeImage';
 import { fetchPosts } from '@/services/api';
 import { Post } from '@/types/types';
@@ -35,167 +36,66 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
     loadPosts();
   }, [filter, count]);
 
-  // Loading State
   if (loadingPosts) {
-    return (
-      <div className="grid gap-5 md:grid-cols-2 lg:gap-5 mb-10">
-        {/* Left Big Skeleton */}
-        <div className="relative block overflow-hidden rounded-lg">
-          <Skeleton height={500} />
-        </div>
-
-        {/* Right Grid of Smaller Skeletons */}
-        <div className="relative h-[500px] grid grid-cols-2 gap-3 lg:gap-4">
-          {[...Array(count - 1)].map((_, index) => (
-            <div
-              key={index}
-              className="flex flex-col overflow-hidden rounded-lg"
-            >
-              <Skeleton height="100%" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <HeroSkeleton count={count} />;
   }
 
-  // Error State
-  if (error && !loadingPosts) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center mb-10">
-        <div className="flex items-center justify-center mb-4">
-          <svg
-            className="w-12 h-12 text-red-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.118 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-xl font-semibold text-red-800 mb-2">
-          Unable to Load Featured Posts
-        </h3>
-        <p className="text-red-600 mb-6">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
-        >
-          Try Again
-        </button>
-      </div>
-    );
+  if (error || posts.length === 0) {
+    return null;
   }
-
-  // Empty State
-  if (!loadingPosts && !error && posts.length === 0) {
-    return (
-      <div className="text-center py-24 mb-10">
-        <div className="flex items-center justify-center mb-6">
-          <svg
-            className="w-16 h-16 text-gray-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-2xl font-medium text-gray-900 mb-3">
-          No Featured Posts Available
-        </h3>
-        <p className="text-gray-500 mb-6 max-w-md mx-auto">
-          There are currently no posts to feature on the homepage. Check back
-          later for new content.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-        >
-          Refresh Page
-        </button>
-      </div>
-    );
-  }
-
-  const renderCategories = (post: Post) =>
-    post.categories && post.categories.length > 0 ? (
-      post.categories.map((category, index) => (
-        <span
-          key={`${post.id}-category-${category.id}-${index}`}
-          className="inline-block text-xs font-medium tracking-wider uppercase text-white mr-2"
-        >
-          {category.name}
-        </span>
-      ))
-    ) : (
-      <span className="text-xs font-medium tracking-wider uppercase text-gray-300">
-        No categories
-      </span>
-    );
 
   return (
-    <div className="grid gap-5 md:grid-cols-2 lg:gap-5 mb-10">
-      {/* Left Big Image */}
-      <a
-        href={`posts/${posts[0].slug}`}
-        className="group relative block overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800"
-      >
-        <SafeImage
-          alt={posts[0].title}
-          className="w-full h-full object-cover rounded-lg"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          fill
-          images={[
-            {
-              image_path: getOptimizedImageUrl(
-                posts[0].images?.[0]?.image_path || '',
-                'full',
-                'post',
-                posts[0].id
-              ),
-            },
-          ]}
-        />
-        <div className="absolute bottom-0 w-full px-5 pt-8 pb-5 bg-gradient-cover">
-          <h2 className="text-xl font-bold capitalize text-white mb-3">
-            {posts[0].title}
-          </h2>
-          <p
-            className="text-gray-100 hidden sm:block"
-            dangerouslySetInnerHTML={{ __html: posts[0].description }}
-          ></p>
-          <div className="pt-3">
-            <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
-            {renderCategories(posts[0])}
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
+        {/* Main Large Banner Tile */}
+        <div className="md:col-span-8 relative group overflow-hidden rounded-3xl shadow-2xl min-h-[400px]">
+          <img
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            src="//ap-autosoe.myshopify.com/cdn/shop/files/au_banner_2.jpg?v=1732326940&width=1200"
+            alt="Hero Banner"
+          />
+          <div className="absolute inset-0 bg-black/40 flex flex-col items-start justify-center p-8 md:p-16 text-white z-10">
+            <div className="text-left max-w-xl">
+              <h2 className="text-4xl md:text-7xl font-black uppercase leading-tight mb-4 md:mb-6 tracking-tighter">
+                Save up <br />
+                <span className="text-red-500">50%</span> off
+              </h2>
+              <p className="text-lg md:text-2xl text-gray-100 mb-8 md:mb-12 font-medium opacity-90">
+                The right tools for the job!
+              </p>
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-3 px-8 py-3 md:px-10 md:py-4 bg-white text-black font-bold uppercase text-xs md:text-sm rounded shadow-lg transition-all duration-300 hover:bg-black hover:text-white group/btn"
+              >
+                shop now
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="10"
+                  height="16"
+                  viewBox="0 0 8 13"
+                  fill="none"
+                  className="transition-transform group-hover/btn:translate-x-2"
+                >
+                  <path
+                    d="M7.46484 6.28516C7.72005 6.59505 7.72005 6.90495 7.46484 7.21484L2.21484 12.4648C1.90495 12.7201 1.59505 12.7201 1.28516 12.4648C1.02995 12.1549 1.02995 11.8451 1.28516 11.5352L6.07031 6.75L1.28516 1.96484C1.02995 1.65495 1.02995 1.34505 1.28516 1.03516C1.59505 0.779948 1.90495 0.779948 2.21484 1.03516L7.46484 6.28516Z"
+                    fill="#EC2324"
+                  ></path>
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
-      </a>
 
-      {/* Right Grid of Smaller Posts */}
-      <div className="relative h-[500px] grid grid-cols-2 gap-3 lg:gap-4">
-        {posts.slice(1, count).map((post) => (
-          <a
-            key={post.id}
-            href={`posts/${post.slug}`}
-            className="group flex flex-col overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800"
-          >
-            <div className="relative h-full w-full">
+        {/* Side Posts Grid - "Others" */}
+        <div className="md:col-span-4 grid grid-cols-1 gap-6 h-full">
+          {posts.slice(0, 2).map((post) => (
+            <div
+              key={post.id}
+              className="relative group overflow-hidden rounded-2xl shadow-lg h-full min-h-[250px]"
+            >
               <SafeImage
                 alt={post.title}
-                className="w-full h-full object-cover"
-                sizes="(max-width: 768px) 50vw, 33vw"
-                fill
+                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                 images={[
                   {
                     image_path: getOptimizedImageUrl(
@@ -206,22 +106,51 @@ const HeroBigGrid: React.FC<{ filter: string; count: number }> = ({
                     ),
                   },
                 ]}
+                fill
               />
-              <div className="absolute bottom-0 w-full px-4 pt-6 pb-4 bg-gradient-cover">
-                <h2 className="text-sm font-semibold capitalize text-white mb-1 leading-tight">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6">
+                <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
                   {post.title}
-                </h2>
-                <div className="pt-1">
-                  <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
-                  {renderCategories(post)}
-                </div>
+                </h3>
+                <Link
+                  href={`/posts/${post.slug}`}
+                  className="text-white/80 text-sm font-medium hover:text-white transition-colors flex items-center gap-2 group/read"
+                >
+                  Read More
+                  <svg
+                    className="w-4 h-4 transition-transform group-hover/read:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
               </div>
             </div>
-          </a>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
 };
+
+const HeroSkeleton: React.FC<{ count: number }> = ({ count }) => (
+  <div className="container mx-auto px-4 py-8">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
+      <div className="md:col-span-8 rounded-3xl overflow-hidden min-h-[400px]">
+        <Skeleton height="100%" />
+      </div>
+      <div className="md:col-span-4 grid gap-6">
+        <Skeleton count={2} height="100%" />
+      </div>
+    </div>
+  </div>
+);
 
 export default HeroBigGrid;
