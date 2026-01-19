@@ -195,3 +195,10 @@ celerybeat-schedule
 # Sphinx documentation
 docs/_build/
 
+# Deployment and script files
+deploy-after-build.js
+.remote_script.sh
+deploy.sh
+dev.ps1
+rsync-exclude.txt
+
