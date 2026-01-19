@@ -204,3 +204,4 @@ rsync-exclude.txt
 
 # Exclude configuration directory
 config/
+data/
