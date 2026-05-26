@@ -19,7 +19,7 @@ const AdSection: React.FC<AdSectionProps> = ({
 }) => {
   return (
     <section className="py-12 bg-gray-50 mb-10">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto">
         <div className="flex flex-row flex-wrap justify-center">
           <Link href={linkHref} className="block w-full">
             <div className="relative w-full h-full rounded-lg overflow-hidden shadow-lg group">

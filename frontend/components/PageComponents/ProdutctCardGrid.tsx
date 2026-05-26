@@ -122,16 +122,83 @@ const ProductCardGrid: React.FC<{
   product: Product;
   imageHeight: string;
   index?: number;
-}> = ({ product, index = 0 }) => {
+  className?: string;
+  variant?: 'grid' | 'list-small';
+}> = ({ product, index = 0, className = '', variant = 'grid' }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // Prepare images
   const hasSecondImage = product.images && product.images.length > 1;
 
+  if (variant === 'list-small') {
+    return (
+      <div
+        className={`product-card flex h-full bg-white overflow-hidden ${className}`}
+      >
+        <div className="relative w-1/3 min-w-[100px] bg-gray-50 group">
+          <Link href={`/shop/${product.slug}`} className="block h-full">
+            <SafeImage
+              alt={product.title}
+              className="absolute inset-0 object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+              images={[
+                {
+                  image_path: getPublicImageUrl(
+                    'products',
+                    product.id,
+                    product.images[0]
+                      ? product.images[0].image_path + '_medium.webp'
+                      : ''
+                  ),
+                },
+              ]}
+              fill={true}
+            />
+          </Link>
+        </div>
+
+        <div className="w-2/3 p-4 flex flex-col justify-center">
+          <Link href={`/shop/${product.slug}`} className="block mb-2">
+            <h2 className="text-sm font-bold text-gray-900 line-clamp-2 hover:text-red-600 transition-colors">
+              {product.title}
+            </h2>
+          </Link>
+
+          <div className="mb-2">
+            {/* Simple Rating */}
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <span
+                  key={i}
+                  className={`text-xs ${i < (product.rating || 5) ? 'text-yellow-400' : 'text-gray-200'}`}
+                >
+                  ★
+                </span>
+              ))}
+              <span className="text-[10px] text-gray-400 ml-1">
+                ({product.reviews_count || 0})
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-lg font-bold text-blue-700">
+              {formatCurrency(product.price)}
+            </span>
+            {product.compare_price && (
+              <span className="text-xs text-gray-400 line-through">
+                {formatCurrency(product.compare_price)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       key={product.id}
-      className="product-card product-card-grid col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-4 xl:col-span-3 h-full"
+      className={`product-card product-card-grid h-full ${className}`}
     >
       <div className="product-card border border-gray-200 h-full flex flex-col bg-white overflow-hidden hover:shadow-xl transition-shadow duration-300">
         <button
@@ -302,8 +369,8 @@ const ProductCardGrid: React.FC<{
           </div>
 
           {/* Add to Cart */}
-          <div className="mt-auto pt-2">
-            <AddToCartButton product={product} variant="full" />
+          <div className="mt-auto pt-2 flex justify-end">
+            <AddToCartButton product={product} />
           </div>
         </div>
       </div>

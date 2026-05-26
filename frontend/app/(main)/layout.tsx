@@ -6,7 +6,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <DynamicHeader layout="default" />
-      <main className="container mx-auto">{children}</main>
+      <main className="mx-auto">{children}</main>
       <Footer />
     </>
   );

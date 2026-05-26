@@ -19,7 +19,7 @@ import BlogPostCardList from '@/components/UI/Cards/BlogPostCardList';
 
 // Loading component for Suspense fallback
 const PostsLoading = () => (
-  <div className="min-h-screen">
+  <div className="container min-h-screen">
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
       {/* Breadcrumbs Skeleton */}
       <div className="mx-auto mt-6 max-w-full mb-10">

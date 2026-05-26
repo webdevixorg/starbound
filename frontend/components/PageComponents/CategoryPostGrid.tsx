@@ -7,7 +7,7 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import Link from 'next/link';
 
-const PostGrid_1: React.FC<{
+const CategoryPostGrid: React.FC<{
   categoryId: number;
   count: number;
   title?: string;
@@ -36,7 +36,7 @@ const PostGrid_1: React.FC<{
   }, [categoryId, count]);
 
   return (
-    <div className="mb-16">
+    <div className="container mx-auto mb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
@@ -189,4 +189,4 @@ const PostGrid_1: React.FC<{
   );
 };
 
-export default PostGrid_1;
+export default CategoryPostGrid;

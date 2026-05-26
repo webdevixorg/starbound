@@ -1,19 +1,34 @@
 // app/(main)/page.tsx
 import React from 'react';
 
-import BigHero from '@/components/PageComponents/BigHero';
+import HeroSlider from '@/components/PageComponents/HeroSlider';
 import PostSlider from '@/components/PageComponents/PostSlider';
-import PostGrid_1 from '@/components/PageComponents/PostGrid_1';
-import PostGrid_2 from '@/components/PageComponents/PostGrid_2';
+import CategoryPostGrid from '@/components/PageComponents/CategoryPostGrid';
+import PostListWithSidebar from '@/components/PageComponents/PostListWithSidebar';
 import ProductGridSection from '@/components/PageComponents/ProductGridSection';
 import AdSection from '@/components/PageComponents/AdSection';
+import AdvancedProductSection from '@/components/PageComponents/AdvancedProductSection';
+import BannerPosts from '@/components/PageComponents/BannerPosts';
+import HeroFeaturedGrid from '@/components/PageComponents/HeroFeaturedGrid';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <BigHero filter="latest" count={5} />
-      <ProductGridSection filter="latest" count={4} />
-      <PostGrid_1 categoryId={91} count={4} title="Automotive Tech" />
+    <div className="bg-white">
+      <HeroSlider />
+      <HeroFeaturedGrid filter="latest" count={5} />
+
+      <AdvancedProductSection categoryId={91} count={6} />
+
+      <div className="container mx-auto px-4">
+        <ProductGridSection filter="latest" count={4} />
+      </div>
+
+      <BannerPosts
+        categoryId={91}
+        count={3}
+        bannerImage="/images/banner/hot-3.png"
+      />
+      <CategoryPostGrid categoryId={91} count={4} title="Automotive Tech" />
       {/* Ad Section */}
       <AdSection
         imageUrl="/images/ads/ad-1.png"
@@ -22,8 +37,12 @@ const HomePage: React.FC = () => {
         title="Experience the Future of Automotive"
         description="Discover cutting-edge technology and exclusive offers."
       />
-      <PostGrid_2 categoryId={89} count={4} title="How-To Guides" />
-      <PostGrid_1 categoryId={94} count={4} title="Motorsports & Culture" />
+      <PostListWithSidebar categoryId={89} count={4} title="How-To Guides" />
+      <CategoryPostGrid
+        categoryId={94}
+        count={4}
+        title="Motorsports & Culture"
+      />
       <PostSlider categoryId={90} count={4} title="News & Updates" />
     </div>
   );

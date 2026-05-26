@@ -11,6 +11,7 @@ import HtmlContent from '@/helpers/content';
 import BreadcrumbsComponent from '@/components/Common/Breadcrumbs';
 import ModalAlert from '@/components/Modals/ModalAlert';
 import { getPublicImageUrl } from '@/helpers/media';
+import { siteConfig } from '@/config/site';
 
 // Types
 interface WishlistProduct {
@@ -52,7 +53,7 @@ export default function WishlistPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 500);
+    }, siteConfig.skeletonMinTime);
 
     return () => clearTimeout(timer);
   }, []);

@@ -12,7 +12,7 @@ import { fetchPostsByCategory } from '@/services/api';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
-const LatestNews: React.FC<{
+const PostListWithSidebar: React.FC<{
   categoryId: number;
   count: number;
   title?: string;
@@ -54,7 +54,7 @@ const LatestNews: React.FC<{
     .map((news) => news);
 
   return (
-    <div className="flex flex-row flex-wrap  mb-10">
+    <div className="container mx-auto flex flex-row flex-wrap mb-10">
       <div className="flex-shrink max-w-full w-full lg:w-2/3 order-first lg:pr-8 lg:pb-8">
         <div className="border-b flex justify-between items-end mb-8 pb-6">
           <h2 className="text-gray-800 text-3xl">{title}</h2>
@@ -332,4 +332,4 @@ const LatestNews: React.FC<{
   );
 };
 
-export default LatestNews;
+export default PostListWithSidebar;
